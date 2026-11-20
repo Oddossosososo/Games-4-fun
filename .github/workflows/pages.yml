@@ -26,58 +26,83 @@ jobs:
           mkdir -p public/games
           cp index.html public/index.html
 
-      - name: Clone and package games with redistributable licences
+      - name: Discover every GitHub game repository in the catalogue
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const html = fs.readFileSync('index.html', 'utf8');
+          const section = html.match(/const GAMES\\s*=\\s*\\[([\\s\\S]*?)\\n\\];/);
+          if (!section) throw new Error('Could not read the GAMES catalogue');
+          const entries = [];
+          for (const match of section[1].matchAll(/\\{([\\s\\S]*?)\\}/g)) {
+            const item = match[1];
+            const id = item.match(/\\bid\\s*:\\s*"([^"]+)"/)?.[1];
+            const repo = item.match(/\\brepo\\s*:\\s*"([^"]*)"/)?.[1];
+            if (id && repo) {
+              const github = repo.match(/^https?:\\/\\/github\\.com\\/([^/]+\\/[^/]+?)(?:\\.git)?\\/?$/i);
+              if (github) entries.push({ id, repo: github[1] });
+            }
+          }
+          const unique = [...new Map(entries.map(x => [x.repo.toLowerCase(), x])).values()];
+          fs.writeFileSync('/tmp/afterglow-repositories.json', JSON.stringify({ entries, unique }, null, 2));
+          console.log('Found ' + entries.length + ' catalogue entries pointing to ' + unique.length + ' GitHub repositories.');
+          NODE
+
+      - name: Clone every catalogue repository with a verified open-source licence
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          mkdir -p /tmp/afterglow-sources public/games
+          mkdir -p public/games
+          echo '# Afterglow game sources' > public/SOURCES.md
+          echo '' >> public/SOURCES.md
+          echo 'Repositories are discovered from the live game catalogue at build time. A repository is copied only when GitHub reports an approved redistributable SPDX licence. Upstream files and licence notices are preserved.' >> public/SOURCES.md
+          echo '' >> public/SOURCES.md
 
-          clone_game_repo() {
-            local repo="$1"
-            local folder="$2"
-            local licence="$3"
+          node <<'NODE'
+          const fs = require('fs');
+          const data = JSON.parse(fs.readFileSync('/tmp/afterglow-repositories.json', 'utf8'));
+          fs.writeFileSync('/tmp/afterglow-unique-repos.tsv',
+            data.unique.map(x => x.repo).join('\\n') + '\\n');
+          NODE
+
+          while IFS= read -r repo; do
+            [ -n "$repo" ] || continue
+            api="https://api.github.com/repos/$repo"
+            metadata="$(curl -fsSL -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GH_TOKEN" "$api")" || {
+              echo "Skipping $repo: repository metadata unavailable"
+              continue
+            }
+            licence="$(printf '%s' "$metadata" | jq -r '.license.spdx_id // "NOASSERTION"')"
+            case "$licence" in
+              MIT|Apache-2.0|GPL-2.0|GPL-2.0-only|GPL-2.0-or-later|GPL-3.0|GPL-3.0-only|GPL-3.0-or-later|AGPL-3.0|AGPL-3.0-only|AGPL-3.0-or-later|MPL-2.0|Unlicense|BSD-2-Clause|BSD-3-Clause|ISC)
+                ;;
+              *)
+                echo "Skipping $repo: licence '$licence' is not on the approved redistribution list"
+                continue
+                ;;
+            esac
+
+            folder="$(printf '%s' "$repo" | tr '[:upper:]' '[:lower:]' | tr '/' '-')"
             echo "Cloning $repo ($licence)"
-            git clone --depth 1 "https://github.com/$repo.git" "/tmp/afterglow-sources/$folder"
-            mkdir -p "public/games/$folder"
-            cp -a "/tmp/afterglow-sources/$folder/." "public/games/$folder/"
+            git clone --depth 1 "https://github.com/$repo.git" "public/games/$folder"
             rm -rf "public/games/$folder/.git"
+            printf '\\n- %s — https://github.com/%s — %s (games/%s/)\\n' "$repo" "$repo" "$licence" "$folder" >> public/SOURCES.md
+          done < /tmp/afterglow-unique-repos.tsv
+
+          node <<'NODE'
+          const fs = require('fs');
+          const data = JSON.parse(fs.readFileSync('/tmp/afterglow-repositories.json', 'utf8'));
+          const map = {};
+          for (const entry of data.entries) {
+            const folder = entry.repo.toLowerCase().replaceAll('/', '-');
+            map[entry.id] = 'games/' + folder + '/';
           }
+          fs.writeFileSync('public/GAME-SOURCES.json', JSON.stringify(map, null, 2));
+          NODE
 
-          # Repositories explicitly identified in the game catalogue with
-          # licences that permit redistribution. Keep their upstream notices.
-          clone_game_repo "Hextris/hextris" "hextris" "GPL-3.0-or-later"
-          clone_game_repo "gabrielecirulli/2048" "2048" "MIT"
-          clone_game_repo "wwwtyro/Astray" "astray" "Unlicense"
-          clone_game_repo "ellisonleao/clumsy-bird" "clumsy-bird" "GPL-3.0"
-          clone_game_repo "bemusic/bemuse" "bemuse" "AGPL-3.0"
-          clone_game_repo "MaxBittker/sandspiel" "sandspiel" "MIT"
-          clone_game_repo "BKcore/HexGL" "hexgl" "MIT"
-          clone_game_repo "doublespeakgames/adarkroom" "darkroom" "MPL-2.0"
-          clone_game_repo "particle-clicker/particle-clicker" "particle-clicker" "MIT"
-          clone_game_repo "sausi-7/games" "sausi-games" "MIT"
-
-          cat > public/SOURCES.md <<'EOF'
-          # Afterglow game sources
-
-          These repositories are cloned during deployment because the catalogue identifies
-          redistributable open-source licences. Original source files and licence notices
-          are retained in each folder under games/.
-
-          - Hextris — https://github.com/Hextris/hextris — GPL-3.0-or-later
-          - 2048 — https://github.com/gabrielecirulli/2048 — MIT
-          - Astray — https://github.com/wwwtyro/Astray — Unlicense
-          - Clumsy Bird — https://github.com/ellisonleao/clumsy-bird — GPL-3.0
-          - Bemuse — https://github.com/bemusic/bemuse — AGPL-3.0
-          - Sandspiel — https://github.com/MaxBittker/sandspiel — MIT
-          - HexGL — https://github.com/BKcore/HexGL — MIT
-          - A Dark Room — https://github.com/doublespeakgames/adarkroom — MPL-2.0
-          - Particle Clicker — https://github.com/particle-clicker/particle-clicker — MIT
-          - Games Hub (Snake, Sudoku, Tic-Tac-Toe, Basketball, Bowling, Table Tennis,
-            Bubble Pop and Stack Tower) — https://github.com/sausi-7/games — MIT
-
-          Games without a verified redistributable source are not cloned. In particular,
-          the official New York Times Wordle link remains external, and hosted-only games
-          are not copied. Afterglow is independent and is not affiliated with upstream projects.
-          EOF
+          echo '' >> public/SOURCES.md
+          echo 'Games without a GitHub repository or with an unverified/non-approved licence remain external and are not copied.' >> public/SOURCES.md
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
