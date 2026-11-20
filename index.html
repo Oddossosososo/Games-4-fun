@@ -52,7 +52,9 @@ let selected = null;
 let activeCat = "All";
 fetch("./GAME-SOURCES.json").then(r=>r.ok?r.json():{}).then(data=>{
  localSources=data||{};
- if(selected) choose(selected);
+ const playable=GAMES.find(g=>localSources[g.id]);
+ if(playable) choose(playable);
+ else if(selected) choose(selected);
 }).catch(()=>{});
 const GAMES = [
  {id:"geometry-dash-web",title:"Geometry Dash",category:"Rhythm",creator:"lasokar",license:"Not specified — unofficial fan-made web port",emoji:"🟦",glow:"#63c9ee",shade:"#173b65",desc:"An unofficial browser-based Geometry Dash fan port. Its hosted URL is stored in one editable field."},
@@ -77,7 +79,7 @@ const GAMES = [
 {id:"bubble-pop",title:"Bubble Pop",category:"Casual",creator:"Saurabh Singh · Games Hub",license:"MIT (collection)",emoji:"🫧",glow:"#d78be9",shade:"#51265f",desc:"Pop matching bubbles and build your score."},
 {id:"stack-tower",title:"Stack Tower",category:"3D",creator:"Saurabh Singh · Games Hub",license:"MIT (collection)",repo:"https://github.com/sausi-7/games",entry:"games/3d/stack-tower/index.html",emoji:"🏗️",glow:"#8d9ce8",shade:"#29366a",desc:"Time your moves to build the tallest 3D tower."},
 ];
-const $=s=>document.querySelector(s);let selected=null,activeCat="All";
+const $=s=>document.querySelector(s);
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function render(){
  const q=$("#search").value.trim().toLowerCase();
@@ -106,6 +108,6 @@ $("#show-credits").onclick=()=>$("#credits").classList.add("open");$("#close-cre
 $("#credits-list").innerHTML=GAMES.map(g=>'<div class="credit"><strong>'+esc(g.title)+'</strong><small>Creator: '+esc(g.creator)+'<br>Licence: '+esc(g.license)+'<br><a href="'+esc(g.repo||"#")+'" target="_blank" rel="noopener">Source / project ↗</a></small></div>').join("");
 function updateSchoolDisclaimer(){const d=new Date(),m=d.getHours()*60+d.getMinutes();$("#school-disclaimer").hidden=!(m>=520&&m<900)}
 updateSchoolDisclaimer();setInterval(updateSchoolDisclaimer,30000);document.addEventListener("visibilitychange",updateSchoolDisclaimer);
-choose(GAMES[0]);
+choose(GAMES.find(g=>g.id==="clumsy-bird")||GAMES[0]);
 </script>
 </body></html>
