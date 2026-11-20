@@ -1,0 +1,79 @@
+name: Build and deploy Afterglow games
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Afterglow
+        uses: actions/checkout@v4
+
+      - name: Prepare website
+        run: |
+          mkdir -p public/games
+          cp index.html public/index.html
+
+      - name: Clone and package browser games
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/afterglow-sources
+
+          git clone --depth 1 --branch gh-pages https://github.com/Hextris/hextris.git /tmp/afterglow-sources/hextris
+          mkdir -p public/games/hextris
+          cp -a /tmp/afterglow-sources/hextris/. public/games/hextris/
+          rm -rf public/games/hextris/.git
+
+          git clone --depth 1 --branch master https://github.com/gabrielecirulli/2048.git /tmp/afterglow-sources/2048
+          mkdir -p public/games/2048
+          cp -a /tmp/afterglow-sources/2048/. public/games/2048/
+          rm -rf public/games/2048/.git
+
+          git clone --depth 1 --branch master https://github.com/wwwtyro/Astray.git /tmp/afterglow-sources/astray
+          mkdir -p public/games/astray
+          cp -a /tmp/afterglow-sources/astray/. public/games/astray/
+          rm -rf public/games/astray/.git
+
+          cat > public/SOURCES.md <<'EOF'
+          # Afterglow game sources
+
+          These games are cloned from their upstream repositories during each deployment.
+          Their original source files and licence notices are retained.
+
+          - Hextris — https://github.com/Hextris/hextris — GPL-3.0 (see games/hextris/LICENSE.md)
+          - 2048 — https://github.com/gabrielecirulli/2048 — MIT (see games/2048/LICENSE.txt)
+          - Astray — https://github.com/wwwtyro/Astray — Unlicense (see games/astray/License.md)
+
+          Afterglow is an independent game directory and is not affiliated with the upstream projects.
+          EOF
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
