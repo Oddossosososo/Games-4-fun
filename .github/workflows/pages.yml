@@ -38,9 +38,10 @@ jobs:
             const item = match[1];
             const id = item.match(/\bid\s*:\s*"([^"]+)"/)?.[1];
             const repo = item.match(/\brepo\s*:\s*"([^"]*)"/)?.[1];
+            const url = item.match(/\burl\s*:\s*"([^"]+)"/)?.[1];
             if (id && repo) {
               const github = repo.match(/^https?:\/\/github\.com\/([^/]+\/[^/]+?)(?:\.git)?\/?$/i);
-              if (github) entries.push({ id, repo: github[1] });
+              if (github) entries.push({ id, repo: github[1], url: url || "" });
             }
           }
           const unique = [...new Map(entries.map(x => [x.repo.toLowerCase(), x])).values()];
@@ -92,11 +93,57 @@ jobs:
 
           node <<'NODE'
           const fs = require('fs');
+          const path = require('path');
           const data = JSON.parse(fs.readFileSync('/tmp/afterglow-repositories.json', 'utf8'));
           const map = {};
+          const exists = p => {
+            const full = path.join('public', p);
+            return fs.existsSync(full) && fs.statSync(full).isFile() && full.toLowerCase().endsWith('.html');
+          };
+          const findIndexes = (dir, rel = '') => {
+            let found = [];
+            if (!fs.existsSync(dir)) return found;
+            for (const ent of fs.readdirSync(dir, {withFileTypes:true})) {
+              if (ent.name === '.git' || ent.name === 'node_modules' || ent.name.startsWith('.')) continue;
+              const child = path.join(dir, ent.name);
+              const childRel = path.posix.join(rel, ent.name);
+              if (ent.isDirectory()) found = found.concat(findIndexes(child, childRel));
+              else if (ent.isFile() && ent.name.toLowerCase() === 'index.html') found.push(childRel);
+            }
+            return found;
+          };
           for (const entry of data.entries) {
             const folder = entry.repo.toLowerCase().replaceAll('/', '-');
-            map[entry.id] = 'games/' + folder + '/';
+            const base = path.join('public', 'games', folder);
+            if (!fs.existsSync(base)) continue;
+            let candidates = [];
+            try {
+              const u = new URL(entry.url);
+              let pathname = decodeURIComponent(u.pathname).replace(/^\/+/, '');
+              const repoName = entry.repo.split('/')[1].replace(/\.git$/i, '');
+              if (u.hostname.toLowerCase().endsWith('.github.io') &&
+                  pathname.split('/')[0]?.toLowerCase() === repoName.toLowerCase()) {
+                pathname = pathname.split('/').slice(1).join('/');
+              }
+              if (pathname && exists(path.posix.join('games', folder, pathname))) {
+                candidates.push(pathname);
+              }
+            } catch {}
+            for (const common of ['index.html', 'dist/index.html', 'build/index.html', 'public/index.html']) {
+              if (exists(path.posix.join('games', folder, common))) candidates.push(common);
+            }
+            candidates = [...new Set(candidates)];
+            if (!candidates.length) {
+              const indexes = findIndexes(base);
+              if (indexes.length === 1) candidates = indexes;
+            }
+            if (candidates.length) {
+              const chosen = candidates[0];
+              map[entry.id] = './games/' + folder + '/' + chosen.split(path.sep).join('/');
+              console.log('Local game entrypoint: ' + entry.id + ' -> ' + map[entry.id]);
+            } else {
+              console.log('No safe static HTML entrypoint found for ' + entry.id + '; leaving it external.');
+            }
           }
           fs.writeFileSync('public/GAME-SOURCES.json', JSON.stringify(map, null, 2));
           NODE
