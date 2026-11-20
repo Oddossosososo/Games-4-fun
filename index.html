@@ -46,6 +46,12 @@ footer{border-top:1px solid #ffffff12;color:var(--muted);padding:20px 0 30px;fon
 <footer><div class="shell foot"><span><strong>Afterglow Arcade</strong> · A curated collection of browser games.</span><span><button id="show-credits" type="button">Credits &amp; Open Source</button> · <span id="school-disclaimer">Remember to enjoy games during free time.</span></span></div></footer>
 <section class="credits" id="credits" role="dialog" aria-modal="true" aria-label="Credits and open source"><div class="credits-box"><div class="credits-head"><h2>Credits &amp; Open Source</h2><button class="action" id="close-credits">Close ✕</button></div><p class="sub">Game names, creators, source repositories and licence information. Selected games are cloned from their open-source repositories during deployment; original licence notices are kept.</p><div class="credits-list" id="credits-list"></div></div></section>
 <script>
+let localSources = {};
+let selectedRuntimeUrl = "";
+fetch("./GAME-SOURCES.json").then(r=>r.ok?r.json():{}).then(data=>{
+ localSources=data||{};
+ if(selected) choose(selected);
+}).catch(()=>{});
 const GAMES = [
  {id:"geometry-dash-web",title:"Geometry Dash",category:"Rhythm",creator:"lasokar",license:"Not specified — unofficial fan-made web port",url:"https://lasokar.github.io/geometrydashdotcom/",repo:"https://github.com/lasokar/geometrydashdotcom",emoji:"🟦",glow:"#63c9ee",shade:"#173b65",desc:"An unofficial browser-based Geometry Dash fan port. Its hosted URL is stored in one editable field."},
 {id:"clumsy-bird",title:"Clumsy Bird",category:"Arcade",creator:"Ellison Leão",license:"GPL-3.0",url:"https://ellisonleao.github.io/clumsy-bird/",repo:"https://github.com/ellisonleao/clumsy-bird",thumb:"https://images.sftcdn.net/images/t_app-cover-l%2Cf_auto/p/2f0fa076-9b68-11e6-89bf-00163ed833e7/4203715268/clumsy-bird-screenshot.png",emoji:"",glow:"#70e5df",shade:"#163b43",desc:"A browser-based MelonJS arcade platform game."},
@@ -79,7 +85,10 @@ function render(){
 }
 function choose(g){
  selected=g;$("#selected-name").textContent=g.title;$("#creator").textContent=g.creator;$("#license").textContent=g.license;$("#category").textContent=g.category;$("#source").innerHTML=g.repo?'<a href="'+esc(g.repo)+'" target="_blank" rel="noopener">GitHub repository ↗</a>':'<a href="'+esc(g.url)+'" target="_blank" rel="noopener">Official game ↗</a>';
- const frame=$("#game-frame"),note=$("#external-note");if(g.externalOnly){frame.hidden=true;frame.src="about:blank";note.hidden=false;}else{note.hidden=true;frame.hidden=false;frame.src=g.url;}
+ const frame=$("#game-frame"),note=$("#external-note");
+ selectedRuntimeUrl=(!g.externalOnly&&localSources[g.id])?localSources[g.id]:g.url;
+ if(g.externalOnly){frame.hidden=true;frame.src="about:blank";note.hidden=false;}
+ else{note.hidden=true;frame.hidden=false;frame.src=selectedRuntimeUrl;}
  $("#other-games").innerHTML=GAMES.filter(x=>x.id!==g.id).map(x=>'<button type="button" data-other="'+esc(x.id)+'">'+esc(x.title)+'</button>').join("");
  render();
 }
@@ -88,7 +97,7 @@ $("#other-games").addEventListener("click",e=>{const b=e.target.closest("[data-o
 $("#filters").addEventListener("click",e=>{const b=e.target.closest("[data-cat]");if(!b)return;activeCat=b.dataset.cat;document.querySelectorAll(".filter").forEach(x=>x.classList.toggle("active",x===b));render()});
 $("#search").addEventListener("input",render);
 function loadLevelUrl(){const field=$("#level-url");let url;try{url=new URL(field.value.trim())}catch(e){alert("Paste a complete level URL first.");return}if(!["http:","https:"].includes(url.protocol)){alert("Only web links (https:// or http://) can be loaded.");return}$("#game-frame").src=url.href;$("#selected-name").textContent="Custom level";$("#open-tab").onclick=()=>window.open(url.href,"_blank","noopener")}
-$("#open-tab").addEventListener("click",()=>{if(!selected)return;const target=new URL(selected.url,document.baseURI).href;window.open(target,"_blank","noopener,noreferrer")});
+$("#open-tab").addEventListener("click",()=>{if(!selected)return;const target=new URL(selectedRuntimeUrl||selected.url,document.baseURI).href;window.open(target,"_blank","noopener,noreferrer")});
 $("#load-level").addEventListener("click",loadLevelUrl);$("#level-url").addEventListener("keydown",e=>{if(e.key==="Enter")loadLevelUrl()});
 $("#fullscreen").addEventListener("click",async()=>{const f=$("#frame-wrap");try{if(!document.fullscreenElement)await f.requestFullscreen();else await document.exitFullscreen()}catch(e){alert("Fullscreen is unavailable in this browser.")}});
 $("#show-credits").onclick=()=>$("#credits").classList.add("open");$("#close-credits").onclick=()=>$("#credits").classList.remove("open");$("#credits").addEventListener("click",e=>{if(e.target===$("#credits"))$("#credits").classList.remove("open")});
