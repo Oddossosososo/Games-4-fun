@@ -48,6 +48,8 @@ footer{border-top:1px solid #ffffff12;color:var(--muted);padding:20px 0 30px;fon
 <script>
 let localSources = {};
 let selectedRuntimeUrl = "";
+let selected = null;
+let activeCat = "All";
 fetch("./GAME-SOURCES.json").then(r=>r.ok?r.json():{}).then(data=>{
  localSources=data||{};
  if(selected) choose(selected);
@@ -104,6 +106,6 @@ $("#show-credits").onclick=()=>$("#credits").classList.add("open");$("#close-cre
 $("#credits-list").innerHTML=GAMES.map(g=>'<div class="credit"><strong>'+esc(g.title)+'</strong><small>Creator: '+esc(g.creator)+'<br>Licence: '+esc(g.license)+'<br><a href="'+esc(g.repo||"#")+'" target="_blank" rel="noopener">Source / project ↗</a></small></div>').join("");
 function updateSchoolDisclaimer(){const d=new Date(),m=d.getHours()*60+d.getMinutes();$("#school-disclaimer").hidden=!(m>=520&&m<900)}
 updateSchoolDisclaimer();setInterval(updateSchoolDisclaimer,30000);document.addEventListener("visibilitychange",updateSchoolDisclaimer);
-render();
+choose(GAMES[0]);
 </script>
 </body></html>
