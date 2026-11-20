@@ -26,37 +26,57 @@ jobs:
           mkdir -p public/games
           cp index.html public/index.html
 
-      - name: Clone and package browser games
+      - name: Clone and package games with redistributable licences
         run: |
           set -euo pipefail
-          mkdir -p /tmp/afterglow-sources
+          mkdir -p /tmp/afterglow-sources public/games
 
-          git clone --depth 1 --branch gh-pages https://github.com/Hextris/hextris.git /tmp/afterglow-sources/hextris
-          mkdir -p public/games/hextris
-          cp -a /tmp/afterglow-sources/hextris/. public/games/hextris/
-          rm -rf public/games/hextris/.git
+          clone_game_repo() {
+            local repo="$1"
+            local folder="$2"
+            local licence="$3"
+            echo "Cloning $repo ($licence)"
+            git clone --depth 1 "https://github.com/$repo.git" "/tmp/afterglow-sources/$folder"
+            mkdir -p "public/games/$folder"
+            cp -a "/tmp/afterglow-sources/$folder/." "public/games/$folder/"
+            rm -rf "public/games/$folder/.git"
+          }
 
-          git clone --depth 1 --branch master https://github.com/gabrielecirulli/2048.git /tmp/afterglow-sources/2048
-          mkdir -p public/games/2048
-          cp -a /tmp/afterglow-sources/2048/. public/games/2048/
-          rm -rf public/games/2048/.git
-
-          git clone --depth 1 --branch master https://github.com/wwwtyro/Astray.git /tmp/afterglow-sources/astray
-          mkdir -p public/games/astray
-          cp -a /tmp/afterglow-sources/astray/. public/games/astray/
-          rm -rf public/games/astray/.git
+          # Repositories explicitly identified in the game catalogue with
+          # licences that permit redistribution. Keep their upstream notices.
+          clone_game_repo "Hextris/hextris" "hextris" "GPL-3.0-or-later"
+          clone_game_repo "gabrielecirulli/2048" "2048" "MIT"
+          clone_game_repo "wwwtyro/Astray" "astray" "Unlicense"
+          clone_game_repo "ellisonleao/clumsy-bird" "clumsy-bird" "GPL-3.0"
+          clone_game_repo "bemusic/bemuse" "bemuse" "AGPL-3.0"
+          clone_game_repo "MaxBittker/sandspiel" "sandspiel" "MIT"
+          clone_game_repo "BKcore/HexGL" "hexgl" "MIT"
+          clone_game_repo "doublespeakgames/adarkroom" "darkroom" "MPL-2.0"
+          clone_game_repo "particle-clicker/particle-clicker" "particle-clicker" "MIT"
+          clone_game_repo "sausi-7/games" "sausi-games" "MIT"
 
           cat > public/SOURCES.md <<'EOF'
           # Afterglow game sources
 
-          These games are cloned from their upstream repositories during each deployment.
-          Their original source files and licence notices are retained.
+          These repositories are cloned during deployment because the catalogue identifies
+          redistributable open-source licences. Original source files and licence notices
+          are retained in each folder under games/.
 
-          - Hextris — https://github.com/Hextris/hextris — GPL-3.0 (see games/hextris/LICENSE.md)
-          - 2048 — https://github.com/gabrielecirulli/2048 — MIT (see games/2048/LICENSE.txt)
-          - Astray — https://github.com/wwwtyro/Astray — Unlicense (see games/astray/License.md)
+          - Hextris — https://github.com/Hextris/hextris — GPL-3.0-or-later
+          - 2048 — https://github.com/gabrielecirulli/2048 — MIT
+          - Astray — https://github.com/wwwtyro/Astray — Unlicense
+          - Clumsy Bird — https://github.com/ellisonleao/clumsy-bird — GPL-3.0
+          - Bemuse — https://github.com/bemusic/bemuse — AGPL-3.0
+          - Sandspiel — https://github.com/MaxBittker/sandspiel — MIT
+          - HexGL — https://github.com/BKcore/HexGL — MIT
+          - A Dark Room — https://github.com/doublespeakgames/adarkroom — MPL-2.0
+          - Particle Clicker — https://github.com/particle-clicker/particle-clicker — MIT
+          - Games Hub (Snake, Sudoku, Tic-Tac-Toe, Basketball, Bowling, Table Tennis,
+            Bubble Pop and Stack Tower) — https://github.com/sausi-7/games — MIT
 
-          Afterglow is an independent game directory and is not affiliated with the upstream projects.
+          Games without a verified redistributable source are not cloned. In particular,
+          the official New York Times Wordle link remains external, and hosted-only games
+          are not copied. Afterglow is independent and is not affiliated with upstream projects.
           EOF
 
       - name: Configure GitHub Pages
