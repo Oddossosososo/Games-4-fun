@@ -31,15 +31,15 @@ jobs:
           node <<'NODE'
           const fs = require('fs');
           const html = fs.readFileSync('index.html', 'utf8');
-          const section = html.match(/const GAMES\\s*=\\s*\\[([\\s\\S]*?)\\n\\];/);
+          const section = html.match(/const GAMES\s*=\s*\[([\s\S]*?)\n\];/);
           if (!section) throw new Error('Could not read the GAMES catalogue');
           const entries = [];
-          for (const match of section[1].matchAll(/\\{([\\s\\S]*?)\\}/g)) {
+          for (const match of section[1].matchAll(/\{([\s\S]*?)\}/g)) {
             const item = match[1];
-            const id = item.match(/\\bid\\s*:\\s*"([^"]+)"/)?.[1];
-            const repo = item.match(/\\brepo\\s*:\\s*"([^"]*)"/)?.[1];
+            const id = item.match(/\bid\s*:\s*"([^"]+)"/)?.[1];
+            const repo = item.match(/\brepo\s*:\s*"([^"]*)"/)?.[1];
             if (id && repo) {
-              const github = repo.match(/^https?:\\/\\/github\\.com\\/([^/]+\\/[^/]+?)(?:\\.git)?\\/?$/i);
+              const github = repo.match(/^https?:\/\/github\.com\/([^/]+\/[^/]+?)(?:\.git)?\/?$/i);
               if (github) entries.push({ id, repo: github[1] });
             }
           }
@@ -63,7 +63,7 @@ jobs:
           const fs = require('fs');
           const data = JSON.parse(fs.readFileSync('/tmp/afterglow-repositories.json', 'utf8'));
           fs.writeFileSync('/tmp/afterglow-unique-repos.tsv',
-            data.unique.map(x => x.repo).join('\\n') + '\\n');
+            data.unique.map(x => x.repo).join('\n') + '\n');
           NODE
 
           while IFS= read -r repo; do
@@ -87,7 +87,7 @@ jobs:
             echo "Cloning $repo ($licence)"
             git clone --depth 1 "https://github.com/$repo.git" "public/games/$folder"
             rm -rf "public/games/$folder/.git"
-            printf '\\n- %s — https://github.com/%s — %s (games/%s/)\\n' "$repo" "$repo" "$licence" "$folder" >> public/SOURCES.md
+            printf '\n- %s — https://github.com/%s — %s (games/%s/)\n' "$repo" "$repo" "$licence" "$folder" >> public/SOURCES.md
           done < /tmp/afterglow-unique-repos.tsv
 
           node <<'NODE'
