@@ -68,7 +68,7 @@ const GAMES = [
 {id:"bubble-pop",title:"Bubble Pop",category:"Casual",creator:"Saurabh Singh · Games Hub",license:"MIT (collection)",url:"https://sausi-7.github.io/games/games/casual/bubble-pop/index.html",repo:"https://github.com/sausi-7/games",emoji:"🫧",glow:"#d78be9",shade:"#51265f",desc:"Pop matching bubbles and build your score."},
 {id:"stack-tower",title:"Stack Tower",category:"3D",creator:"Saurabh Singh · Games Hub",license:"MIT (collection)",url:"https://sausi-7.github.io/games/games/3d/stack-tower/index.html",repo:"https://github.com/sausi-7/games",emoji:"🏗️",glow:"#8d9ce8",shade:"#29366a",desc:"Time your moves to build the tallest 3D tower."},
 ];
-const $=s=>document.querySelector(s);let selected=GAMES[0],activeCat="All";
+const $=s=>document.querySelector(s);let selected=null,activeCat="All";
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function render(){
  const q=$("#search").value.trim().toLowerCase();
@@ -91,6 +91,6 @@ $("#show-credits").onclick=()=>$("#credits").classList.add("open");$("#close-cre
 $("#credits-list").innerHTML=GAMES.map(g=>'<div class="credit"><strong>'+esc(g.title)+'</strong><small>Creator: '+esc(g.creator)+'<br>Licence: '+esc(g.license)+'<br><a href="'+esc(g.repo||g.url)+'" target="_blank" rel="noopener">Source / project ↗</a></small></div>').join("");
 function updateSchoolDisclaimer(){const d=new Date(),m=d.getHours()*60+d.getMinutes();$("#school-disclaimer").hidden=!(m>=520&&m<900)}
 updateSchoolDisclaimer();setInterval(updateSchoolDisclaimer,30000);document.addEventListener("visibilitychange",updateSchoolDisclaimer);
-choose(GAMES[0]);
+render();
 </script>
 </body></html>
