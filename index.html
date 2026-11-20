@@ -41,7 +41,7 @@
     </section>
     <section aria-label="Game library"><div class="section-head"><h2>Explore the arcade</h2><span class="count" id="count">6 games</span></div><div class="grid" id="game-grid"></div></section>
   </main>
-  <footer><div class="shell foot"><span><strong>Afterglow Arcade</strong> · Made for curious players.</span><span>Featured games are original creations or open-source projects used under their respective licences (including MIT where applicable). Play responsibly and enjoy games during your free time.</span></div></footer>
+  <footer><div class="shell foot"><span><strong>Afterglow Arcade</strong> · Made for curious players.</span><span>Featured games are original creations or open-source projects used under their respective licences (including MIT where applicable). <span id="school-disclaimer">Play responsibly and enjoy games during your free time.</span></span></div></footer>
 
   <section class="modal" id="player" role="dialog" aria-modal="true" aria-label="Game player">
     <div class="player-shell">
@@ -137,6 +137,18 @@
     $("#player").addEventListener("click",event=>{if(event.target===$("#player"))closeGame()});
     document.addEventListener("keydown",event=>{if(event.key==="Escape"&&$("#player").classList.contains("open")&&!document.fullscreenElement)closeGame()});
     renderGames();
+
+    // Show the school-time disclaimer from 8:40 AM until 3:00 PM
+    // using the visitor's local device time.
+    const schoolDisclaimer = $("#school-disclaimer");
+    function updateSchoolDisclaimer(){
+      const now = new Date();
+      const minutes = now.getHours() * 60 + now.getMinutes();
+      schoolDisclaimer.hidden = !(minutes >= 8 * 60 + 40 && minutes < 15 * 60);
+    }
+    updateSchoolDisclaimer();
+    setInterval(updateSchoolDisclaimer, 30 * 1000);
+    document.addEventListener("visibilitychange", updateSchoolDisclaimer);
   </script>
 </body>
 </html>
