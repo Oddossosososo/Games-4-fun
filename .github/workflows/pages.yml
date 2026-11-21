@@ -74,13 +74,30 @@ jobs:
               exit 1
             fi
 
-            echo "Downloading $name ($licence) with wget from branch $default_branch"
-            archive="$(mktemp --suffix=.tar.gz)"
-            mkdir -p "public/games/$folder"
-            wget --quiet --show-progress --output-document="$archive" --tries=5 --waitretry=5 --timeout=30 --retry-connrefused "https://codeload.github.com/$name/tar.gz/refs/heads/$default_branch"
-            tar -xzf "$archive" --strip-components=1 -C "public/games/$folder"
-            rm -f "$archive"
-            rm -rf "public/games/$folder/.git" "public/games/$folder/node_modules"
+            echo "Git-cloning $name ($licence) from branch $default_branch"
+            destination="public/games/$folder"
+            clone_tmp="$(mktemp -d)"
+            cloned=false
+            for attempt in 1 2 3; do
+              if git -c http.lowSpeedLimit=1000 -c http.lowSpeedTime=60 clone \
+                --depth 1 --single-branch --branch "$default_branch" \
+                "https://github.com/$name.git" "$clone_tmp/repo"; then
+                cloned=true
+                break
+              fi
+              echo "Clone attempt $attempt failed for $name; retrying..."
+              rm -rf "$clone_tmp/repo"
+              sleep "$((attempt * 3))"
+            done
+            if [ "$cloned" != true ]; then
+              echo "::error::git clone failed for $name after 3 attempts"
+              rm -rf "$clone_tmp"
+              exit 1
+            fi
+            mkdir -p "$(dirname "$destination")"
+            rm -rf "$destination"
+            mv "$clone_tmp/repo" "$destination"
+            rm -rf "$clone_tmp" "$destination/.git" "$destination/node_modules"
             find "public/games/$folder" -type f \( -name 'package.zip' -o -name '*.map' \) -delete
             find "public/games/$folder" -type d \( -name '.github' -o -name '__tests__' -o -name 'coverage' \) -prune -exec rm -rf {} +
             printf '\n- [%s](https://github.com/%s) — SPDX: %s — local copy: games/%s/\n' "$name" "$name" "$licence" "$folder" >> public/SOURCES.md
