@@ -70,7 +70,7 @@ for line in lines:
         clean.append('    $("#inst_main_body").html("<div id=\'instructions_head\'>HOW TO PLAY</div><p>Stop blocks from leaving the outer hexagon.</p><p>Use the left and right arrow keys, or tap the left and right sides of the screen, to rotate. Use the down arrow to speed up falling blocks.</p><p>Clear blocks by making three or more blocks of the same colour touch.</p><hr><p>Hextris by Logan Engstrom, Garrett Finucane, Noah Moroze and Michael Yang.</p>");')
     else:
         clean.append(line)
-main.write_text("\\n".join(clean) + "\\n", encoding="utf-8")
+main.write_text("\n".join(clean) + "\n", encoding="utf-8")
 
 
 # Add an explicit third-party notice for bundled font families.
