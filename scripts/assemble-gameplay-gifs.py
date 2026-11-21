@@ -32,7 +32,12 @@ for folder in sorted(FRAMES.iterdir()):
     created += 1
     print(f"Created gameplay GIF: {folder.name}")
 
-expected = len(list(FRAMES.iterdir()))
-if created != expected or created == 0:
-    raise SystemExit(f"Only {created} of {expected} gameplay GIFs were created.")
+manifest = __import__("json").loads((ROOT / "games.json").read_text(encoding="utf-8"))
+expected_ids = {game["id"] for game in manifest["games"]}
+created_ids = {folder.name for folder in FRAMES.iterdir() if folder.is_dir() and len(list(folder.glob("*.png"))) >= 2}
+missing = sorted(expected_ids - created_ids)
+if missing:
+    raise SystemExit("Missing real gameplay captures for: " + ", ".join(missing))
+if created != len(expected_ids):
+    raise SystemExit(f"Created {created} gameplay GIFs; expected {len(expected_ids)}.")
 print(f"Created {created} real gameplay GIF thumbnails.")
