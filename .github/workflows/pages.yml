@@ -103,6 +103,46 @@ jobs:
             printf '\n- [%s](https://github.com/%s) — SPDX: %s — local copy: games/%s/\n' "$name" "$name" "$licence" "$folder" >> public/SOURCES.md
           done < <(node -e "for (const r of require('./games.json').games.filter(g=>g.verified&&g.mode==='local').map(g=>g.source).filter((v,i,a)=>a.indexOf(v)===i)) console.log(r)")
 
+      - name: Build Sandspiel locally for GitHub Pages
+        if: hashFiles('public/games/maxbittker-sandspiel/package.json') != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            core.info('Sandspiel source is cloned; its actual playable page must be compiled from Rust/WASM and webpack.');
+      - name: Set up Rust for Sandspiel WASM
+        if: hashFiles('public/games/maxbittker-sandspiel/package.json') != ''
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+      - name: Compile Sandspiel WASM and browser bundle
+        if: hashFiles('public/games/maxbittker-sandspiel/package.json') != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd public/games/maxbittker-sandspiel
+          cargo install wasm-pack --locked
+          yarn install --frozen-lockfile --non-interactive
+          node <<'NODE'
+          const fs = require('fs');
+          const webpackPath = 'webpack.config.js';
+          let webpack = fs.readFileSync(webpackPath, 'utf8');
+          webpack = webpack.replace('publicPath: "/"', 'publicPath: "./"');
+          fs.writeFileSync(webpackPath, webpack);
+          const appPath = 'js/app.js';
+          let app = fs.readFileSync(appPath, 'utf8');
+          app = app.replace('<Router>', '<Router basename={window.location.pathname.replace(/\\/dist\\/index\\.html$/, "")}>');
+          fs.writeFileSync(appPath, app);
+          const htmlPath = 'index.html';
+          let html = fs.readFileSync(htmlPath, 'utf8');
+          html = html.replace(/(["'])\\/(assets\\/|styles\\.css|manifest\\.json)/g, '$1./$2');
+          html = html.replace(/\\s*<script[^>]+googlesyndication[^>]*><\\/script>/g, '');
+          html = html.replace(/\\s*<script[^>]+googletagmanager[^>]*><\\/script>/g, '');
+          html = html.replace(/\\s*<script async defer src="https:\\/\\/a\\.sandspiel\\.club\\/app\\.js"><\\/script>/g, '');
+          html = html.replace(/\\s*<noscript>[\\s\\S]*?<\\/noscript>/g, '');
+          fs.writeFileSync(htmlPath, html);
+          NODE
+          yarn build
+
       - name: Upgrade Pong ball-only predictive CPU
         run: node scripts/improve-pong-ai.js
 
