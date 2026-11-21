@@ -30,18 +30,18 @@ html = page.read_text(encoding="utf-8")
 
 # Remove remote metadata, external font loads, advertising and analytics.
 html = re.sub(r'(?is)\s*<meta\s+property=["\'](?:og:|twitter:)[^>]*>', '', html)
-html = re.sub(r'(?is)\s*<link[^>]+href=["\']https?://fonts\\.googleapis\\.com[^>]*>', '', html)
+html = re.sub(r'(?is)\s*<link[^>]+href=["\']https?://fonts\.googleapis\.com[^>]*>', '', html)
 html = re.sub(r'(?is)\s*<script[^>]*(?:googlesyndication|data-ad-client)[^>]*>.*?</script>', '', html)
-html = re.sub(r'(?is)\s*<script[^>]*>\s*\(function\\(i,s,o,g,r,a,m\\).*?google-analytics\\.com/analytics\\.js.*?</script>', '', html)
-html = re.sub(r'(?is)\s*<link[^>]+href=["\']style/rrssb\\.css["\'][^>]*>', '', html)
-html = re.sub(r'(?is)\s*<script[^>]+src=["\']vendor/rrssb\\.min\\.js["\'][^>]*>\s*</script>', '', html)
+html = re.sub(r'(?is)\s*<script[^>]*>\s*\(function\(i,s,o,g,r,a,m\).*?google-analytics\.com/analytics\.js.*?</script>', '', html)
+html = re.sub(r'(?is)\s*<link[^>]+href=["\']style/rrssb\.css["\'][^>]*>', '', html)
+html = re.sub(r'(?is)\s*<script[^>]+src=["\']vendor/rrssb\.min\.js["\'][^>]*>\s*</script>', '', html)
 
 # Remove the social-share container without disturbing its surrounding game UI.
 def remove_div_with_id(source, target_id):
-    match = re.search(r'<div\\b[^>]*\\bid\\s*=\\s*["\']' + re.escape(target_id) + r'["\'][^>]*>', source, re.I)
+    match = re.search(r'<div\b[^>]*\bid\s*=\s*["\']' + re.escape(target_id) + r'["\'][^>]*>', source, re.I)
     if not match:
         return source
-    token_re = re.compile(r'</?div\\b[^>]*>', re.I)
+    token_re = re.compile(r'</?div\b[^>]*>', re.I)
     depth = 0
     for token in token_re.finditer(source, match.start()):
         if token.group(0).lower().startswith('</'):
@@ -54,21 +54,24 @@ def remove_div_with_id(source, target_id):
 
 html = remove_div_with_id(html, "socialShare")
 # Drop the inline language-specific social sharing injector.
-html = re.sub(r'(?is)\s*<script[^>]*>\s*\(function addRussianSocialShare\\(\\).*?</script>', '', html)
+html = re.sub(r'(?is)\s*<script[^>]*>\s*\(function addRussianSocialShare\(\).*?</script>', '', html)
 page.write_text(html, encoding="utf-8")
 
-# Remove the old remote high-score endpoint and the dynamically injected analytics script.
+# Remove remote score/analytics code and replace linked instructions with local text.
 main = root / "js/main.js"
-js = main.read_text(encoding="utf-8")
-js = re.sub(r"(?m)^\\s*\\$\\.get\\(['\"]http://54\\.183\\.184\\.126/['\"]\\s*\\+\\s*String\\(score\\)\\)\\s*;?\\s*$", "", js)
-js = re.sub(r"(?m)^\\s*script\\.src\\s*=\\s*['\"]http://hextris\\.io/a\\.js['\"];?\\s*$", "", js)
-# Keep the in-game instructions and attribution local; remove outbound links and remote services.
-js = re.sub(
-    r'(?m)^\\s*\\$\\("#inst_main_body"\\)\\.html\\(.*?\\);\\s*$',
-    '$("#inst_main_body").html("<div id=\'instructions_head\'>HOW TO PLAY</div><p>The goal is to stop blocks from leaving the outer hexagon.</p><p>Use the left and right arrow keys, or tap the left and right sides of the screen, to rotate. Use the down arrow to speed up falling blocks.</p><p>Clear blocks by making three or more blocks of the same colour touch.</p><hr><p>Hextris by Logan Engstrom, Garrett Finucane, Noah Moroze and Michael Yang.</p>");',
-    js
-)
-main.write_text(js, encoding="utf-8")
+lines = main.read_text(encoding="utf-8").splitlines()
+clean = []
+for line in lines:
+    if "$.get('http://54.183.184.126/'" in line:
+        continue
+    if "script.src = 'http://hextris.io/a.js'" in line:
+        continue
+    if '$("#inst_main_body").html(' in line:
+        clean.append('    $("#inst_main_body").html("<div id=\'instructions_head\'>HOW TO PLAY</div><p>Stop blocks from leaving the outer hexagon.</p><p>Use the left and right arrow keys, or tap the left and right sides of the screen, to rotate. Use the down arrow to speed up falling blocks.</p><p>Clear blocks by making three or more blocks of the same colour touch.</p><hr><p>Hextris by Logan Engstrom, Garrett Finucane, Noah Moroze and Michael Yang.</p>");')
+    else:
+        clean.append(line)
+main.write_text("\\n".join(clean) + "\\n", encoding="utf-8")
+
 
 # Add an explicit third-party notice for bundled font families.
 (root / "THIRD-PARTY-NOTICES.md").write_text(
@@ -88,7 +91,7 @@ scan_files = [page] + list(root.rglob("*.js")) + list(root.rglob("*.css"))
 bad = []
 for file in scan_files:
     text = file.read_text(encoding="utf-8", errors="ignore")
-    if re.search(r'https?://|\\bfetch\\s*\\(|XMLHttpRequest|sendBeacon|WebSocket|googlesyndication|google-analytics', text, re.I):
+    if re.search(r'https?://|\bfetch\s*\(|XMLHttpRequest|sendBeacon|WebSocket|googlesyndication|google-analytics', text, re.I):
         bad.append(str(file))
 if bad:
     raise SystemExit("Remote references remain in: " + ", ".join(bad))
