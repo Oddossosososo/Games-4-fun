@@ -24,7 +24,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 26
 
       - name: Prepare static site
         run: |
@@ -140,6 +140,11 @@ jobs:
           fs.writeFileSync(htmlPath, html);
           NODE
           yarn build
+
+          # Keep only the compiled site. Webpack bundles the WASM into dist/,
+          # so Rust build outputs and npm dependencies are not needed at runtime.
+          rm -rf node_modules crate/target crate/pkg
+          test -s dist/index.html
 
       - name: Upgrade Pong ball-only predictive CPU
         run: node scripts/improve-pong-ai.js
