@@ -612,20 +612,23 @@
     async function prepareGameFiles(games) {
       const pending = [];
       const queued = new Set();
-      const add = url => {
+      const add = (value, base = document.baseURI) => {
         try {
-          const resolved = new URL(url, document.baseURI);
+          const resolved = new URL(value, base);
           if (resolved.origin !== location.origin || queued.has(resolved.href)) return;
-          if (!/\\.(?:html?|css|js|mjs|json|png|jpe?g|webp|gif|svg|woff2?|ttf|mp3|ogg|wav|mp4|webm|wasm)(?:[?#]|$)/i.test(resolved.href)) return;
+          if (!/\.(?:html?|css|js|mjs|json|png|jpe?g|webp|gif|svg|woff2?|ttf|mp3|ogg|wav|mp4|webm|wasm)(?:[?#]|$)/i.test(resolved.href)) return;
           queued.add(resolved.href);
           pending.push(resolved.href);
         } catch {}
       };
-      const discoverCss = text => {
-        for (const match of text.matchAll(/url\\(\\s*(['"]?)(.*?)\\1\\s*\\)/gi)) {
+      const discoverCss = (text, base) => {
+        for (const match of text.matchAll(/url\(\s*(['"]?)(.*?)\1\s*\)/gi)) {
           const value = match[2].trim();
-          if (value && !value.startsWith("data:") && !value.startsWith("blob:")) add(value);
+          if (value && !value.startsWith("data:") && !value.startsWith("blob:")) add(value, base);
         }
+      };
+      const discoverScriptAssets = (text, base) => {
+        for (const match of text.matchAll(/["'`]((?:\.\.?\/|\/)[^"'`]+?\.(?:png|jpe?g|webp|gif|svg|woff2?|ttf|mp3|ogg|wav|json|wasm)(?:[?#][^"'`]*)?)["'`]/gi)) add(match[1], base);
       };
       for (const game of games.filter(isLocal)) add(localURL(game));
       let cursor = 0;
@@ -637,22 +640,19 @@
             if (!response.ok) continue;
             const type = response.headers.get("content-type") || "";
             if (type.includes("text/html")) {
-              const html = await response.text();
-              const doc = new DOMParser().parseFromString(html, "text/html");
-              doc.querySelectorAll("script[src],link[href],img[src],audio[src],video[src],source[src]").forEach(node => {
-                add(node.getAttribute("src") || node.getAttribute("href"));
-              });
-              doc.querySelectorAll("style").forEach(node => discoverCss(node.textContent || ""));
-            } else if (type.includes("text/css") || /\\.css(?:[?#]|$)/i.test(url)) {
-              discoverCss(await response.text());
+              const doc = new DOMParser().parseFromString(await response.text(), "text/html");
+              doc.querySelectorAll("script[src],link[href],img[src],audio[src],video[src],source[src]").forEach(node => add(node.getAttribute("src") || node.getAttribute("href"), url));
+              doc.querySelectorAll("style").forEach(node => discoverCss(node.textContent || "", url));
+            } else if (type.includes("text/css") || /\.css(?:[?#]|$)/i.test(url)) {
+              discoverCss(await response.text(), url);
+            } else if (type.includes("javascript") || /\.(?:js|mjs)(?:[?#]|$)/i.test(url)) {
+              discoverScriptAssets(await response.text(), url);
             }
-          } catch {
-            // A missing or temporarily unavailable asset must not stop other games preparing.
-          }
+          } catch {}
         }
       };
-      await Promise.all(Array.from({ length: 4 }, worker));
-      console.info("Afterglow prepared", queued.size, "same-origin game files across", games.filter(isLocal).length, "self-hosted games.");
+      await Promise.all(Array.from({ length: 6 }, worker));
+      console.info("Afterglow warmed", queued.size, "same-origin game files across", games.filter(isLocal).length, "self-hosted games.");
     }
 
     async function start() {
