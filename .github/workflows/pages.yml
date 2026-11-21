@@ -31,6 +31,7 @@ jobs:
           mkdir -p public/games
           cp index.html arcade-api.js games.json public/
           cp -R games/afterglow public/games/afterglow
+          cp -R games/hextris public/games/hextris
 
       - name: Validate browser API scripts
         run: |
