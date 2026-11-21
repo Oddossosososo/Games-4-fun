@@ -239,7 +239,7 @@
     }
 
     const $ = selector => document.querySelector(selector);
-    const state = { games: [], sources: {}, selected: null, category: "All", query: "", loadTimer: null, generation: 0, previewUrls: new Map(), recorder: null, recordStream: null };
+    const state = { games: [], selected: null, category: "All", query: "", loadTimer: null, generation: 0, previewUrls: new Map(), recorder: null, recordStream: null };
     const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[char]));
     // Detection is deliberately non-global so repeated checks are consistent.
     const PROFANITY_SOURCE = "\\b(?:asshole|arsehole|bastard|bitch|bullshit|crap|cunt|damn|dick|fuck|motherfucker|piss|shit|slut|whore)\\w*\\b";
@@ -249,7 +249,7 @@
     const censorText = value => String(value ?? "").replace(PROFANITY_CENSOR, word => word[0] + "*".repeat(Math.max(1, word.length - 1)));
     const localURL = game => {
       if (!["local", "bundled"].includes(game.mode)) return "";
-      let route = state.sources?.[game.id];
+      let route = "";
       const cleanEntry = value => {
         let path = String(value || "");
         while (path.startsWith("/")) path = path.slice(1);
@@ -508,19 +508,9 @@
         if (generation !== state.generation) return;
         if (!$("#stage-status").hidden) setStatus("Still loading?", "The game has not confirmed that it loaded. Try again or open it in a new tab.", true);
       }, 18000);
-      try {
-        const response = await fetch(url, { cache: "no-cache", redirect: "follow" });
-        if (generation !== state.generation) return;
-        const type = response.headers.get("content-type") || "";
-        if (!response.ok || (type && !type.toLowerCase().includes("text/html"))) throw new Error("Missing game entrypoint");
-        frame.src = response.url || url;
-      } catch (error) {
-        if (generation !== state.generation) return;
-        clearTimer();
-        setStatus("Game unavailable", "The game files could not be found. Try again later or open the game website.", true);
-        $("#play-state").textContent = "UNAVAILABLE";
-        if (onlineAPI) onlineAPI.trackEvent("game_load_error", game.id).catch(() => {});
-      }
+      // Navigate the iframe directly. A fetch preflight can fail on CORS even
+      // when the browser is allowed to display the same game in an iframe.
+      frame.src = url;
     }
 
     function openSelected() {
@@ -600,16 +590,10 @@
 
     async function start() {
       try {
-        const [manifestResponse, sourcesResponse] = await Promise.all([
-          fetch("./games.json", { cache: "no-cache" }),
-          fetch("./GAME-SOURCES.json", { cache: "no-cache" }).catch(() => null)
-        ]);
+        // The repository-root manifest is the sole catalogue source.
+        const manifestResponse = await fetch("./games.json", { cache: "no-cache" });
         if (!manifestResponse.ok) throw new Error("games.json returned HTTP " + manifestResponse.status);
         const manifest = await manifestResponse.json();
-        // GAME-SOURCES.json is generated during deployment, but it is not a
-        // hard dependency: local routes can be reconstructed from games.json.
-        state.sources = sourcesResponse?.ok ? await sourcesResponse.json() : {};
-        if (!state.sources || typeof state.sources !== "object" || Array.isArray(state.sources)) state.sources = {};
         if (!Array.isArray(manifest.games)) throw new Error("The game catalogue has an invalid format.");
         state.games = manifest.games;
         await loadLocalPreviews();
