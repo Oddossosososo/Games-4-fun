@@ -33,46 +33,38 @@
       "desc": "A browser-based MelonJS arcade platform game."
     },
     {
-      "id": "webosu",
-      "title": "Web osu!",
-      "category": "Rhythm",
-      "creator": "Michael Kim",
-      "license": "Unverified",
-      "mode": "unavailable",
-      "verified": false,
-      "embeddable": false,
-      "emoji": "🥁",
-      "glow": "#9d5ce0",
-      "shade": "#281345",
-      "desc": "A browser-based osu! rhythm experience."
-    },
-    {
       "id": "bemuse",
       "title": "Bemuse",
       "category": "Rhythm",
       "creator": "Bemuse contributors",
-      "license": "AGPL-3.0 (not yet audited)",
+      "license": "AGPL-3.0",
       "mode": "unavailable",
       "verified": false,
       "embeddable": false,
       "emoji": "🎼",
       "glow": "#6b7be7",
       "shade": "#1b2858",
-      "desc": "A keyboard rhythm game for the browser."
+      "desc": "A keyboard rhythm game for the browser.",
+      "source": "https://github.com/bemusic/bemuse",
+      "entrypoint": "bemuse/public/index.html",
+      "auditNote": "AGPL-3.0 confirmed in upstream LICENSE. Song packs and music services use external servers; audit outbound requests and meet AGPL source-offer obligations if deploying a modified version."
     },
     {
       "id": "hextris",
       "title": "Hextris",
       "category": "Puzzle",
       "creator": "Hextris contributors",
-      "license": "Unverified — GitHub SPDX metadata missing",
+      "license": "GPL-3.0",
       "mode": "unavailable",
       "verified": false,
       "embeddable": false,
       "emoji": "⬡",
       "glow": "#50b7b0",
       "shade": "#16424b",
-      "desc": "Fast-paced hexagonal colour-matching puzzle."
+      "desc": "Fast-paced hexagonal colour-matching puzzle.",
+      "source": "https://github.com/Hextris/hextris",
+      "entrypoint": "index.html",
+      "auditNote": "GPL-3.0 confirmed in upstream LICENSE.md. Preserve the full licence and notices in the local copy. Runtime network requests have not yet been audited."
     },
     {
       "id": "2048",
@@ -95,14 +87,17 @@
       "title": "Sandspiel",
       "category": "Puzzle",
       "creator": "Max Bittker",
-      "license": "Unverified",
+      "license": "MIT",
       "mode": "unavailable",
       "verified": false,
       "embeddable": false,
       "emoji": "🏖️",
       "glow": "#db9b55",
       "shade": "#56371e",
-      "desc": "Experiment with falling-sand elements and particles."
+      "desc": "Experiment with falling-sand elements and particles.",
+      "source": "https://github.com/MaxBittker/sandspiel",
+      "entrypoint": "index.html",
+      "auditNote": "MIT confirmed in upstream LICENSE. Repository includes Firebase configuration and backend functions; community gallery/API traffic must be audited or disabled before release."
     },
     {
       "id": "astray",
@@ -135,20 +130,6 @@
       "glow": "#49b5dc",
       "shade": "#173c56",
       "desc": "A futuristic HTML5 hovercraft racing game."
-    },
-    {
-      "id": "teteri",
-      "title": "Tetris",
-      "category": "Puzzle",
-      "creator": "TETERI contributors",
-      "license": "Unverified",
-      "mode": "unavailable",
-      "verified": false,
-      "embeddable": false,
-      "emoji": "🧱",
-      "glow": "#a48be8",
-      "shade": "#34265d",
-      "desc": "A modern Tetris-style block-stacking game."
     },
     {
       "id": "darkroom",
@@ -187,22 +168,25 @@
       "title": "Snake",
       "category": "Arcade",
       "creator": "Saurabh Singh · Games Hub",
-      "license": "Unverified",
+      "license": "MIT (Games Hub repository)",
       "mode": "unavailable",
       "verified": false,
       "embeddable": false,
       "emoji": "🐍",
       "glow": "#55d6a5",
       "shade": "#174637",
-      "desc": "Eat, grow, and avoid your own tail."
+      "desc": "Eat, grow, and avoid your own tail.",
+      "source": "https://github.com/sausi-7/games/tree/main/games/arcade/snake",
+      "entrypoint": "games/arcade/snake/index.html",
+      "auditNote": "Repository-root MIT licence confirmed. WARNING: this folder's index title identifies it as “Jet Fighter - Portrait”, not Snake. Do not import or mark LIVE until the game identity is resolved. External Phaser CDN is referenced."
     },
     {
       "id": "sudoku",
       "title": "Sudoku",
       "category": "Puzzle",
       "creator": "Saurabh Singh · Games Hub",
-      "license": "MIT (collection; pending audit)",
-      "source": "https://github.com/sausi-7/games",
+      "license": "MIT (Games Hub repository)",
+      "source": "https://github.com/sausi-7/games/tree/main/games/puzzle/sudoku",
       "entrypoint": "games/puzzle/sudoku/index.html",
       "mode": "unavailable",
       "verified": false,
@@ -210,21 +194,25 @@
       "emoji": "🔢",
       "glow": "#8c9cf2",
       "shade": "#29366b",
-      "desc": "Solve the classic 9×9 number puzzle."
+      "desc": "Solve the classic 9×9 number puzzle.",
+      "auditNote": "Repository-root MIT licence confirmed. Sudoku entrypoint exists and matches the game. Local copy and per-game licence notice are not yet present; runtime audit remains pending."
     },
     {
       "id": "tic-tac-toe",
       "title": "Tic-Tac-Toe",
       "category": "Board",
       "creator": "Saurabh Singh · Games Hub",
-      "license": "Unverified",
+      "license": "MIT (Games Hub repository)",
       "mode": "unavailable",
       "verified": false,
       "embeddable": false,
       "emoji": "⭕",
       "glow": "#70bde5",
       "shade": "#1d3d5c",
-      "desc": "Get three marks in a row to win."
+      "desc": "Get three marks in a row to win.",
+      "source": "https://github.com/sausi-7/games/tree/main/games/board/tic-tac-toe",
+      "entrypoint": "games/board/tic-tac-toe/index.html",
+      "auditNote": "Repository-root MIT licence confirmed. WARNING: this folder's index title identifies it as “Jet Fighter - Portrait”, not Tic-Tac-Toe. Do not import or mark LIVE until the game identity is resolved. External Phaser CDN is referenced."
     },
     {
       "id": "wordle",
@@ -246,22 +234,25 @@
       "title": "Basketball",
       "category": "Sports",
       "creator": "Saurabh Singh · Games Hub",
-      "license": "Unverified",
+      "license": "MIT (Games Hub repository)",
       "mode": "unavailable",
       "verified": false,
       "embeddable": false,
       "emoji": "🏀",
       "glow": "#e6a15f",
       "shade": "#633b20",
-      "desc": "Aim your shot and arc the ball through the hoop."
+      "desc": "Aim your shot and arc the ball through the hoop.",
+      "source": "https://github.com/sausi-7/games/tree/main/games/sports/basketball",
+      "entrypoint": "games/sports/basketball/index.html",
+      "auditNote": "Repository-root MIT licence confirmed. WARNING: this folder's index title is “Kaiju Krush”, not Basketball. Do not import or mark LIVE until the game identity is resolved. External Phaser CDN is referenced."
     },
     {
       "id": "bowling",
       "title": "Bowling",
       "category": "Sports",
       "creator": "Saurabh Singh · Games Hub",
-      "license": "MIT (collection; pending audit)",
-      "source": "https://github.com/sausi-7/games",
+      "license": "MIT (Games Hub repository)",
+      "source": "https://github.com/sausi-7/games/tree/main/games/sports/bowling",
       "entrypoint": "games/sports/bowling/index.html",
       "mode": "unavailable",
       "verified": false,
@@ -269,43 +260,50 @@
       "emoji": "🎳",
       "glow": "#7fc3e9",
       "shade": "#23445d",
-      "desc": "Line up your throw and knock down the pins."
+      "desc": "Line up your throw and knock down the pins.",
+      "auditNote": "Repository-root MIT licence confirmed. Bowling entrypoint exists and is titled “StrikeFlow — Ten-Pin Bowling”. External Phaser CDN is referenced and must be listed or self-hosted before release."
     },
     {
       "id": "table-tennis",
       "title": "Table Tennis",
       "category": "Sports",
       "creator": "Saurabh Singh · Games Hub",
-      "license": "Unverified",
+      "license": "MIT (Games Hub repository)",
       "mode": "unavailable",
       "verified": false,
       "embeddable": false,
       "emoji": "🏓",
       "glow": "#69d4c2",
       "shade": "#1c4d4a",
-      "desc": "Volley the ping-pong ball back and forth."
+      "desc": "Volley the ping-pong ball back and forth.",
+      "source": "https://github.com/sausi-7/games/tree/main/games/sports/table-tennis",
+      "entrypoint": "games/sports/table-tennis/index.html",
+      "auditNote": "Repository-root MIT licence confirmed. WARNING: this folder's index title is “Kaiju Krush”, not Table Tennis. Do not import or mark LIVE until the game identity is resolved. External Phaser CDN is referenced."
     },
     {
       "id": "bubble-pop",
       "title": "Bubble Pop",
       "category": "Casual",
       "creator": "Saurabh Singh · Games Hub",
-      "license": "Unverified",
+      "license": "MIT (Games Hub repository)",
       "mode": "unavailable",
       "verified": false,
       "embeddable": false,
       "emoji": "🫧",
       "glow": "#d78be9",
       "shade": "#51265f",
-      "desc": "Pop matching bubbles and build your score."
+      "desc": "Pop matching bubbles and build your score.",
+      "source": "https://github.com/sausi-7/games/tree/main/games/casual/bubble-pop",
+      "entrypoint": "games/casual/bubble-pop/index.html",
+      "auditNote": "Repository-root MIT licence confirmed. WARNING: this folder's index title identifies it as “Jet Fighter - Portrait”, not Bubble Pop. Do not import or mark LIVE until the game identity is resolved. External Phaser CDN is referenced."
     },
     {
       "id": "stack-tower",
       "title": "Stack Tower",
       "category": "3D",
       "creator": "Saurabh Singh · Games Hub",
-      "license": "MIT (collection; pending audit)",
-      "source": "https://github.com/sausi-7/games",
+      "license": "MIT (Games Hub repository)",
+      "source": "https://github.com/sausi-7/games/tree/main/games/3d/stack-tower",
       "entrypoint": "games/3d/stack-tower/index.html",
       "mode": "unavailable",
       "verified": false,
@@ -313,7 +311,8 @@
       "emoji": "🏗️",
       "glow": "#8d9ce8",
       "shade": "#29366a",
-      "desc": "Time your moves to build the tallest 3D tower."
+      "desc": "Time your moves to build the tallest 3D tower.",
+      "auditNote": "Repository-root MIT licence confirmed. Stack Tower entrypoint exists and matches the game. Local copy and per-game licence notice are not yet present; inspect runtime dependencies before release."
     }
   ]
 }
