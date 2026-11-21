@@ -54,13 +54,20 @@ for (const game of manifest.games) {
     warnings.push('Skipping unverified game: '+game.id);
     continue;
   }
-  if (game.mode === 'local') {
-    if (!game.source || !/^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/?$/.test(game.source)) errors.push('['+game.id+'] local game needs a GitHub source URL');
-    if (!approvedLicenses.has(game.license)) errors.push('['+game.id+'] licence is not on the approved list: '+game.license);
+  if (game.mode === 'local' || game.mode === 'bundled') {
     if (!game.entrypoint || path.isAbsolute(game.entrypoint) || game.entrypoint.split(/[\\/]/).includes('..')) errors.push('['+game.id+'] unsafe or missing entrypoint');
-    const sourceRepo = game.source?.match(/github\.com\/([^/]+\/[^/]+)/i)?.[1];
-    const folder = sourceRepo?.toLowerCase().replaceAll('/','-');
-    const rel = folder && game.entrypoint ? path.posix.join('games',folder,game.entrypoint) : '';
+    let rel = '';
+    let folder = '';
+    if (game.mode === 'local') {
+      if (!game.source || !/^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/?$/.test(game.source)) errors.push('['+game.id+'] local game needs a GitHub source URL');
+      if (!approvedLicenses.has(game.license)) errors.push('['+game.id+'] licence is not on the approved list: '+game.license);
+      const sourceRepo = game.source?.match(/github\.com\/([^/]+\/[^/]+)/i)?.[1];
+      folder = sourceRepo?.toLowerCase().replaceAll('/','-');
+      rel = folder && game.entrypoint ? path.posix.join('games',folder,game.entrypoint) : '';
+    } else {
+      if (!game.source || !game.source.startsWith('https://github.com/')) errors.push('['+game.id+'] bundled game needs its repository source URL');
+      rel = game.entrypoint;
+    }
     const file = rel ? path.resolve(publicRoot,rel) : '';
     if (!file || !inside(publicRoot,file) || !fs.existsSync(file) || !fs.statSync(file).isFile() || !file.toLowerCase().endsWith('.html')) {
       errors.push('['+game.id+'] deployed entrypoint missing: '+rel);
@@ -76,7 +83,7 @@ for (const game of manifest.games) {
     }
     const mapped = sourceMap[game.id];
     if (!mapped || mapped !== './'+rel) errors.push('['+game.id+'] GAME-SOURCES.json mapping does not match manifest');
-    const gameDir = folder && path.join(publicRoot,'games',folder);
+    const gameDir = game.mode === 'local' ? (folder && path.join(publicRoot,'games',folder)) : path.dirname(file);
     if (gameDir && fs.existsSync(gameDir)) {
       const bytes = folderSize(gameDir);
       if (bytes > MAX_GAME_BYTES) errors.push('['+game.id+'] repository payload exceeds 120 MiB ('+(bytes/1024/1024).toFixed(1)+' MiB)');
