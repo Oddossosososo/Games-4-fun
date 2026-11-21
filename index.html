@@ -237,13 +237,12 @@
     "use strict";
 
     let onlineAPI = null;
-    try {
-      const apiModule = await import("./arcade-api.js");
-      onlineAPI = await apiModule.initArcadeAPI();
-      window.AfterglowAPI = onlineAPI;
-    } catch (error) {
-      console.warn("Online services are unavailable; local arcade mode remains active.", error);
-    }
+    const onlineAPIReady = import("./arcade-api.js")
+      .then(apiModule => apiModule.initArcadeAPI())
+      .catch(error => {
+        console.warn("Online services are unavailable; local arcade mode remains active.", error);
+        return null;
+      });
 
     const $ = selector => document.querySelector(selector);
     const state = { games: [], selected: null, category: "All", query: "", loadTimer: null, generation: 0, previewUrls: new Map(), recorder: null, recordStream: null, favorites: new Set(JSON.parse(localStorage.getItem("afterglow-favorites") || "[]")), recent: JSON.parse(localStorage.getItem("afterglow-recent") || "[]"), theater: false };
@@ -597,19 +596,17 @@
       while (feed.children.length > 20) feed.lastElementChild.remove();
     }
 
-    if (onlineAPI) {
-      onlineAPI.onRoomEvent(message => {
+    onlineAPIReady.then(api => {
+      if (!api) { $("#api-status").textContent = "Local mode · services unavailable"; return; }
+      onlineAPI = api; window.AfterglowAPI = api;
+      api.onRoomEvent(message => {
         if (message.type === "chat") showRoomMessage(message);
-        else {
-          const line = document.createElement("div");
-          line.textContent = "Room event received: " + String(message.type || "event");
-          $("#room-feed").prepend(line);
-        }
+        else { const line = document.createElement("div"); line.textContent = "Room event received: " + String(message.type || "event"); $("#room-feed").prepend(line); }
       });
-      onlineAPI.onPresence(players => {
-        $("#room-presence").textContent = players.length + " player" + (players.length === 1 ? "" : "s") + " online";
-      });
-    }
+      api.onPresence(players => { $("#room-presence").textContent = players.length + " player" + (players.length === 1 ? "" : "s") + " online"; });
+      $("#api-status").textContent = "Services ready";
+      if (state.games.length) renderOnlineGames();
+    });
 
     // Warm the browser HTTP cache for every self-hosted game after the catalogue loads.
     // This downloads each entry page plus same-origin assets referenced by its HTML/CSS.
