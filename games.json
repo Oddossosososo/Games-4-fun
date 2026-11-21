@@ -24,13 +24,14 @@
       "license": "GPL-3.0",
       "source": "https://github.com/ellisonleao/clumsy-bird",
       "entrypoint": "index.html",
-      "mode": "local",
+      "mode": "external",
       "verified": true,
-      "embeddable": true,
+      "embeddable": false,
       "emoji": "🐦",
       "glow": "#70e5df",
       "shade": "#163b43",
-      "desc": "A browser-based MelonJS arcade platform game."
+      "desc": "A browser-based MelonJS arcade platform game.",
+      "officialUrl": "https://ellisonleao.github.io/clumsy-bird/"
     },
     {
       "id": "bemuse",
@@ -76,13 +77,14 @@
       "license": "MIT",
       "source": "https://github.com/gabrielecirulli/2048",
       "entrypoint": "index.html",
-      "mode": "local",
+      "mode": "external",
       "verified": true,
-      "embeddable": true,
+      "embeddable": false,
       "emoji": "🔢",
       "glow": "#d49a58",
       "shade": "#56351f",
-      "desc": "Slide and combine matching number tiles."
+      "desc": "Slide and combine matching number tiles.",
+      "officialUrl": "https://play2048.co/"
     },
     {
       "id": "sandspiel",
@@ -110,13 +112,14 @@
       "license": "Unlicense",
       "source": "https://github.com/wwwtyro/Astray",
       "entrypoint": "index.html",
-      "mode": "local",
+      "mode": "external",
       "verified": true,
-      "embeddable": true,
+      "embeddable": false,
       "emoji": "🌀",
       "glow": "#4c9bdd",
       "shade": "#17345c",
-      "desc": "A 3D maze game built with WebGL."
+      "desc": "A 3D maze game built with WebGL.",
+      "officialUrl": "https://wwwtyro.github.io/Astray/"
     },
     {
       "id": "hexgl",
@@ -126,13 +129,14 @@
       "license": "MIT",
       "source": "https://github.com/BKcore/HexGL",
       "entrypoint": "index.html",
-      "mode": "local",
+      "mode": "external",
       "verified": true,
-      "embeddable": true,
+      "embeddable": false,
       "emoji": "🏎️",
       "glow": "#49b5dc",
       "shade": "#173c56",
-      "desc": "A futuristic HTML5 hovercraft racing game."
+      "desc": "A futuristic HTML5 hovercraft racing game.",
+      "officialUrl": "https://hexgl.bkcore.com/play"
     },
     {
       "id": "darkroom",
@@ -142,13 +146,14 @@
       "license": "MPL-2.0",
       "source": "https://github.com/doublespeakgames/adarkroom",
       "entrypoint": "index.html",
-      "mode": "local",
+      "mode": "external",
       "verified": true,
-      "embeddable": true,
+      "embeddable": false,
       "emoji": "🔥",
       "glow": "#bb8052",
       "shade": "#492a25",
-      "desc": "A minimalist text adventure and resource game."
+      "desc": "A minimalist text adventure and resource game.",
+      "officialUrl": "https://adarkroom.doublespeakgames.com/"
     },
     {
       "id": "particle",
@@ -158,13 +163,14 @@
       "license": "MIT",
       "source": "https://github.com/particle-clicker/particle-clicker",
       "entrypoint": "index.html",
-      "mode": "local",
+      "mode": "external",
       "verified": true,
-      "embeddable": true,
+      "embeddable": false,
       "emoji": "⚛️",
       "glow": "#58b6ad",
       "shade": "#1b4447",
-      "desc": "An incremental game about particle physics."
+      "desc": "An incremental game about particle physics.",
+      "officialUrl": "https://particle-clicker.web.cern.ch/"
     },
     {
       "id": "snake",
