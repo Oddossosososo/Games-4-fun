@@ -102,7 +102,7 @@
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
   
     .online-section{margin:0 auto 28px}
-    .online-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+    .online-tabs{display:flex;gap:8px;flex-wrap:wrap;padding:14px 16px 0}.online-grid{display:block;padding:14px 16px 16px}.online-card[hidden]{display:none}.online-card{max-width:none}
     .online-card{min-width:0;padding:16px;border:1px solid var(--line);border-radius:16px;background:rgba(10,12,25,.38)}
     .online-card h3{margin:0 0 10px;font-size:14px;letter-spacing:.04em}
     .online-card p,.online-help{color:var(--muted);font-size:12px;line-height:1.55}
@@ -115,8 +115,7 @@
     .online-feed{max-height:125px;overflow:auto;margin-top:8px;color:var(--muted);font-size:11px;line-height:1.6}
     .online-feed div{padding:4px 0;border-bottom:1px solid var(--line)}
     .online-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-    @media(max-width:900px){.online-grid{grid-template-columns:1fr 1fr}}
-    @media(max-width:620px){.online-grid{grid-template-columns:1fr}}
+    @media(max-width:620px){.online-tabs{gap:6px}.online-tabs .chip{flex:1}}
 
   </style>
 </head>
@@ -124,7 +123,7 @@
   <header class="topbar">
     <div class="shell nav">
       <a class="brand" href="./" aria-label="Afterglow Arcade home"><span class="brand-mark">✦</span><span>Afterglow <b>Arcade</b></span></a>
-      <div class="nav-right"><span class="live-dot"></span><span>IN THE LIBRARY</span><strong id="header-count">Loading…</strong></div>
+      <div class="nav-right"><span class="live-dot"></span><span>IN THE LIBRARY</span><strong id="header-count">Ready</strong></div>
     </div>
   </header>
 
@@ -142,8 +141,8 @@
     <section class="shelves" id="shelves" hidden><div class="shelf"><h2>★ Favorites</h2><div id="favorites-shelf" class="shelf-items"></div></div><div class="shelf"><h2>Recently played</h2><div id="recent-shelf" class="shelf-items"></div></div></section>
     <section class="layout">
       <aside class="panel">
-        <div class="panel-head"><h2>Explore the library</h2><span class="count" id="count">Loading…</span></div>
-        <div class="game-grid" id="game-grid" aria-live="polite"><div class="empty">Loading games…</div></div>
+        <div class="panel-head"><h2>Explore the library</h2><span class="count" id="count">Preparing library…</span></div>
+        <div class="game-grid" id="game-grid" aria-live="polite"><div class="empty">Your game library will appear here.</div></div>
       </aside>
 
       <section class="panel" aria-label="Game player">
@@ -168,9 +167,14 @@
 
   <section class="shell online-section" aria-label="Online arcade services">
     <div class="panel">
-      <div class="panel-head"><h2>Online Arcade</h2><span class="count" id="api-status">Connecting services…</span></div>
+      <div class="panel-head"><h2>Online Arcade</h2><span class="count" id="api-status">Services optional</span></div>
+      <div class="online-tabs" role="tablist" aria-label="Online arcade sections">
+        <button class="chip active" type="button" role="tab" aria-selected="true" aria-controls="online-leaderboards" data-online-tab="online-leaderboards">Leaderboards</button>
+        <button class="chip" type="button" role="tab" aria-selected="false" aria-controls="online-multiplayer" data-online-tab="online-multiplayer">Multiplayer</button>
+        <button class="chip" type="button" role="tab" aria-selected="false" aria-controls="online-analytics" data-online-tab="online-analytics">Analytics</button>
+      </div>
       <div class="online-grid">
-        <section class="online-card" aria-label="Leaderboards">
+        <section class="online-card" id="online-leaderboards" role="tabpanel" aria-label="Leaderboards">
           <h3>Global leaderboards</h3>
           <label class="online-field">Game
             <select class="online-select" id="leaderboard-game"></select>
@@ -182,7 +186,7 @@
           </form>
           <div class="online-status" id="score-status">Scores are submitted automatically when supported games end. Use a nickname, not personal information.</div>
         </section>
-        <section class="online-card" aria-label="Multiplayer rooms">
+        <section class="online-card" id="online-multiplayer" role="tabpanel" aria-label="Multiplayer rooms" hidden>
           <h3>Multiplayer rooms</h3>
           <p>Create a room and share its six-character code. Realtime rooms support presence and game events.</p>
           <div class="online-actions">
@@ -201,7 +205,7 @@
           </form>
           <div class="online-feed" id="room-feed" aria-live="polite"></div>
         </section>
-        <section class="online-card" aria-label="Analytics and saves">
+        <section class="online-card" id="online-analytics" role="tabpanel" aria-label="Analytics and saves" hidden>
           <h3>Analytics &amp; progress</h3>
           <p>First-party event counts help measure game launches and errors. No email, IP address or account ID is recorded by arcade analytics.</p>
           <p>Guest progress stays in this browser using local storage. The online API is available to self-hosted game frames through <code>window.parent.AfterglowAPI</code>.</p>
@@ -656,43 +660,38 @@
     }
 
     async function start() {
+      const renderCatalogue = async games => {
+        state.games = games; renderFilters(); renderGames(); renderLibrary(); renderShelves();
+        prepareGameFiles(state.games); await loadLocalPreviews();
+      };
+      let hasCachedCatalogue = false;
       try {
-        // The repository-root manifest is the sole catalogue source.
-        const manifestResponse = await fetch("./games.json?v=hextris-self-hosted-2", { cache: "no-store" });
-        if (!manifestResponse.ok) throw new Error("games.json returned HTTP " + manifestResponse.status);
-        const manifest = await manifestResponse.json();
-        if (!Array.isArray(manifest.games)) throw new Error("The game catalogue has an invalid format.");
-        state.games = manifest.games;
-        localStorage.setItem("afterglow-catalog-cache", JSON.stringify({ savedAt: Date.now(), games: state.games }));
-        await loadLocalPreviews();
-        renderFilters();
-        renderGames();
-        renderLibrary();
-        renderShelves();
-        // Start warming all self-hosted titles in the background; never delay first play.
-        prepareGameFiles(state.games);
-        $("#play-state").textContent = "Choose a game to start.";
-        const firstLocal = state.games.find(isLocal);
-        if (firstLocal) selectGame(firstLocal);
-      } catch (error) {
-        console.error("Afterglow startup failed:", error);
-        const cached = (() => { try { return JSON.parse(localStorage.getItem("afterglow-catalog-cache") || "null"); } catch { return null; } })();
+        const cached = JSON.parse(localStorage.getItem("afterglow-catalog-cache") || "null");
         if (Array.isArray(cached?.games) && cached.games.length) {
-          state.games = cached.games;
-          renderFilters(); renderGames(); renderLibrary(); renderShelves();
-          $("#play-state").textContent = "OFFLINE CATALOGUE";
-          $("#api-status").textContent = "Offline mode";
-          document.querySelector(".online-section").hidden = true;
-          const cachedLocal = state.games.find(isLocal); if (cachedLocal) selectGame(cachedLocal);
-          return;
+          await renderCatalogue(cached.games); hasCachedCatalogue = true;
+          $("#play-state").textContent = "Choose a game to start.";
+          $("#api-status").textContent = onlineAPI ? "Services ready" : "Local mode";
+        }
+      } catch (error) { console.warn("Cached catalogue could not be rendered.", error); }
+      try {
+        const response = await fetch("./games.json?v=arcade-cache-v3", { cache: "no-cache" });
+        if (!response.ok) throw new Error("games.json returned HTTP " + response.status);
+        const manifest = await response.json();
+        if (!Array.isArray(manifest.games)) throw new Error("The game catalogue has an invalid format.");
+        await renderCatalogue(manifest.games);
+        localStorage.setItem("afterglow-catalog-cache", JSON.stringify({ savedAt: Date.now(), games: state.games }));
+        $("#play-state").textContent = "Choose a game to start.";
+        $("#api-status").textContent = onlineAPI ? "Services ready" : "Local mode";
+      } catch (error) {
+        console.error("Afterglow catalogue refresh failed:", error);
+        if (hasCachedCatalogue) {
+          $("#play-state").textContent = "OFFLINE CATALOGUE · Choose a game to start.";
+          $("#api-status").textContent = "Offline mode"; document.querySelector(".online-section").hidden = true; return;
         }
         document.querySelector(".online-section").hidden = true;
-        $("#count").textContent = "Catalogue error";
-        $("#game-grid").innerHTML = '<div class="empty">Games are temporarily unavailable.<br><small>Please try again in a moment.</small><br><button class="action" id="reload-page" type="button">Retry</button></div>';
-        $("#game-grid").addEventListener("click", event => {
-          if (event.target.id === "reload-page") location.reload();
-        }, { once: true });
-        setStatus("Unable to start", "Game data could not be loaded. Please try again later.");
+        $("#count").textContent = "Catalogue unavailable";
+        $("#game-grid").innerHTML = '<div class="empty">Games are temporarily unavailable.<br><small>Check your connection and reload.</small></div>';
+        $("#play-state").textContent = "Catalogue unavailable."; $("#api-status").textContent = "Offline";
       }
     }
 
@@ -827,6 +826,13 @@
       }
     });
 
+    document.querySelector(".online-tabs")?.addEventListener("click", event => {
+      const tab = event.target.closest("[data-online-tab]"); if (!tab) return;
+      document.querySelectorAll("[data-online-tab]").forEach(button => {
+        const active = button === tab; button.classList.toggle("active", active); button.setAttribute("aria-selected", String(active));
+      });
+      document.querySelectorAll(".online-card").forEach(panel => { if (panel.id.startsWith("online-")) panel.hidden = panel.id !== tab.dataset.onlineTab; });
+    });
     start();
   </script>
 </body>
