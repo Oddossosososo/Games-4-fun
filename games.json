@@ -38,8 +38,8 @@
       "category": "Rhythm",
       "creator": "Bemuse contributors",
       "license": "AGPL-3.0",
-      "mode": "unavailable",
-      "verified": false,
+      "mode": "external",
+      "verified": true,
       "embeddable": false,
       "emoji": "🎼",
       "glow": "#6b7be7",
@@ -47,7 +47,8 @@
       "desc": "A keyboard rhythm game for the browser.",
       "source": "https://github.com/bemusic/bemuse",
       "entrypoint": "bemuse/public/index.html",
-      "auditNote": "AGPL-3.0 confirmed in upstream LICENSE. Song packs and music services use external servers; audit outbound requests and meet AGPL source-offer obligations if deploying a modified version."
+      "auditNote": "Official Bemuse site, linked by upstream README. AGPL-3.0 applies to the main Bemuse project; subprojects may have separate licences. BMS songs are community content and are not guaranteed to be Creative Commons. External song, ranking and service requests are not audited.",
+      "officialUrl": "https://bemuse.ninja/"
     },
     {
       "id": "hextris",
@@ -55,8 +56,8 @@
       "category": "Puzzle",
       "creator": "Hextris contributors",
       "license": "GPL-3.0",
-      "mode": "unavailable",
-      "verified": false,
+      "mode": "external",
+      "verified": true,
       "embeddable": false,
       "emoji": "⬡",
       "glow": "#50b7b0",
@@ -64,7 +65,8 @@
       "desc": "Fast-paced hexagonal colour-matching puzzle.",
       "source": "https://github.com/Hextris/hextris",
       "entrypoint": "index.html",
-      "auditNote": "GPL-3.0 confirmed in upstream LICENSE.md. Preserve the full licence and notices in the local copy. Runtime network requests have not yet been audited."
+      "auditNote": "Official play site linked by upstream README. GPL-3.0 confirmed in upstream LICENSE.md. External runtime requests have not been audited; this is an external link, not a local copy.",
+      "officialUrl": "https://hextris.github.io/hextris/"
     },
     {
       "id": "2048",
@@ -88,8 +90,8 @@
       "category": "Puzzle",
       "creator": "Max Bittker",
       "license": "MIT",
-      "mode": "unavailable",
-      "verified": false,
+      "mode": "external",
+      "verified": true,
       "embeddable": false,
       "emoji": "🏖️",
       "glow": "#db9b55",
@@ -97,7 +99,8 @@
       "desc": "Experiment with falling-sand elements and particles.",
       "source": "https://github.com/MaxBittker/sandspiel",
       "entrypoint": "index.html",
-      "auditNote": "MIT confirmed in upstream LICENSE. Repository includes Firebase configuration and backend functions; community gallery/API traffic must be audited or disabled before release."
+      "auditNote": "Official play site linked by upstream README. MIT confirmed in upstream LICENSE. The project includes Firebase/backend features; external API and gallery requests are not audited. This is an external link, not a local copy.",
+      "officialUrl": "https://sandspiel.club/"
     },
     {
       "id": "astray",
@@ -188,14 +191,15 @@
       "license": "MIT (Games Hub repository)",
       "source": "https://github.com/sausi-7/games/tree/main/games/puzzle/sudoku",
       "entrypoint": "games/puzzle/sudoku/index.html",
-      "mode": "unavailable",
-      "verified": false,
+      "mode": "external",
+      "verified": true,
       "embeddable": false,
       "emoji": "🔢",
       "glow": "#8c9cf2",
       "shade": "#29366b",
       "desc": "Solve the classic 9×9 number puzzle.",
-      "auditNote": "Repository-root MIT licence confirmed. Sudoku entrypoint exists and matches the game. Local copy and per-game licence notice are not yet present; runtime audit remains pending."
+      "auditNote": "External Games Hub demo route. Root MIT licence confirmed. Not locally hosted; runtime dependencies and network requests have not been audited.",
+      "officialUrl": "https://sausi-7.github.io/games/#play=sudoku"
     },
     {
       "id": "tic-tac-toe",
@@ -254,14 +258,15 @@
       "license": "MIT (Games Hub repository)",
       "source": "https://github.com/sausi-7/games/tree/main/games/sports/bowling",
       "entrypoint": "games/sports/bowling/index.html",
-      "mode": "unavailable",
-      "verified": false,
+      "mode": "external",
+      "verified": true,
       "embeddable": false,
       "emoji": "🎳",
       "glow": "#7fc3e9",
       "shade": "#23445d",
       "desc": "Line up your throw and knock down the pins.",
-      "auditNote": "Repository-root MIT licence confirmed. Bowling entrypoint exists and is titled “StrikeFlow — Ten-Pin Bowling”. External Phaser CDN is referenced and must be listed or self-hosted before release."
+      "auditNote": "External Games Hub demo route. Root MIT licence confirmed. Not locally hosted; Phaser CDN and other runtime requests have not been audited.",
+      "officialUrl": "https://sausi-7.github.io/games/#play=bowling"
     },
     {
       "id": "table-tennis",
@@ -305,14 +310,15 @@
       "license": "MIT (Games Hub repository)",
       "source": "https://github.com/sausi-7/games/tree/main/games/3d/stack-tower",
       "entrypoint": "games/3d/stack-tower/index.html",
-      "mode": "unavailable",
-      "verified": false,
+      "mode": "external",
+      "verified": true,
       "embeddable": false,
       "emoji": "🏗️",
       "glow": "#8d9ce8",
       "shade": "#29366a",
       "desc": "Time your moves to build the tallest 3D tower.",
-      "auditNote": "Repository-root MIT licence confirmed. Stack Tower entrypoint exists and matches the game. Local copy and per-game licence notice are not yet present; inspect runtime dependencies before release."
+      "auditNote": "External Games Hub demo route. Root MIT licence confirmed. Not locally hosted; runtime dependencies and network requests have not been audited.",
+      "officialUrl": "https://sausi-7.github.io/games/#play=stack-tower"
     }
   ]
 }
