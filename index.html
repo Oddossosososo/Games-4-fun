@@ -599,6 +599,54 @@
       });
     }
 
+    // Warm the browser HTTP cache for every self-hosted game after the catalogue loads.
+    // This downloads each entry page plus same-origin assets referenced by its HTML/CSS.
+    async function prepareGameFiles(games) {
+      const pending = [];
+      const queued = new Set();
+      const add = url => {
+        try {
+          const resolved = new URL(url, document.baseURI);
+          if (resolved.origin !== location.origin || queued.has(resolved.href)) return;
+          if (!/\\.(?:html?|css|js|mjs|json|png|jpe?g|webp|gif|svg|woff2?|ttf|mp3|ogg|wav|mp4|webm|wasm)(?:[?#]|$)/i.test(resolved.href)) return;
+          queued.add(resolved.href);
+          pending.push(resolved.href);
+        } catch {}
+      };
+      const discoverCss = text => {
+        for (const match of text.matchAll(/url\\(\\s*(['"]?)(.*?)\\1\\s*\\)/gi)) {
+          const value = match[2].trim();
+          if (value && !value.startsWith("data:") && !value.startsWith("blob:")) add(value);
+        }
+      };
+      for (const game of games.filter(isLocal)) add(localURL(game));
+      let cursor = 0;
+      const worker = async () => {
+        while (cursor < pending.length) {
+          const url = pending[cursor++];
+          try {
+            const response = await fetch(url, { cache: "force-cache", credentials: "same-origin" });
+            if (!response.ok) continue;
+            const type = response.headers.get("content-type") || "";
+            if (type.includes("text/html")) {
+              const html = await response.text();
+              const doc = new DOMParser().parseFromString(html, "text/html");
+              doc.querySelectorAll("script[src],link[href],img[src],audio[src],video[src],source[src]").forEach(node => {
+                add(node.getAttribute("src") || node.getAttribute("href"));
+              });
+              doc.querySelectorAll("style").forEach(node => discoverCss(node.textContent || ""));
+            } else if (type.includes("text/css") || /\\.css(?:[?#]|$)/i.test(url)) {
+              discoverCss(await response.text());
+            }
+          } catch {
+            // A missing or temporarily unavailable asset must not stop other games preparing.
+          }
+        }
+      };
+      await Promise.all(Array.from({ length: 4 }, worker));
+      console.info("Afterglow prepared", queued.size, "same-origin game files across", games.filter(isLocal).length, "self-hosted games.");
+    }
+
     async function start() {
       try {
         // The repository-root manifest is the sole catalogue source.
@@ -613,6 +661,8 @@
         renderGames();
         renderLibrary();
         renderShelves();
+        // Start warming all self-hosted titles in the background; never delay first play.
+        prepareGameFiles(state.games);
         $("#play-state").textContent = "Choose a game to start.";
         const firstLocal = state.games.find(isLocal);
         if (firstLocal) selectGame(firstLocal);
