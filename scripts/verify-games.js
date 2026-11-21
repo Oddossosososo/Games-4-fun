@@ -88,6 +88,10 @@ for (const game of manifest.games) {
       const bytes = folderSize(gameDir);
       if (bytes > MAX_GAME_BYTES) errors.push('['+game.id+'] repository payload exceeds 120 MiB ('+(bytes/1024/1024).toFixed(1)+' MiB)');
     }
+  } else if (game.mode === 'hosted') {
+    if (!game.hostedUrl || !/^https:\/\//.test(game.hostedUrl)) errors.push('['+game.id+'] hosted game needs an HTTPS hostedUrl');
+    if (game.embeddable !== true && game.embeddable !== false) errors.push('['+game.id+'] hosted game must declare embeddable');
+    if (sourceMap[game.id]) errors.push('['+game.id+'] externally hosted games must not be added to GAME-SOURCES.json');
   } else if (game.mode === 'external') {
     if (game.embeddable !== false) errors.push('['+game.id+'] external games must not be embedded');
     if (!game.officialUrl || !/^https:\/\//.test(game.officialUrl)) errors.push('['+game.id+'] external game needs an HTTPS officialUrl');
