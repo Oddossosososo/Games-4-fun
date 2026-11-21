@@ -657,26 +657,52 @@
     }
 
     async function start() {
-      const renderCatalogue = async games => {
-        state.games = games; renderFilters(); renderGames(); renderLibrary(); renderShelves();
-        prepareGameFiles(state.games); await loadLocalPreviews();
+      const renderCatalogue = games => {
+        // Render the catalogue synchronously before starting any optional asset work.
+        state.games = games;
+        renderFilters();
+        renderGames();
+        renderLibrary();
+        renderShelves();
         if (onlineAPI) renderOnlineGames();
+
+        const warmAssets = () => {
+          Promise.resolve()
+            .then(() => prepareGameFiles(state.games))
+            .then(() => loadLocalPreviews())
+            .catch(error => console.warn("Background game asset preparation failed.", error));
+        };
+        if ("requestIdleCallback" in window) {
+          window.requestIdleCallback(warmAssets, { timeout: 1500 });
+        } else {
+          window.setTimeout(warmAssets, 0);
+        }
       };
       let hasCachedCatalogue = false;
       try {
         const cached = JSON.parse(localStorage.getItem("afterglow-catalog-cache") || "null");
         if (Array.isArray(cached?.games) && cached.games.length) {
-          await renderCatalogue(cached.games); hasCachedCatalogue = true;
+          renderCatalogue(cached.games); hasCachedCatalogue = true;
           $("#play-state").textContent = "Choose a game to start.";
           $("#api-status").textContent = onlineAPI ? "Services ready" : "Local mode";
         }
       } catch (error) { console.warn("Cached catalogue could not be rendered.", error); }
       try {
-        const response = await fetch("./games.json?v=arcade-cache-v3", { cache: "no-cache" });
-        if (!response.ok) throw new Error("games.json returned HTTP " + response.status);
-        const manifest = await response.json();
+        const controller = new AbortController();
+        const timeoutId = window.setTimeout(() => controller.abort(), 2500);
+        let manifest;
+        try {
+          const response = await fetch("./games.json?v=arcade-cache-v3", {
+            cache: "no-cache",
+            signal: controller.signal
+          });
+          if (!response.ok) throw new Error("games.json returned HTTP " + response.status);
+          manifest = await response.json();
+        } finally {
+          window.clearTimeout(timeoutId);
+        }
         if (!Array.isArray(manifest.games)) throw new Error("The game catalogue has an invalid format.");
-        await renderCatalogue(manifest.games);
+        renderCatalogue(manifest.games);
         localStorage.setItem("afterglow-catalog-cache", JSON.stringify({ savedAt: Date.now(), games: state.games }));
         $("#play-state").textContent = "Choose a game to start.";
         $("#api-status").textContent = onlineAPI ? "Services ready" : "Local mode";
