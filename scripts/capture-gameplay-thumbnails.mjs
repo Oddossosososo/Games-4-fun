@@ -81,5 +81,7 @@ for (const game of manifest.games) {
 
 await browser.close();
 await new Promise(resolve => httpServer.close(resolve));
-if (captured === 0) throw new Error("No gameplay thumbnails could be captured.");
-console.log("Captured gameplay for " + captured + " of " + manifest.games.length + " games.");
+if (captured !== manifest.games.length) {
+  throw new Error("Captured gameplay for only " + captured + " of " + manifest.games.length + " games; refusing to publish incomplete thumbnails.");
+}
+console.log("Captured real gameplay for all " + captured + " games.");
