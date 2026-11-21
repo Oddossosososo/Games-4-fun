@@ -93,15 +93,25 @@ for (const fix of fixes) {
 }
 
 const manifest = JSON.parse(fs.readFileSync(path.resolve('games.json'), 'utf8'));
+const localGames = manifest.games.filter(g => g.verified && g.mode === 'local');
 let injected = 0;
-for (const game of manifest.games.filter(g => g.verified && g.mode === 'local')) {
-  const repo = game.source.match(/github\.com\/([^/]+\/[^/]+)/i)?.[1];
-  if (!repo || !game.entrypoint) continue;
+let alreadyInstalled = 0;
+for (const game of localGames) {
+  const repo = game.source?.match(/github\.com\/([^/]+\/[^/]+)/i)?.[1];
+  if (!repo || !game.entrypoint) {
+    throw new Error('Local game is missing its GitHub source or entrypoint: ' + game.id);
+  }
   const folder = repo.toLowerCase().replaceAll('/', '-');
   const target = path.resolve(root, folder, game.entrypoint);
-  if (!target.startsWith(root + path.sep) || !fs.existsSync(target)) continue;
+  if (!target.startsWith(root + path.sep) || !fs.existsSync(target) || !fs.statSync(target).isFile()) {
+    throw new Error('Cannot install shared asset queue; local entrypoint is missing: ' + game.id + ' (' + target + ')');
+  }
   let html = fs.readFileSync(target, 'utf8');
-  if (html.includes('__afterglowAssetQueueInstalled')) continue;
+  if (html.includes('__afterglowAssetQueueInstalled')) {
+    alreadyInstalled++;
+    console.log('Shared asset queue already present: ' + game.id);
+    continue;
+  }
   const tag = '<script>' + preloadScript.replaceAll('\\\\', '\\') + '</script>';
   if (/<\/head>/i.test(html)) html = html.replace(/<\/head>/i, tag + '</head>');
   else html = tag + html;
@@ -109,4 +119,7 @@ for (const game of manifest.games.filter(g => g.verified && g.mode === 'local'))
   injected++;
   console.log('Installed shared asset queue: ' + game.id);
 }
-console.log('Installed shared preloader in ' + injected + ' game entrypoints.');
+if (injected + alreadyInstalled !== localGames.length) {
+  throw new Error('Shared asset queue coverage check failed.');
+}
+console.log('Shared preloader coverage: ' + (injected + alreadyInstalled) + '/' + localGames.length + ' local games (' + injected + ' newly installed, ' + alreadyInstalled + ' already present).');
