@@ -103,6 +103,12 @@ jobs:
             printf '\n- [%s](https://github.com/%s) — SPDX: %s — local copy: games/%s/\n' "$name" "$name" "$licence" "$folder" >> public/SOURCES.md
           done < <(node -e "for (const r of require('./games.json').games.filter(g=>g.verified&&g.mode==='local').map(g=>g.source).filter((v,i,a)=>a.indexOf(v)===i)) console.log(r)")
 
+      - name: Use Node.js 24 for Sandspiel's dependency tree
+        if: hashFiles('public/games/maxbittker-sandspiel/package.json') != ''
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
       - name: Set up Rust for Sandspiel WASM
         if: hashFiles('public/games/maxbittker-sandspiel/package.json') != ''
         uses: dtolnay/rust-toolchain@stable
@@ -145,6 +151,11 @@ jobs:
           # so Rust build outputs and npm dependencies are not needed at runtime.
           rm -rf node_modules crate/target crate/pkg
           test -s dist/index.html
+
+      - name: Restore Node.js 26 LTS for remaining build steps
+        uses: actions/setup-node@v4
+        with:
+          node-version: 26
 
       - name: Upgrade Pong ball-only predictive CPU
         run: node scripts/improve-pong-ai.js
