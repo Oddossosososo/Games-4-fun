@@ -241,8 +241,12 @@
     const $ = selector => document.querySelector(selector);
     const state = { games: [], sources: {}, selected: null, category: "All", query: "", loadTimer: null, generation: 0, previewUrls: new Map(), recorder: null, recordStream: null };
     const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[char]));
-    const PROFANITY = /\b(?:asshole|bastard|bitch|bullshit|crap|cunt|damn|dick|fuck|fucker|fucking|motherfucker|piss|shit|slut|whore)\b/gi;
-    const censorText = value => String(value ?? "").replace(PROFANITY, word => word[0] + "*".repeat(Math.max(1, word.length - 1)));
+    // Detection is deliberately non-global so repeated checks are consistent.
+    const PROFANITY_SOURCE = String.raw\`\b(?:asshole|arsehole|bastard|bitch|bullshit|crap|cunt|damn|dick|fuck|motherfucker|piss|shit|slut|whore)\w*\b\`;
+    const PROFANITY_CHECK = new RegExp(PROFANITY_SOURCE, "i");
+    const PROFANITY_CENSOR = new RegExp(PROFANITY_SOURCE, "gi");
+    const hasProfanity = value => PROFANITY_CHECK.test(String(value ?? ""));
+    const censorText = value => String(value ?? "").replace(PROFANITY_CENSOR, word => word[0] + "*".repeat(Math.max(1, word.length - 1)));
     const localURL = game => {
       if (!["local", "bundled"].includes(game.mode)) return "";
       let route = state.sources?.[game.id];
@@ -442,7 +446,7 @@
         const selected = state.selected?.id === game.id;
         const video = state.previewUrls.get(game.id) || ("./thumbs/" + encodeURIComponent(game.id) + ".mp4");
         return '<button class="game-card ' + (selected ? "selected" : "") + '" type="button" data-game="' + escapeHTML(game.id) + '" aria-pressed="' + selected + '" aria-label="Play ' + escapeHTML(game.title) + '">' +
-          '<div class="thumb" style="' + style + '"><div class="thumb-fallback">' + escapeHTML(game.emoji || "✦") + '</div><video src="' + video + '" autoplay muted loop playsinline preload="none" aria-hidden="true"></video><span class="thumb-tag">' + escapeHTML(game.category || "Game") + '</span></div>' +
+          '<div class="thumb" style="' + style + '"><div class="thumb-fallback">' + escapeHTML(game.emoji || "✦") + '</div><video src="' + video + '" autoplay muted loop playsinline preload="none" aria-hidden="true"></video><span class="thumb-tag">' + escapeHTML(censorText(game.category || "Game")) + '</span></div>' +
           '<div class="card-info"><div class="card-title">' + escapeHTML(censorText(game.title)) + '</div><div class="card-sub">' + escapeHTML(censorText(game.creator || "Independent creator")) + '</div></div></button>';
       }).join("") : '<div class="empty">No games match that search. Try another title or category.</div>';
       $("#total-stat").textContent = state.games.length;
@@ -465,7 +469,7 @@
       frame.src = "about:blank";
       $("#selected-name").textContent = censorText(game.title);
       $("#creator").textContent = censorText(game.creator || "Unknown");
-      $("#license").textContent = game.license || "Not listed";
+      $("#license").textContent = censorText(game.license || "Not listed");
       $("#category").textContent = censorText(game.category || "—");
       $("#open-tab").disabled = !destination(game);
       $("#fullscreen").disabled = !isLocal(game);
@@ -665,8 +669,7 @@
       if (!onlineAPI) return;
       try {
         const nickname = $("#score-name").value.trim();
-        if (PROFANITY.test(nickname)) { PROFANITY.lastIndex = 0; throw new Error("Please choose a different nickname."); }
-        PROFANITY.lastIndex = 0;
+        if (hasProfanity(nickname)) throw new Error("Please choose a different nickname.");
         onlineAPI.setDisplayName(nickname);
         $("#score-status").textContent = "Nickname saved. Supported games submit results automatically.";
       } catch (error) {
@@ -709,8 +712,7 @@
       try {
         const message = $("#room-message").value.trim();
         if (!message) return;
-        if (PROFANITY.test(message)) { PROFANITY.lastIndex = 0; $("#room-status").textContent = "Please edit that message before sending."; return; }
-        PROFANITY.lastIndex = 0;
+        if (hasProfanity(message)) { $("#room-status").textContent = "Please edit that message before sending."; return; }
         await onlineAPI.sendRoomEvent("chat", { name: onlineAPI.displayName, text: message });
         $("#room-message").value = "";
       } catch (error) {
