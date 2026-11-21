@@ -123,10 +123,13 @@ jobs:
           } > public/SOURCES.md.tmp
           mv public/SOURCES.md.tmp public/SOURCES.md
 
-      - name: Generate animated GIF thumbnails
+      - name: Capture real gameplay and build animated GIF thumbnails
         run: |
+          npm install --no-save playwright@1.55.0
+          npx playwright install --with-deps chromium
+          node scripts/capture-gameplay-thumbnails.mjs
           python -m pip install --quiet Pillow
-          python scripts/generate-thumbnails.py
+          python scripts/assemble-gameplay-gifs.py
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
