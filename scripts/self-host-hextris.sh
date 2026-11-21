@@ -80,7 +80,7 @@ view_clean = []
 for line in view_lines:
     if "'pausedAndroid':" in line or "'pausediOS':" in line or "'pausedOther':" in line:
         key = line.split(":", 1)[0]
-        view_clean.append(key + ': "<div class=\\'centeredHeader unselectable\\'>Game Paused</div>",')
+        view_clean.append(key + ": \"<div class='centeredHeader unselectable'>Game Paused</div>\",")
     else:
         view_clean.append(line)
 view.write_text("\n".join(view_clean) + "\n", encoding="utf-8")
