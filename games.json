@@ -47,8 +47,8 @@
       "shade": "#56371e",
       "desc": "Experiment with falling-sand elements and particles.",
       "source": "https://github.com/MaxBittker/sandspiel",
-      "entrypoint": "index.html",
-      "auditNote": "Official play site linked by upstream README. MIT confirmed in upstream LICENSE. The project includes Firebase/backend features; external API and gallery requests are not audited. This is an external link, not a local copy."
+      "entrypoint": "dist/index.html",
+      "auditNote": "MIT-licensed upstream source is built from its Rust/WASM and webpack sources during Pages deployment; hosted locally under this game's route."
     },
     {
       "id": "astray",
