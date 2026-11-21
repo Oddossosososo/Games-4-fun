@@ -660,6 +660,7 @@
       const renderCatalogue = async games => {
         state.games = games; renderFilters(); renderGames(); renderLibrary(); renderShelves();
         prepareGameFiles(state.games); await loadLocalPreviews();
+        if (onlineAPI) renderOnlineGames();
       };
       let hasCachedCatalogue = false;
       try {
