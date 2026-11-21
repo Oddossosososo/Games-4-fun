@@ -6,11 +6,43 @@ cd "$ROOT"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
+# Download through jsDelivr's GitHub CDN rather than GitHub's codeload
+# endpoint. This keeps the mirror job working when github.com/codeload is flaky.
 wget --quiet --show-progress --tries=5 --waitretry=5 --timeout=30 --retry-connrefused \
-  --output-document="$TMP/hextris-gh-pages.tar.gz" \
-  https://codeload.github.com/Hextris/hextris/tar.gz/refs/heads/gh-pages
+  --output-document="$TMP/hextris-files.json" \
+  https://data.jsdelivr.com/v1/package/gh/Hextris/hextris@gh-pages
 mkdir -p "$TMP/upstream"
-tar -xzf "$TMP/hextris-gh-pages.tar.gz" --strip-components=1 -C "$TMP/upstream"
+python3 - "$TMP/hextris-files.json" "$TMP/upstream" <<'PY'
+import json
+import pathlib
+import subprocess
+import sys
+from urllib.parse import quote
+
+manifest = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
+destination = pathlib.Path(sys.argv[2])
+base = "https://cdn.jsdelivr.net/gh/Hextris/hextris@gh-pages/"
+
+def download(entries, parent=""):
+    for entry in entries:
+        name = entry["name"]
+        relative = f"{parent}/{name}".lstrip("/")
+        if entry.get("type") == "directory":
+            download(entry.get("files", []), relative)
+        elif entry.get("type") == "file":
+            target = destination / relative
+            target.parent.mkdir(parents=True, exist_ok=True)
+            url = base + quote(relative, safe="/")
+            subprocess.run([
+                "wget", "--quiet", "--show-progress", "--tries=5",
+                "--waitretry=5", "--timeout=30", "--retry-connrefused",
+                "--output-document", str(target), url
+            ], check=True)
+
+download(manifest.get("files", []))
+PY
+test -s "$TMP/upstream/index.html"
+test -s "$TMP/upstream/LICENSE.md"
 rm -rf games/hextris
 mkdir -p games/hextris
 rsync -a "$TMP/upstream/" games/hextris/ \
