@@ -498,6 +498,11 @@
       if (onlineAPI) onlineAPI.trackEvent("game_open", game.id).catch(() => {});
 
       const url = localURL(game) || hostedURL(game);
+      if (hostedURL(game) && game.embeddable === false) {
+        setStatus("Open this game on its host", "This host does not allow embedding. Use Open tab to play it.");
+        $("#play-state").textContent = "EXTERNAL HOST";
+        return;
+      }
       if (!url) {
         setStatus(game.officialUrl ? "Opening the game website" : "Not available", game.officialUrl ? "This game is external. Use Open tab to launch its website." : "No playable destination is configured.");
         $("#play-state").textContent = "EXTERNAL GAME";
