@@ -53,6 +53,7 @@ def remove_div_with_id(source, target_id):
     return source
 
 html = remove_div_with_id(html, "socialShare")
+html = remove_div_with_id(html, "buttonCont")
 # Drop the inline language-specific social sharing injector.
 html = re.sub(r'(?is)\s*<script[^>]*>\s*\(function addRussianSocialShare\(\).*?</script>', '', html)
 page.write_text(html, encoding="utf-8")
@@ -84,6 +85,14 @@ for line in view_lines:
     else:
         view_clean.append(line)
 view.write_text("\n".join(view_clean) + "\n", encoding="utf-8")
+
+# Strip any remaining outbound URL-bearing code lines from game scripts.
+for script_file in root.rglob("*.js"):
+    if script_file.name == "jquery.js":
+        continue
+    source_lines = script_file.read_text(encoding="utf-8").splitlines()
+    source_lines = [line for line in source_lines if not any(term in line for term in ("http://", "https://", "googlesyndication", "google-analytics", "$.get(", "script.src"))]
+    script_file.write_text("\n".join(source_lines) + "\n", encoding="utf-8")
 
 # Add an explicit third-party notice for bundled font families.
 (root / "THIRD-PARTY-NOTICES.md").write_text(
