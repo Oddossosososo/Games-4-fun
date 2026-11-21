@@ -76,7 +76,7 @@ export async function initArcadeAPI() {
     async createRoom(displayName = getDisplayName()) {
       const code = makeRoomCode();
       await this.joinRoom(code, displayName);
-      await this.trackEvent("room_create");
+      this.trackEvent("room_create").catch(() => {});
       return code;
     },
     async joinRoom(code, displayName = getDisplayName()) {
@@ -107,7 +107,7 @@ export async function initArcadeAPI() {
           }
         });
       });
-      await api.trackEvent("room_join");
+      api.trackEvent("room_join").catch(() => {});
       return cleanCode;
     },
     async sendRoomEvent(type, data) {
@@ -129,7 +129,7 @@ export async function initArcadeAPI() {
     async leaveRoom() {
       if (activeChannel) await client.removeChannel(activeChannel);
       activeChannel = null;
-      if (activeRoom) await api.trackEvent("room_leave");
+      if (activeRoom) api.trackEvent("room_leave").catch(() => {});
       activeRoom = "";
     },
     get roomCode() { return activeRoom; },
