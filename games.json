@@ -2,21 +2,6 @@
   "version": 1,
   "games": [
     {
-      "id": "geometry-dash-web",
-      "title": "Geometry Dash",
-      "category": "Rhythm",
-      "creator": "Web Dashers",
-      "license": "Unverified — external site only",
-      "mode": "external",
-      "verified": true,
-      "embeddable": false,
-      "emoji": "🟦",
-      "glow": "#63c9ee",
-      "shade": "#173b65",
-      "desc": "Unofficial browser-based Geometry Dash experience hosted by Web Dashers. Opens on its own site.",
-      "officialUrl": "https://web-dashers.github.io/"
-    },
-    {
       "id": "clumsy-bird",
       "title": "Clumsy Bird",
       "category": "Arcade",
@@ -30,26 +15,7 @@
       "emoji": "🐦",
       "glow": "#70e5df",
       "shade": "#163b43",
-      "desc": "A browser-based MelonJS arcade platform game.",
-      "officialUrl": "https://ellisonleao.github.io/clumsy-bird/"
-    },
-    {
-      "id": "bemuse",
-      "title": "Bemuse",
-      "category": "Rhythm",
-      "creator": "Bemuse contributors",
-      "license": "AGPL-3.0",
-      "mode": "external",
-      "verified": true,
-      "embeddable": false,
-      "emoji": "🎼",
-      "glow": "#6b7be7",
-      "shade": "#1b2858",
-      "desc": "A keyboard rhythm game for the browser.",
-      "source": "https://github.com/bemusic/bemuse",
-      "entrypoint": "bemuse/public/index.html",
-      "auditNote": "Official Bemuse site, linked by upstream README. AGPL-3.0 applies to the main Bemuse project; subprojects may have separate licences. BMS songs are community content and are not guaranteed to be Creative Commons. External song, ranking and service requests are not audited.",
-      "officialUrl": "https://bemuse.ninja/"
+      "desc": "A browser-based MelonJS arcade platform game."
     },
     {
       "id": "2048",
@@ -65,8 +31,7 @@
       "emoji": "🔢",
       "glow": "#d49a58",
       "shade": "#56351f",
-      "desc": "Slide and combine matching number tiles.",
-      "officialUrl": "https://play2048.co/"
+      "desc": "Slide and combine matching number tiles."
     },
     {
       "id": "sandspiel",
@@ -83,8 +48,7 @@
       "desc": "Experiment with falling-sand elements and particles.",
       "source": "https://github.com/MaxBittker/sandspiel",
       "entrypoint": "index.html",
-      "auditNote": "Official play site linked by upstream README. MIT confirmed in upstream LICENSE. The project includes Firebase/backend features; external API and gallery requests are not audited. This is an external link, not a local copy.",
-      "officialUrl": "https://sandspiel.club/"
+      "auditNote": "Official play site linked by upstream README. MIT confirmed in upstream LICENSE. The project includes Firebase/backend features; external API and gallery requests are not audited. This is an external link, not a local copy."
     },
     {
       "id": "astray",
@@ -100,8 +64,7 @@
       "emoji": "🌀",
       "glow": "#4c9bdd",
       "shade": "#17345c",
-      "desc": "A 3D maze game built with WebGL.",
-      "officialUrl": "https://wwwtyro.github.io/Astray/"
+      "desc": "A 3D maze game built with WebGL."
     },
     {
       "id": "hexgl",
@@ -117,8 +80,7 @@
       "emoji": "🏎️",
       "glow": "#49b5dc",
       "shade": "#173c56",
-      "desc": "A futuristic HTML5 hovercraft racing game.",
-      "officialUrl": "https://hexgl.bkcore.com/play"
+      "desc": "A futuristic HTML5 hovercraft racing game."
     },
     {
       "id": "darkroom",
@@ -134,8 +96,7 @@
       "emoji": "🔥",
       "glow": "#bb8052",
       "shade": "#492a25",
-      "desc": "A minimalist text adventure and resource game.",
-      "officialUrl": "https://adarkroom.doublespeakgames.com/"
+      "desc": "A minimalist text adventure and resource game."
     },
     {
       "id": "particle",
@@ -151,8 +112,7 @@
       "emoji": "⚛️",
       "glow": "#58b6ad",
       "shade": "#1b4447",
-      "desc": "An incremental game about particle physics.",
-      "officialUrl": "https://particle-clicker.web.cern.ch/"
+      "desc": "An incremental game about particle physics."
     },
     {
       "id": "snake",
@@ -204,21 +164,6 @@
       "source": "https://github.com/Oddossosososo/Games-4-fun/tree/main/games/afterglow/tic-tac-toe",
       "entrypoint": "games/afterglow/tic-tac-toe/index.html",
       "auditNote": "Original self-contained implementation. No external assets, audio, fonts, analytics or runtime network requests."
-    },
-    {
-      "id": "wordle",
-      "title": "Wordle",
-      "category": "Word & Quiz",
-      "creator": "The New York Times",
-      "license": "Copyrighted — official link only",
-      "mode": "external",
-      "verified": true,
-      "embeddable": false,
-      "officialUrl": "https://www.nytimes.com/games/wordle/index.html",
-      "emoji": "🔤",
-      "glow": "#70c6a8",
-      "shade": "#1d4a3c",
-      "desc": "The official Wordle game."
     },
     {
       "id": "basketball",
@@ -304,6 +249,246 @@
       "shade": "#29366a",
       "desc": "Time your moves to build the tallest 3D tower.",
       "auditNote": "Original self-contained implementation. No external assets, audio, fonts, analytics or runtime network requests."
+    },
+    {
+      "id": "block-drop",
+      "title": "Block Drop",
+      "category": "Arcade",
+      "creator": "Arcadia contributors",
+      "license": "MIT",
+      "source": "https://github.com/JeffreyHamilton6399/arcadia",
+      "entrypoint": "games/tetris/index.html",
+      "mode": "local",
+      "verified": true,
+      "embeddable": true,
+      "emoji": "🧱",
+      "glow": "#8e83e8",
+      "shade": "#29234e",
+      "desc": "Classic falling-block puzzle. Rotate and place pieces to clear lines."
+    },
+    {
+      "id": "maze-chase",
+      "title": "Maze Chase",
+      "category": "Arcade",
+      "creator": "Arcadia contributors",
+      "license": "MIT",
+      "source": "https://github.com/JeffreyHamilton6399/arcadia",
+      "entrypoint": "games/pacman/index.html",
+      "mode": "local",
+      "verified": true,
+      "embeddable": true,
+      "emoji": "🟡",
+      "glow": "#e8c85e",
+      "shade": "#51431c",
+      "desc": "Navigate a maze, collect dots and avoid the chasers."
+    },
+    {
+      "id": "minesweeper",
+      "title": "Minesweeper",
+      "category": "Puzzle",
+      "creator": "Arcadia contributors",
+      "license": "MIT",
+      "source": "https://github.com/JeffreyHamilton6399/arcadia",
+      "entrypoint": "games/minesweeper/index.html",
+      "mode": "local",
+      "verified": true,
+      "embeddable": true,
+      "emoji": "💣",
+      "glow": "#9da9c7",
+      "shade": "#2c344b",
+      "desc": "Reveal safe squares and flag the hidden mines."
+    },
+    {
+      "id": "breakout",
+      "title": "Breakout",
+      "category": "Arcade",
+      "creator": "Arcadia contributors",
+      "license": "MIT",
+      "source": "https://github.com/JeffreyHamilton6399/arcadia",
+      "entrypoint": "games/breakout/index.html",
+      "mode": "local",
+      "verified": true,
+      "embeddable": true,
+      "emoji": "🧱",
+      "glow": "#e58d64",
+      "shade": "#542c25",
+      "desc": "Bounce the ball and clear every brick."
+    },
+    {
+      "id": "pong",
+      "title": "Pong",
+      "category": "Sports",
+      "creator": "Arcadia contributors",
+      "license": "MIT",
+      "source": "https://github.com/JeffreyHamilton6399/arcadia",
+      "entrypoint": "games/pong/index.html",
+      "mode": "local",
+      "verified": true,
+      "embeddable": true,
+      "emoji": "🏓",
+      "glow": "#72d9cb",
+      "shade": "#1b4b49",
+      "desc": "Classic paddle duel against the computer."
+    },
+    {
+      "id": "memory-match",
+      "title": "Memory Match",
+      "category": "Puzzle",
+      "creator": "Arcadia contributors",
+      "license": "MIT",
+      "source": "https://github.com/JeffreyHamilton6399/arcadia",
+      "entrypoint": "games/memory/index.html",
+      "mode": "local",
+      "verified": true,
+      "embeddable": true,
+      "emoji": "🧠",
+      "glow": "#bd9ae9",
+      "shade": "#392852",
+      "desc": "Flip cards and find every matching pair."
+    },
+    {
+      "id": "sliding-puzzle",
+      "title": "15 Puzzle",
+      "category": "Puzzle",
+      "creator": "Arcadia contributors",
+      "license": "MIT",
+      "source": "https://github.com/JeffreyHamilton6399/arcadia",
+      "entrypoint": "games/sliding-puzzle/index.html",
+      "mode": "local",
+      "verified": true,
+      "embeddable": true,
+      "emoji": "🔢",
+      "glow": "#7ebbe9",
+      "shade": "#1e3d59",
+      "desc": "Slide numbered tiles into the correct order."
+    },
+    {
+      "id": "connect-four",
+      "title": "Connect Four",
+      "category": "Board",
+      "creator": "Arcadia contributors",
+      "license": "MIT",
+      "source": "https://github.com/JeffreyHamilton6399/arcadia",
+      "entrypoint": "games/connect4/index.html",
+      "mode": "local",
+      "verified": true,
+      "embeddable": true,
+      "emoji": "🔴",
+      "glow": "#e58b72",
+      "shade": "#542c2a",
+      "desc": "Line up four discs before the computer does."
+    },
+    {
+      "id": "simon",
+      "title": "Simon",
+      "category": "Casual",
+      "creator": "Arcadia contributors",
+      "license": "MIT",
+      "source": "https://github.com/JeffreyHamilton6399/arcadia",
+      "entrypoint": "games/simon/index.html",
+      "mode": "local",
+      "verified": true,
+      "embeddable": true,
+      "emoji": "🎵",
+      "glow": "#e4a4d1",
+      "shade": "#512d4b",
+      "desc": "Repeat the growing sequence of lights and sounds."
+    },
+    {
+      "id": "whack-a-mole",
+      "title": "Whack-a-Mole",
+      "category": "Arcade",
+      "creator": "Arcadia contributors",
+      "license": "MIT",
+      "source": "https://github.com/JeffreyHamilton6399/arcadia",
+      "entrypoint": "games/whackamole/index.html",
+      "mode": "local",
+      "verified": true,
+      "embeddable": true,
+      "emoji": "🔨",
+      "glow": "#b5d67b",
+      "shade": "#3b4d25",
+      "desc": "Test your reflexes in a quick arcade round."
+    },
+    {
+      "id": "vertical-jumper",
+      "title": "Vertical Jumper",
+      "category": "Arcade",
+      "creator": "Arcadia contributors",
+      "license": "MIT",
+      "source": "https://github.com/JeffreyHamilton6399/arcadia",
+      "entrypoint": "games/doodlejump/index.html",
+      "mode": "local",
+      "verified": true,
+      "embeddable": true,
+      "emoji": "🪂",
+      "glow": "#73c9e9",
+      "shade": "#1d4052",
+      "desc": "Bounce upward across platforms and keep climbing."
+    },
+    {
+      "id": "flap-runner",
+      "title": "Flap Runner",
+      "category": "Arcade",
+      "creator": "Arcadia contributors",
+      "license": "MIT",
+      "source": "https://github.com/JeffreyHamilton6399/arcadia",
+      "entrypoint": "games/flappy/index.html",
+      "mode": "local",
+      "verified": true,
+      "embeddable": true,
+      "emoji": "🐤",
+      "glow": "#e9bd71",
+      "shade": "#55401e",
+      "desc": "Tap or press a key to fly through the gaps."
+    },
+    {
+      "id": "aim-trainer",
+      "title": "Aim Trainer",
+      "category": "Skill",
+      "creator": "Arcadia contributors",
+      "license": "MIT",
+      "source": "https://github.com/JeffreyHamilton6399/arcadia",
+      "entrypoint": "games/aimtrainer/index.html",
+      "mode": "local",
+      "verified": true,
+      "embeddable": true,
+      "emoji": "🎯",
+      "glow": "#e58d8d",
+      "shade": "#542828",
+      "desc": "Practise mouse accuracy by clicking the targets."
+    },
+    {
+      "id": "reaction-time",
+      "title": "Reaction Time",
+      "category": "Skill",
+      "creator": "Arcadia contributors",
+      "license": "MIT",
+      "source": "https://github.com/JeffreyHamilton6399/arcadia",
+      "entrypoint": "games/reaction/index.html",
+      "mode": "local",
+      "verified": true,
+      "embeddable": true,
+      "emoji": "⚡",
+      "glow": "#e9d47b",
+      "shade": "#51471f",
+      "desc": "Wait for the signal, then test your reaction speed."
+    },
+    {
+      "id": "stack",
+      "title": "Stack",
+      "category": "Arcade",
+      "creator": "Arcadia contributors",
+      "license": "MIT",
+      "source": "https://github.com/JeffreyHamilton6399/arcadia",
+      "entrypoint": "games/stack/index.html",
+      "mode": "local",
+      "verified": true,
+      "embeddable": true,
+      "emoji": "🏗️",
+      "glow": "#8cb5e8",
+      "shade": "#263d5b",
+      "desc": "Drop moving blocks and build the tallest tower."
     }
   ]
 }
