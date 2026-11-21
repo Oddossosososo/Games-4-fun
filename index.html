@@ -48,10 +48,10 @@ const escapeHTML=value=>String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;"
 const SUPABASE_URL="https://zvtrluxlzrihsuvralhg.supabase.co";
 const SUPABASE_KEY="sb_publishable_hwFf-GdHVxzGNYxKHltKbw_7Eq5hTzO";
 const ACCOUNT_API=SUPABASE_URL+"/functions/v1/afterglow-account";
-const accountClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const accountClient=window.supabase?.createClient?window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY):null;
 const accountState={user:null,mode:"login",storage:{},saveTimer:null};
 function accountButtonLabel(){ $("#account-button").textContent=accountState.user?accountState.user.username:"Account"; }
-function openAccount(){renderAccountPanel();$("#account-modal").classList.add("open");}
+function openAccount(){if(!accountClient){$("#account-content").textContent="Account service is unavailable right now. The arcade still works normally.";$("#account-modal").classList.add("open");return;}renderAccountPanel();$("#account-modal").classList.add("open");}
 function closeAccount(){$("#account-modal").classList.remove("open");}
 function renderAccountPanel(){
  const root=$("#account-content");
@@ -93,7 +93,7 @@ async function restoreCloudGameSave(game){
  }
 }
 function queueCloudSave(game,key,value){
- if(!accountState.user||!game||!key||key.startsWith("sb-")||key.startsWith("afterglow."))return;
+ if(!accountClient||!accountState.user||!game||!key||key.startsWith("sb-")||key.startsWith("afterglow."))return;
  accountState.storage[key]=value;
  clearTimeout(accountState.saveTimer);
  accountState.saveTimer=setTimeout(async()=>{
@@ -117,7 +117,7 @@ async function restoreAccountSession(){
  const {data:userData}=await accountClient.auth.getUser();
  if(!userData.user)return;
  const {data:profile}=await accountClient.from("profiles").select("username").eq("id",userData.user.id).maybeSingle();
- if(profile){accountState.user={id:userData.user.id,username:profile.username};accountButtonLabel();}
+ if(profile){accountState.user={id:userData.user.id,username:profile.username};accountButtonLabel();if(state.selected)chooseGame(state.selected);}
 }
 $("#account-button").addEventListener("click",openAccount);
 $("#close-account").addEventListener("click",closeAccount);
