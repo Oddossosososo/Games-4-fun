@@ -52,6 +52,7 @@ let selectedRuntimeUrl = "";
 let selected = null;
 let activeCat = "All";
 let gameLoadTimer = null;
+let frameGeneration = 0;
 /* Catalogue is loaded from games.json. */
 const $=s=>document.querySelector(s);
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
@@ -63,19 +64,46 @@ function render(){
 }
 function choose(g){
  selected=g;$("#selected-name").textContent=g.title;$("#creator").textContent=g.creator;$("#license").textContent=g.license;$("#category").textContent=g.category;$("#source").innerHTML=g.source?'<a href="'+esc(g.source)+'" target="_blank" rel="noopener">GitHub repository ↗</a>':'No verified Git repository';
- const frame=$("#game-frame"),note=$("#external-note"),loading=$("#loading-note");
+ const note=$("#external-note"),loading=$("#loading-note");
+ const generation=++frameGeneration;
  if(gameLoadTimer){clearTimeout(gameLoadTimer);gameLoadTimer=null;}
  loading.hidden=true;
  selectedRuntimeUrl=localSources[g.id]||"";
- if(selectedRuntimeUrl && g.verified && g.mode === "local" && g.embeddable){note.hidden=true;frame.hidden=false;loading.hidden=false;$("#loading-title").textContent="Loading "+g.title+"…";$("#loading-detail").textContent="Large games may take a little longer on their first launch.";frame.src=selectedRuntimeUrl;gameLoadTimer=setTimeout(()=>{loading.hidden=false;$("#loading-title").textContent=g.title+" is taking longer than expected";$("#loading-detail").textContent="Try Open tab ↗. If it still fails, the game may have a missing asset.";},g.id==="hexgl"?60000:30000);}
- else{frame.hidden=true;frame.src="about:blank";loading.hidden=true;note.hidden=false;
+ const previousFrame=$("#game-frame");
+ const frame=document.createElement("iframe");
+ frame.id="game-frame";
+ frame.title="Selected browser game";
+ frame.allow="autoplay; fullscreen; gamepad";
+ frame.referrerPolicy="strict-origin-when-cross-origin";
+ previousFrame.replaceWith(frame);
+ if(selectedRuntimeUrl && g.verified && g.mode === "local" && g.embeddable){
+   note.hidden=true;frame.hidden=false;loading.hidden=false;
+   $("#loading-title").textContent="Loading "+g.title+"…";
+   $("#loading-detail").textContent="Large games may take a little longer on their first launch.";
+   const expectedUrl=new URL(selectedRuntimeUrl,document.baseURI).href;
+   frame.addEventListener("load",()=>{
+     if(generation!==frameGeneration)return;
+     try{if(frame.contentWindow.location.href!==expectedUrl)return;}catch(_){return;}
+     if(gameLoadTimer){clearTimeout(gameLoadTimer);gameLoadTimer=null;}
+     loading.hidden=true;
+   });
+   frame.src=selectedRuntimeUrl;
+   gameLoadTimer=setTimeout(()=>{
+     if(generation!==frameGeneration)return;
+     loading.hidden=false;
+     $("#loading-title").textContent=g.title+" is taking longer than expected";
+     $("#loading-detail").textContent="Try Open tab ↗. If it still fails, the game may have a missing asset.";
+   },g.id==="hexgl"?60000:30000);
+ }
+ else{
+   frame.hidden=true;frame.src="about:blank";loading.hidden=true;note.hidden=false;
    note.textContent=g.mode==="external" && g.officialUrl
      ?"This game is available on its official website. Select Open tab ↗ to play."
-     :"This game has not passed hosting verification yet, so it is unavailable here.";}
+     :"This game has not passed hosting verification yet, so it is unavailable here.";
+ }
  $("#other-games").innerHTML=GAMES.filter(x=>x.id!==g.id).map(x=>'<button type="button" data-other="'+esc(x.id)+'">'+esc(x.title)+'</button>').join("");
  render();
 }
-$("#game-frame").addEventListener("load",()=>{if(gameLoadTimer){clearTimeout(gameLoadTimer);gameLoadTimer=null;}$("#loading-note").hidden=true;});
 $("#game-grid").addEventListener("click",e=>{const b=e.target.closest("[data-id]");if(b){const g=GAMES.find(x=>x.id===b.dataset.id);if(g)choose(g)}});
 $("#other-games").addEventListener("click",e=>{const b=e.target.closest("[data-other]");if(b){const g=GAMES.find(x=>x.id===b.dataset.other);if(g)choose(g)}});
 $("#filters").addEventListener("click",e=>{const b=e.target.closest("[data-cat]");if(!b)return;activeCat=b.dataset.cat;document.querySelectorAll(".filter").forEach(x=>x.classList.toggle("active",x===b));render()});
