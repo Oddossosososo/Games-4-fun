@@ -49,6 +49,7 @@
     .game-card{min-width:0;padding:0;overflow:hidden;text-align:left;border:1px solid #ffffff18;border-radius:14px;background:#171a2d;transition:transform .18s,border-color .18s,box-shadow .18s}
     .game-card:hover{transform:translateY(-2px);border-color:#9d8ae9;box-shadow:0 9px 25px #0004}
     .game-card.selected{border-color:var(--purple);box-shadow:0 0 0 1px #b69cff55}
+    .shelves{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:0 0 16px}.shelves[hidden]{display:none}.shelf{border:1px solid var(--line);border-radius:16px;padding:14px;background:#141629b8}.shelf h2{font-size:13px;margin:0 0 10px}.shelf-items{display:flex;gap:8px;flex-wrap:wrap}.shelf-items button{border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:#191b30;color:var(--text)}.shelf-items .empty-shelf{color:var(--muted);font-size:11px}.stage.theater{position:fixed;inset:0;z-index:80;aspect-ratio:auto;min-height:0;background:#000}.stage.theater #game-frame{width:100vw;height:100vh}.stage.theater .stage-status{background:#090914}@media(max-width:620px){.shelves{grid-template-columns:1fr}}
     .thumb{position:relative;aspect-ratio:16/9;overflow:hidden;background:linear-gradient(135deg,var(--shade,#34285c),#111528)}
     .thumb video{display:block;width:100%;height:100%;object-fit:cover}
     .thumb-fallback{position:absolute;inset:0;display:grid;place-items:center;font-size:42px;background:radial-gradient(circle at 70% 20%,#ffffff20,transparent 38%),linear-gradient(135deg,var(--shade,#34285c),#101323)}
@@ -135,9 +136,10 @@
 
     <section class="toolbar" aria-label="Game filters">
       <div class="filters" id="filters"><button class="chip active" data-category="All">Everything</button></div>
-      <label class="search-wrap"><span class="search-icon">⌕</span><input id="search" class="search" type="search" placeholder="Search games…" autocomplete="off" aria-label="Search games"></label>
+      <label class="search-wrap"><span class="search-icon">⌕</span><input id="search" class="search" type="search" placeholder="Search games…" autocomplete="off" aria-label="Search games"></label><button class="action" id="random-game" type="button">🎲 Random game</button>
     </section>
 
+    <section class="shelves" id="shelves" hidden><div class="shelf"><h2>★ Favorites</h2><div id="favorites-shelf" class="shelf-items"></div></div><div class="shelf"><h2>Recently played</h2><div id="recent-shelf" class="shelf-items"></div></div></section>
     <section class="layout">
       <aside class="panel">
         <div class="panel-head"><h2>Explore the library</h2><span class="count" id="count">Loading…</span></div>
@@ -147,7 +149,7 @@
       <section class="panel" aria-label="Game player">
         <div class="player-head">
           <div><div class="player-kicker">NOW PLAYING</div><div class="selected-title" id="selected-name">Choose a game</div></div>
-          <div class="actions"><button class="action" id="open-tab" type="button" disabled>Open tab ↗</button><button class="action" id="record-preview" type="button" disabled>● Record preview</button><button class="action primary" id="fullscreen" type="button" disabled>⛶ Fullscreen</button></div>
+          <div class="actions"><button class="action" id="open-tab" type="button" disabled>Open tab ↗</button><button class="action" id="record-preview" type="button" disabled>● Record preview</button><button class="action" id="favorite-toggle" type="button" disabled>☆ Favorite</button><button class="action" id="theater" type="button">Theater mode</button><button class="action" id="backup-save" type="button">Backup save</button><button class="action primary" id="fullscreen" type="button" disabled>⛶ Fullscreen</button></div>
         </div>
         <div class="stage" id="stage">
           <div class="stage-status" id="stage-status"><strong id="status-title">Ready when you are</strong><small id="status-detail">Choose a game from the library to begin.</small><button class="action" id="retry" type="button" hidden>Try again</button></div>
@@ -185,7 +187,7 @@
           <p>Create a room and share its six-character code. Realtime rooms support presence and game events.</p>
           <div class="online-actions">
             <button class="action primary" id="create-room" type="button">Create room</button>
-            <button class="action" id="leave-room" type="button" disabled>Leave</button>
+            <button class="action" id="leave-room" type="button" disabled>Leave</button><button class="action" id="copy-room-link" type="button" disabled>Copy invite link</button>
           </div>
           <form class="online-form" id="join-room-form">
             <input class="online-input" id="room-code" maxlength="6" pattern="[A-Za-z0-9]{6}" aria-label="Room code" placeholder="ROOM CODE" autocomplete="off">
@@ -240,7 +242,7 @@
     }
 
     const $ = selector => document.querySelector(selector);
-    const state = { games: [], selected: null, category: "All", query: "", loadTimer: null, generation: 0, previewUrls: new Map(), recorder: null, recordStream: null };
+    const state = { games: [], selected: null, category: "All", query: "", loadTimer: null, generation: 0, previewUrls: new Map(), recorder: null, recordStream: null, favorites: new Set(JSON.parse(localStorage.getItem("afterglow-favorites") || "[]")), recent: JSON.parse(localStorage.getItem("afterglow-recent") || "[]"), theater: false };
     const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[char]));
     // Detection is deliberately non-global so repeated checks are consistent.
     const PROFANITY_SOURCE = "\\b(?:asshole|arsehole|bastard|bitch|bullshit|crap|cunt|damn|dick|fuck|motherfucker|piss|shit|slut|whore)\\w*\\b";
@@ -409,6 +411,7 @@
         recorder.start(250);
         $("#record-preview").textContent = "■ Stop & save";
         $("#record-preview").disabled = false;
+      $("#favorite-toggle").disabled = false;
         recorderStatus("Recording this shared tab… stop when ready (8-second limit).");
         window.setTimeout(() => {
           if (state.recorder === recorder && recorder.state !== "inactive") stopPreviewRecording();
@@ -439,6 +442,9 @@
       ).join("");
     }
 
+    function updateFavoriteButton(){ if(!state.selected) return; const fav=state.favorites.has(state.selected.id); $("#favorite-toggle").textContent=fav?"★ Favorited":"☆ Favorite"; }
+    function renderShelves(){ const fav=state.games.filter(g=>state.favorites.has(g.id)); const recent=state.recent.map(id=>state.games.find(g=>g.id===id)).filter(Boolean); const render=(arr,el)=>{el.innerHTML=arr.length?arr.map(g=>'<button type="button" data-shelf-game="'+escapeHTML(g.id)+'">'+escapeHTML(g.emoji||"✦")+" "+escapeHTML(censorText(g.title))+'</button>').join(""):'<span class="empty-shelf">Nothing here yet.</span>';}; render(fav,$("#favorites-shelf"));render(recent,$("#recent-shelf"));$("#shelves").hidden=!(fav.length||recent.length); }
+    document.querySelector("#shelves").addEventListener("click",e=>{const b=e.target.closest("[data-shelf-game]");if(b)selectGame(state.games.find(g=>g.id===b.dataset.shelfGame));});
     function renderGames() {
       const games = filteredGames();
       $("#count").textContent = games.length + " of " + state.games.length + " games";
@@ -482,6 +488,10 @@
         ? '<a href="' + escapeHTML(game.source) + '" target="_blank" rel="noopener noreferrer">View source ↗</a>'
         : game.officialUrl ? '<a href="' + escapeHTML(game.officialUrl) + '" target="_blank" rel="noopener noreferrer">Game website ↗</a>' : "SOURCE NOT LISTED";
       renderGames();
+      state.recent = [game.id, ...state.recent.filter(id => id !== game.id)].slice(0, 5);
+      localStorage.setItem("afterglow-recent", JSON.stringify(state.recent));
+      renderShelves();
+      updateFavoriteButton();
       if (onlineAPI) onlineAPI.trackEvent("game_open", game.id).catch(() => {});
 
       const url = localURL(game);
@@ -597,15 +607,28 @@
         const manifest = await manifestResponse.json();
         if (!Array.isArray(manifest.games)) throw new Error("The game catalogue has an invalid format.");
         state.games = manifest.games;
+        localStorage.setItem("afterglow-catalog-cache", JSON.stringify({ savedAt: Date.now(), games: state.games }));
         await loadLocalPreviews();
         renderFilters();
         renderGames();
         renderLibrary();
+        renderShelves();
         $("#play-state").textContent = "Choose a game to start.";
         const firstLocal = state.games.find(isLocal);
         if (firstLocal) selectGame(firstLocal);
       } catch (error) {
         console.error("Afterglow startup failed:", error);
+        const cached = (() => { try { return JSON.parse(localStorage.getItem("afterglow-catalog-cache") || "null"); } catch { return null; } })();
+        if (Array.isArray(cached?.games) && cached.games.length) {
+          state.games = cached.games;
+          renderFilters(); renderGames(); renderLibrary(); renderShelves();
+          $("#play-state").textContent = "OFFLINE CATALOGUE";
+          $("#api-status").textContent = "Offline mode";
+          document.querySelector(".online-section").hidden = true;
+          const cachedLocal = state.games.find(isLocal); if (cachedLocal) selectGame(cachedLocal);
+          return;
+        }
+        document.querySelector(".online-section").hidden = true;
         $("#count").textContent = "Catalogue error";
         $("#game-grid").innerHTML = '<div class="empty">Games are temporarily unavailable.<br><small>Please try again in a moment.</small><br><button class="action" id="reload-page" type="button">Retry</button></div>';
         $("#game-grid").addEventListener("click", event => {
@@ -642,6 +665,11 @@
       } catch (error) { recorderStatus(error.message || "Could not remove preview."); }
     });
 
+    $("#random-game").addEventListener("click", () => { const choices = filteredGames(); if (choices.length) selectGame(choices[Math.floor(Math.random()*choices.length)]); });
+    $("#favorite-toggle").addEventListener("click", () => { if (!state.selected) return; const id=state.selected.id; if(state.favorites.has(id)) state.favorites.delete(id); else state.favorites.add(id); localStorage.setItem("afterglow-favorites",JSON.stringify([...state.favorites])); renderShelves(); updateFavoriteButton(); renderGames(); });
+    $("#theater").addEventListener("click", () => { state.theater=!state.theater; $("#stage").classList.toggle("theater",state.theater); $("#theater").textContent=state.theater?"Exit theater":"Theater mode"; document.body.style.overflow=state.theater?"hidden":""; });
+    $("#backup-save").addEventListener("click", () => { const data={createdAt:new Date().toISOString(), localStorage:Object.fromEntries(Object.keys(localStorage).filter(k=>k.startsWith("afterglow-")||k.startsWith("number-")).map(k=>[k,localStorage.getItem(k)]))}; const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}); const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="afterglow-save-backup.json";a.click();URL.revokeObjectURL(a.href); });
+    $("#copy-room-link").addEventListener("click", async () => { const code=$("#room-code").value.trim().toUpperCase(); if(!code) return; const url=new URL(location.href); url.searchParams.set("room",code); try{await navigator.clipboard.writeText(url.href);$("#room-status").textContent="Invite link copied."; }catch{$("#room-status").textContent=url.href;} });
     $("#search").addEventListener("input", event => {
       state.query = event.target.value;
       renderGames();
@@ -666,6 +694,7 @@
       try {
         const code = await onlineAPI.createRoom(onlineAPI.displayName);
         $("#room-code").value = code;
+        $("#copy-room-link").disabled = false;
         $("#room-status").textContent = "Room " + code + " created. Share the code with friends.";
         $("#leave-room").disabled = false;
       } catch (error) {
@@ -678,6 +707,7 @@
       try {
         const code = await onlineAPI.joinRoom($("#room-code").value, onlineAPI.displayName);
         $("#room-code").value = code;
+        $("#copy-room-link").disabled = false;
         $("#room-status").textContent = "Connected to room " + code + ".";
         $("#leave-room").disabled = false;
       } catch (error) {
@@ -721,6 +751,7 @@
 
     document.addEventListener("keydown", event => {
       if (event.key === "Escape") {
+        if(state.theater){state.theater=false;$("#stage").classList.remove("theater");$("#theater").textContent="Theater mode";document.body.style.overflow="";}
         closeModal("library-modal");
         closeModal("credits-modal");
       }
