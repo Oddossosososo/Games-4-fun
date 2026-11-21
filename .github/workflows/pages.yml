@@ -212,15 +212,6 @@ jobs:
           } > public/SOURCES.md.tmp
           mv public/SOURCES.md.tmp public/SOURCES.md
 
-      - name: Capture real gameplay and build short MP4 previews
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ffmpeg
-          npm install --no-save playwright@1.55.0
-          npx playwright install --with-deps chromium
-          node scripts/capture-gameplay-thumbnails.mjs
-          python scripts/assemble-gameplay-mp4.py
-
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
