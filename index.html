@@ -251,17 +251,19 @@
     const hasProfanity = value => PROFANITY_CHECK.test(String(value ?? ""));
     const censorText = value => String(value ?? "").replace(PROFANITY_CENSOR, word => word[0] + "*".repeat(Math.max(1, word.length - 1)));
     const localURL = game => {
-      if (!["local", "bundled"].includes(game.mode)) return "";
+      // A self-hosted title remains local even if an older catalogue omitted its mode.
+      const mode = game.mode === "bundled" || game.hosting === "self-hosted" ? "bundled" : game.mode;
+      if (!["local", "bundled"].includes(mode)) return "";
       let route = "";
       const cleanEntry = value => {
         let path = String(value || "");
         while (path.startsWith("/")) path = path.slice(1);
         return path;
       };
-      if (!route && game.mode === "bundled" && game.entrypoint) {
+      if (!route && mode === "bundled" && game.entrypoint) {
         route = "./" + cleanEntry(game.entrypoint);
       }
-      if (!route && game.mode === "local" && game.source && game.entrypoint) {
+      if (!route && mode === "local" && game.source && game.entrypoint) {
         const marker = "github.com/";
         const position = game.source.toLowerCase().indexOf(marker);
         if (position >= 0) {
@@ -496,7 +498,7 @@
 
       const url = localURL(game);
       if (!url) {
-        setStatus(game.officialUrl ? "Open this game on its website" : "Not available", game.officialUrl ? "This title is not hosted in Afterglow Arcade. Use Open tab to visit its game website." : "No playable destination is configured.");
+        setStatus(game.officialUrl ? "Opening the game website" : "Not available", game.officialUrl ? "This game is external. Use Open tab to launch its website." : "No playable destination is configured.");
         $("#play-state").textContent = "EXTERNAL GAME";
         return;
       }
@@ -650,7 +652,7 @@
     async function start() {
       try {
         // The repository-root manifest is the sole catalogue source.
-        const manifestResponse = await fetch("./games.json", { cache: "no-cache" });
+        const manifestResponse = await fetch("./games.json?v=hextris-self-hosted-2", { cache: "no-store" });
         if (!manifestResponse.ok) throw new Error("games.json returned HTTP " + manifestResponse.status);
         const manifest = await manifestResponse.json();
         if (!Array.isArray(manifest.games)) throw new Error("The game catalogue has an invalid format.");
