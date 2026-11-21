@@ -297,6 +297,11 @@
     function selectGame(game) {
       if (!game) return;
       state.selected = game;
+      const leaderboardSelect = $("#leaderboard-game");
+      if (leaderboardSelect) {
+        leaderboardSelect.value = game.id;
+        if (onlineAPI) refreshLeaderboard();
+      }
       state.generation += 1;
       const generation = state.generation;
       clearTimer();
