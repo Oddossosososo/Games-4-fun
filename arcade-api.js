@@ -76,6 +76,7 @@ export async function initArcadeAPI() {
     async createRoom(displayName = getDisplayName()) {
       const code = makeRoomCode();
       await this.joinRoom(code, displayName);
+      await this.trackEvent("room_create");
       return code;
     },
     async joinRoom(code, displayName = getDisplayName()) {
