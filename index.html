@@ -512,7 +512,7 @@
         const response = await fetch(url, { cache: "no-cache", redirect: "follow" });
         if (generation !== state.generation) return;
         const type = response.headers.get("content-type") || "";
-        if (!response.ok || (type && !/text\\/html/i.test(type))) throw new Error("Missing game entrypoint");
+        if (!response.ok || (type && !type.toLowerCase().includes("text/html"))) throw new Error("Missing game entrypoint");
         frame.src = response.url || url;
       } catch (error) {
         if (generation !== state.generation) return;
