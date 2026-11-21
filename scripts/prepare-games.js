@@ -103,7 +103,7 @@ for (const game of manifest.games.filter(g => g.verified && g.mode === 'local'))
   let html = fs.readFileSync(target, 'utf8');
   if (html.includes('__afterglowAssetQueueInstalled')) continue;
   const tag = '<script>' + preloadScript.replaceAll('\\\\', '\\') + '</script>';
-  if (/<\\/head>/i.test(html)) html = html.replace(/<\\/head>/i, tag + '</head>');
+  if (/<\/head>/i.test(html)) html = html.replace(/<\/head>/i, tag + '</head>');
   else html = tag + html;
   fs.writeFileSync(target, html);
   injected++;
