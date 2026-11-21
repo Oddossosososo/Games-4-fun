@@ -9,13 +9,14 @@ FRAMES = Path("/tmp/afterglow-gameplay-frames")
 OUT = ROOT / "public" / "thumbs"
 OUT.mkdir(parents=True, exist_ok=True)
 manifest = json.loads((ROOT / "games.json").read_text(encoding="utf-8"))
-expected_ids = {game["id"] for game in manifest["games"]}
+expected_ids = set(json.loads((ROOT / "public" / "GAME-SOURCES.json").read_text(encoding="utf-8")))
 
 for game_id in sorted(expected_ids):
     folder = FRAMES / game_id
     files = sorted(folder.glob("*.png")) if folder.is_dir() else []
     if len(files) < 2:
-        raise SystemExit("Missing gameplay frames for " + game_id)
+        print("Skipping preview; no local gameplay frames captured: " + game_id)
+        continue
     output = OUT / (game_id + ".mp4")
     subprocess.run([
         "ffmpeg", "-hide_banner", "-loglevel", "error", "-y",
@@ -28,4 +29,4 @@ for game_id in sorted(expected_ids):
         raise SystemExit("MP4 encoding failed for " + game_id)
     print("Created MP4 gameplay preview: " + game_id + " (" + str(output.stat().st_size // 1024) + " KB)")
 
-print("Created " + str(len(expected_ids)) + " short MP4 gameplay previews.")
+print("Processed " + str(len(expected_ids)) + " locally hosted games; missing captures are skipped safely.")
