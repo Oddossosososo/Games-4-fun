@@ -277,7 +277,8 @@
       }
       return route ? new URL(route, document.baseURI).href : "";
     };
-    const destination = game => localURL(game) || game.officialUrl || "";
+    const hostedURL = game => game && game.mode === "hosted" && /^https:\/\//i.test(game.hostedUrl || "") ? game.hostedUrl : "";
+    const destination = game => localURL(game) || hostedURL(game) || game.officialUrl || "";
     const isLocal = game => Boolean(localURL(game));
 
     function setStatus(title, detail, retry = false) {
@@ -481,14 +482,14 @@
       $("#license").textContent = censorText(game.license || "Not listed");
       $("#category").textContent = censorText(game.category || "—");
       $("#open-tab").disabled = !destination(game);
-      $("#fullscreen").disabled = !isLocal(game);
+      $("#fullscreen").disabled = !(isLocal(game) || hostedURL(game));
       $("#record-preview").disabled = false;
       $("#record-preview").textContent = "● Record preview";
       $("#delete-preview").hidden = !state.previewUrls.has(game.id);
       recorderStatus(state.previewUrls.has(game.id) ? "A saved local preview is active for this game." : "Previews are saved only in this browser.");
       $("#source-link").innerHTML = game.source
         ? '<a href="' + escapeHTML(game.source) + '" target="_blank" rel="noopener noreferrer">View source ↗</a>'
-        : game.officialUrl ? '<a href="' + escapeHTML(game.officialUrl) + '" target="_blank" rel="noopener noreferrer">Game website ↗</a>' : "SOURCE NOT LISTED";
+        : (game.hostedUrl || game.officialUrl) ? '<a href="' + escapeHTML(game.hostedUrl || game.officialUrl) + '" target="_blank" rel="noopener noreferrer">Game website ↗</a>' : "SOURCE NOT LISTED";
       renderGames();
       state.recent = [game.id, ...state.recent.filter(id => id !== game.id)].slice(0, 5);
       localStorage.setItem("afterglow-recent", JSON.stringify(state.recent));
@@ -496,15 +497,15 @@
       updateFavoriteButton();
       if (onlineAPI) onlineAPI.trackEvent("game_open", game.id).catch(() => {});
 
-      const url = localURL(game);
+      const url = localURL(game) || hostedURL(game);
       if (!url) {
         setStatus(game.officialUrl ? "Opening the game website" : "Not available", game.officialUrl ? "This game is external. Use Open tab to launch its website." : "No playable destination is configured.");
         $("#play-state").textContent = "EXTERNAL GAME";
         return;
       }
 
-      setStatus("Loading " + censorText(game.title) + "…", "Preparing game files.");
-      $("#play-state").textContent = "SELF-HOSTED";
+      setStatus("Loading " + censorText(game.title) + "…", isLocal(game) ? "Preparing game files." : "Connecting to the configured game host.");
+      $("#play-state").textContent = isLocal(game) ? "SELF-HOSTED" : "EXTERNAL HOST";
       frame.onload = () => {
         if (generation !== state.generation) return;
         clearTimer();
