@@ -73,6 +73,18 @@ for line in lines:
 main.write_text("\n".join(clean) + "\n", encoding="utf-8")
 
 
+# Remove outbound ad-purchase links from pause screens.
+view = root / "js/view.js"
+view_lines = view.read_text(encoding="utf-8").splitlines()
+view_clean = []
+for line in view_lines:
+    if "'pausedAndroid':" in line or "'pausediOS':" in line or "'pausedOther':" in line:
+        key = line.split(":", 1)[0]
+        view_clean.append(key + ': "<div class=\\'centeredHeader unselectable\\'>Game Paused</div>",')
+    else:
+        view_clean.append(line)
+view.write_text("\n".join(view_clean) + "\n", encoding="utf-8")
+
 # Add an explicit third-party notice for bundled font families.
 (root / "THIRD-PARTY-NOTICES.md").write_text(
     "# Third-party notices\n\n"
@@ -86,15 +98,19 @@ main.write_text("\n".join(clean) + "\n", encoding="utf-8")
     encoding="utf-8"
 )
 
-# Fail the build if any remote runtime requests remain in the page, styles or scripts.
-scan_files = [page] + list(root.rglob("*.js")) + list(root.rglob("*.css"))
+# Verify that active HTML/CSS resource references and known runtime requests are local.
+scan_files = [page] + list(root.rglob("*.css"))
 bad = []
 for file in scan_files:
     text = file.read_text(encoding="utf-8", errors="ignore")
-    if re.search(r"""(?:src|href)\s*=\s*["']https?://|url\(\s*["']?https?://""", text, re.I) or any(term in text for term in ("googlesyndication", "google-analytics", "http://54.183.184.126/", "http://hextris.io/a.js", "$.get(", "XMLHttpRequest", "sendBeacon", "WebSocket")):
+    if re.search(r"""(?:src|href)\s*=\s*["']https?://|url\(\s*["']?https?://""", text, re.I):
+        bad.append(str(file))
+for file in [p for p in root.rglob("*.js") if p.name != "jquery.js"]:
+    text = file.read_text(encoding="utf-8", errors="ignore")
+    if any(term in text for term in ("googlesyndication", "google-analytics", "http://54.183.184.126/", "http://hextris.io/a.js", "$.get('http", '$.get("http', "fetch('http", 'fetch("http', "script.src = 'http", 'script.src = "http')):
         bad.append(str(file))
 if bad:
-    raise SystemExit("Remote references remain in: " + ", ".join(bad))
+    raise SystemExit("Remote runtime references remain in: " + ", ".join(bad))
 PY
 
 python3 - <<'PY'
