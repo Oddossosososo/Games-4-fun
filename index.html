@@ -242,9 +242,18 @@
     const state = { games: [], sources: {}, selected: null, category: "All", query: "", loadTimer: null, generation: 0 };
     const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[char]));
     const localURL = game => {
-      const route = state.sources[game.id];
-      if (!route || !["local", "bundled"].includes(game.mode)) return "";
-      return new URL(route, document.baseURI).href;
+      if (!["local", "bundled"].includes(game.mode)) return "";
+      let route = state.sources?.[game.id];
+      // Fallback for older or incomplete Pages deployments where the generated
+      // route manifest is missing: reconstruct the same safe relative route.
+      if (!route && game.mode === "bundled" && game.entrypoint) {
+        route = "./" + game.entrypoint.replace(/^\\/+/, "");
+      }
+      if (!route && game.mode === "local" && game.source && game.entrypoint) {
+        const match = game.source.match(/github\\.com\\/([^/]+\\/[^/]+)/i);
+        if (match) route = "./games/" + match[1].toLowerCase().replaceAll("/", "-") + "/" + game.entrypoint.replace(/^\\/+/, "");
+      }
+      return route ? new URL(route, document.baseURI).href : "";
     };
     const destination = game => localURL(game) || game.officialUrl || "";
     const isLocal = game => Boolean(localURL(game));
@@ -425,12 +434,14 @@
       try {
         const [manifestResponse, sourcesResponse] = await Promise.all([
           fetch("./games.json", { cache: "no-cache" }),
-          fetch("./GAME-SOURCES.json", { cache: "no-cache" })
+          fetch("./GAME-SOURCES.json", { cache: "no-cache" }).catch(() => null)
         ]);
         if (!manifestResponse.ok) throw new Error("games.json returned HTTP " + manifestResponse.status);
-        if (!sourcesResponse.ok) throw new Error("GAME-SOURCES.json returned HTTP " + sourcesResponse.status);
         const manifest = await manifestResponse.json();
-        state.sources = await sourcesResponse.json();
+        // GAME-SOURCES.json is generated during deployment, but it is not a
+        // hard dependency: local routes can be reconstructed from games.json.
+        state.sources = sourcesResponse?.ok ? await sourcesResponse.json() : {};
+        if (!state.sources || typeof state.sources !== "object" || Array.isArray(state.sources)) state.sources = {};
         if (!Array.isArray(manifest.games)) throw new Error("The game catalogue has an invalid format.");
         state.games = manifest.games;
         renderFilters();
