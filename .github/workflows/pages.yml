@@ -56,6 +56,11 @@ jobs:
               MIT|Apache-2.0|GPL-2.0|GPL-2.0-only|GPL-2.0-or-later|GPL-3.0|GPL-3.0-only|GPL-3.0-or-later|AGPL-3.0|AGPL-3.0-only|AGPL-3.0-or-later|MPL-2.0|Unlicense|BSD-2-Clause|BSD-3-Clause|ISC) ;;
               *) echo "::error::Refusing to host $name: GitHub reports licence '$licence'"; exit 1 ;;
             esac
+            declared="$(REPO_NAME="$name" node -e 'const g=require("./games.json").games.find(x=>x.source==="https://github.com/"+process.env.REPO_NAME); console.log(g?.license || "")')"
+            if [ "$declared" != "$licence" ]; then
+              echo "::error::Manifest licence '$declared' for $name does not match GitHub SPDX '$licence'"
+              exit 1
+            fi
 
             echo "Cloning $name ($licence)"
             git clone --depth 1 "https://github.com/$name.git" "public/games/$folder"
