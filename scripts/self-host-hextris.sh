@@ -6,7 +6,11 @@ cd "$ROOT"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
-git clone --depth 1 --branch gh-pages https://github.com/Hextris/hextris.git "$TMP/upstream"
+wget --quiet --show-progress --tries=5 --waitretry=5 --timeout=30 --retry-connrefused \
+  --output-document="$TMP/hextris-gh-pages.tar.gz" \
+  https://codeload.github.com/Hextris/hextris/tar.gz/refs/heads/gh-pages
+mkdir -p "$TMP/upstream"
+tar -xzf "$TMP/hextris-gh-pages.tar.gz" --strip-components=1 -C "$TMP/upstream"
 rm -rf games/hextris
 mkdir -p games/hextris
 rsync -a "$TMP/upstream/" games/hextris/ \
