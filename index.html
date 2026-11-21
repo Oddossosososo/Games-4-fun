@@ -242,7 +242,7 @@
     const state = { games: [], sources: {}, selected: null, category: "All", query: "", loadTimer: null, generation: 0, previewUrls: new Map(), recorder: null, recordStream: null };
     const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[char]));
     // Detection is deliberately non-global so repeated checks are consistent.
-    const PROFANITY_SOURCE = String.raw\`\b(?:asshole|arsehole|bastard|bitch|bullshit|crap|cunt|damn|dick|fuck|motherfucker|piss|shit|slut|whore)\w*\b\`;
+    const PROFANITY_SOURCE = "\\b(?:asshole|arsehole|bastard|bitch|bullshit|crap|cunt|damn|dick|fuck|motherfucker|piss|shit|slut|whore)\\w*\\b";
     const PROFANITY_CHECK = new RegExp(PROFANITY_SOURCE, "i");
     const PROFANITY_CENSOR = new RegExp(PROFANITY_SOURCE, "gi");
     const hasProfanity = value => PROFANITY_CHECK.test(String(value ?? ""));
