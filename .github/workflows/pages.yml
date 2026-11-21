@@ -29,7 +29,7 @@ jobs:
       - name: Prepare static site
         run: |
           mkdir -p public/games
-          cp index.html games.json public/
+          cp index.html arcade-api.js games.json public/
           cp -R games/afterglow public/games/afterglow
 
       - name: Clone only verified, redistributable game repositories
