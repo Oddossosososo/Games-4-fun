@@ -30,6 +30,7 @@ jobs:
         run: |
           mkdir -p public/games
           cp index.html games.json public/
+          cp -R games/afterglow public/games/afterglow
 
       - name: Clone only verified, redistributable game repositories
         env:
@@ -82,11 +83,16 @@ jobs:
           const root = path.resolve('public');
           const routes = {};
           for (const game of manifest.games) {
-            if (!game.verified || game.mode !== 'local') continue;
-            const repo = game.source.match(/github\.com\/([^/]+\/[^/]+)/i)?.[1];
-            if (!repo) throw new Error('Invalid GitHub source for '+game.id);
-            const folder = repo.toLowerCase().replaceAll('/','-');
-            const relative = path.posix.join('games',folder,game.entrypoint);
+            if (!game.verified || !['local','bundled'].includes(game.mode)) continue;
+            let relative;
+            if (game.mode === 'bundled') {
+              relative = game.entrypoint;
+            } else {
+              const repo = game.source.match(/github\.com\/([^/]+\/[^/]+)/i)?.[1];
+              if (!repo) throw new Error('Invalid GitHub source for '+game.id);
+              const folder = repo.toLowerCase().replaceAll('/','-');
+              relative = path.posix.join('games',folder,game.entrypoint);
+            }
             if (!game.entrypoint || path.isAbsolute(game.entrypoint) || game.entrypoint.split(/[\\/]/).includes('..')) {
               throw new Error('Unsafe entrypoint for '+game.id);
             }
