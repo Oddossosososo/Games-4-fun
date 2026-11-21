@@ -5,15 +5,16 @@
       "id": "geometry-dash-web",
       "title": "Geometry Dash",
       "category": "Rhythm",
-      "creator": "lasokar",
-      "license": "Unverified",
-      "mode": "unavailable",
-      "verified": false,
+      "creator": "Web Dashers",
+      "license": "Unverified — external site only",
+      "mode": "external",
+      "verified": true,
       "embeddable": false,
       "emoji": "🟦",
       "glow": "#63c9ee",
       "shade": "#173b65",
-      "desc": "Unofficial fan-made browser port; hosting rights and source are not verified."
+      "desc": "Unofficial browser-based Geometry Dash experience hosted by Web Dashers. Opens on its own site.",
+      "officialUrl": "https://web-dashers.github.io/"
     },
     {
       "id": "clumsy-bird",
