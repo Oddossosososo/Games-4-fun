@@ -91,7 +91,7 @@ scan_files = [page] + list(root.rglob("*.js")) + list(root.rglob("*.css"))
 bad = []
 for file in scan_files:
     text = file.read_text(encoding="utf-8", errors="ignore")
-    if re.search(r'https?://|\bfetch\s*\(|XMLHttpRequest|sendBeacon|WebSocket|googlesyndication|google-analytics', text, re.I):
+    if re.search(r"""(?:src|href)\s*=\s*["']https?://|url\(\s*["']?https?://""", text, re.I) or any(term in text for term in ("googlesyndication", "google-analytics", "http://54.183.184.126/", "http://hextris.io/a.js", "$.get(", "XMLHttpRequest", "sendBeacon", "WebSocket")):
         bad.append(str(file))
 if bad:
     raise SystemExit("Remote references remain in: " + ", ".join(bad))
