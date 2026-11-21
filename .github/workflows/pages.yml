@@ -59,8 +59,12 @@ jobs:
             name="${repo#https://github.com/}"
             name="${name%/}"
             folder="$(printf '%s' "$name" | tr '[:upper:]' '[:lower:]' | tr '/' '-')"
-            metadata="$(curl -fsSL -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GH_TOKEN" "https://api.github.com/repos/$name")"
+            metadata_file="$(mktemp)"
+            wget --quiet --output-document="$metadata_file" --tries=5 --waitretry=3 --timeout=30 --header="Accept: application/vnd.github+json" --header="Authorization: Bearer $GH_TOKEN" "https://api.github.com/repos/$name"
+            metadata="$(cat "$metadata_file")"
+            rm -f "$metadata_file"
             licence="$(printf '%s' "$metadata" | jq -r '.license.spdx_id // "NOASSERTION"')"
+            default_branch="$(printf '%s' "$metadata" | jq -r '.default_branch // "main"')"
             case "$licence" in
               MIT|Apache-2.0|GPL-2.0|GPL-2.0-only|GPL-2.0-or-later|GPL-3.0|GPL-3.0-only|GPL-3.0-or-later|AGPL-3.0|AGPL-3.0-only|AGPL-3.0-or-later|MPL-2.0|Unlicense|BSD-2-Clause|BSD-3-Clause|ISC) ;;
               *) echo "::error::Refusing to host $name: GitHub reports licence '$licence'"; exit 1 ;;
@@ -71,8 +75,12 @@ jobs:
               exit 1
             fi
 
-            echo "Cloning $name ($licence)"
-            git clone --depth 1 "https://github.com/$name.git" "public/games/$folder"
+            echo "Downloading $name ($licence) with wget from branch $default_branch"
+            archive="$(mktemp --suffix=.tar.gz)"
+            mkdir -p "public/games/$folder"
+            wget --quiet --show-progress --output-document="$archive" --tries=5 --waitretry=5 --timeout=30 --retry-connrefused "https://codeload.github.com/$name/tar.gz/refs/heads/$default_branch"
+            tar -xzf "$archive" --strip-components=1 -C "public/games/$folder"
+            rm -f "$archive"
             rm -rf "public/games/$folder/.git" "public/games/$folder/node_modules"
             find "public/games/$folder" -type f \( -name 'package.zip' -o -name '*.map' \) -delete
             find "public/games/$folder" -type d \( -name '.github' -o -name '__tests__' -o -name 'coverage' \) -prune -exec rm -rf {} +
