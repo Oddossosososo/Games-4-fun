@@ -1,4 +1,4 @@
-name: Build and deploy Afterglow games
+name: Build and deploy Afterglow Arcade
 
 on:
   push:
@@ -21,125 +21,93 @@ jobs:
       - name: Check out Afterglow
         uses: actions/checkout@v4
 
-      - name: Prepare website
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Prepare static site
         run: |
           mkdir -p public/games
-          cp index.html public/index.html
+          cp index.html games.json public/
 
-      - name: Discover every GitHub game repository in the catalogue
-        run: |
-          node <<'NODE'
-          const fs = require('fs');
-          const html = fs.readFileSync('index.html', 'utf8');
-          const section = html.match(/const GAMES\s*=\s*\[([\s\S]*?)\n\];/);
-          if (!section) throw new Error('Could not read the GAMES catalogue');
-          const entries = [];
-          for (const match of section[1].matchAll(/\{([\s\S]*?)\}/g)) {
-            const item = match[1];
-            const id = item.match(/\bid\s*:\s*"([^"]+)"/)?.[1];
-            const repo = item.match(/\brepo\s*:\s*"([^"]*)"/)?.[1];
-            const entry = item.match(/\bentry\s*:\s*"([^"]+)"/)?.[1] || "";
-            if (id && repo) {
-              const github = repo.match(/^https?:\/\/github\.com\/([^/]+\/[^/]+?)(?:\.git)?\/?$/i);
-              if (github) entries.push({ id, repo: github[1], entry });
-            }
-          }
-          const unique = [...new Map(entries.map(x => [x.repo.toLowerCase(), x])).values()];
-          fs.writeFileSync('/tmp/afterglow-repositories.json', JSON.stringify({ entries, unique }, null, 2));
-          console.log('Found ' + entries.length + ' catalogue entries pointing to ' + unique.length + ' GitHub repositories.');
-          NODE
-
-      - name: Clone every catalogue repository with a verified open-source licence
+      - name: Clone only verified, redistributable game repositories
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          mkdir -p public/games
-          echo '# Afterglow game sources' > public/SOURCES.md
-          echo '' >> public/SOURCES.md
-          echo 'Repositories are discovered from the live game catalogue at build time. A repository is copied only when GitHub reports an approved redistributable SPDX licence. Upstream files and licence notices are preserved.' >> public/SOURCES.md
-          echo '' >> public/SOURCES.md
-
           node <<'NODE'
           const fs = require('fs');
-          const data = JSON.parse(fs.readFileSync('/tmp/afterglow-repositories.json', 'utf8'));
-          fs.writeFileSync('/tmp/afterglow-unique-repos.tsv',
-            data.unique.map(x => x.repo).join('\n') + '\n');
+          const manifest = JSON.parse(fs.readFileSync('games.json','utf8'));
+          const local = manifest.games.filter(g => g.verified && g.mode === 'local');
+          const repos = [...new Set(local.map(g => g.source))];
+          fs.writeFileSync('/tmp/afterglow-local-repos.json', JSON.stringify(repos));
+          console.log('Preparing '+local.length+' verified local game entries from '+repos.length+' repositories.');
           NODE
 
           while IFS= read -r repo; do
             [ -n "$repo" ] || continue
-            api="https://api.github.com/repos/$repo"
-            metadata="$(curl -fsSL -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GH_TOKEN" "$api")" || {
-              echo "Skipping $repo: repository metadata unavailable"
-              continue
-            }
+            name="${repo#https://github.com/}"
+            name="${name%/}"
+            folder="$(printf '%s' "$name" | tr '[:upper:]' '[:lower:]' | tr '/' '-')"
+            metadata="$(curl -fsSL -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GH_TOKEN" "https://api.github.com/repos/$name")"
             licence="$(printf '%s' "$metadata" | jq -r '.license.spdx_id // "NOASSERTION"')"
             case "$licence" in
-              MIT|Apache-2.0|GPL-2.0|GPL-2.0-only|GPL-2.0-or-later|GPL-3.0|GPL-3.0-only|GPL-3.0-or-later|AGPL-3.0|AGPL-3.0-only|AGPL-3.0-or-later|MPL-2.0|Unlicense|BSD-2-Clause|BSD-3-Clause|ISC)
-                ;;
-              *)
-                echo "Skipping $repo: licence '$licence' is not on the approved redistribution list"
-                continue
-                ;;
+              MIT|Apache-2.0|GPL-2.0|GPL-2.0-only|GPL-2.0-or-later|GPL-3.0|GPL-3.0-only|GPL-3.0-or-later|AGPL-3.0|AGPL-3.0-only|AGPL-3.0-or-later|MPL-2.0|Unlicense|BSD-2-Clause|BSD-3-Clause|ISC) ;;
+              *) echo "::error::Refusing to host $name: GitHub reports licence '$licence'"; exit 1 ;;
             esac
 
-            folder="$(printf '%s' "$repo" | tr '[:upper:]' '[:lower:]' | tr '/' '-')"
-            echo "Cloning $repo ($licence)"
-            git clone --depth 1 "https://github.com/$repo.git" "public/games/$folder"
-            rm -rf "public/games/$folder/.git"
-            printf '\n- %s — https://github.com/%s — %s (games/%s/)\n' "$repo" "$repo" "$licence" "$folder" >> public/SOURCES.md
-          done < /tmp/afterglow-unique-repos.tsv
+            echo "Cloning $name ($licence)"
+            git clone --depth 1 "https://github.com/$name.git" "public/games/$folder"
+            rm -rf "public/games/$folder/.git" "public/games/$folder/node_modules"
+            find "public/games/$folder" -type f \( -name 'package.zip' -o -name '*.map' \) -delete
+            find "public/games/$folder" -type d \( -name '.github' -o -name '__tests__' -o -name 'coverage' \) -prune -exec rm -rf {} +
+            printf '\n- [%s](https://github.com/%s) — SPDX: %s — local copy: games/%s/\n' "$name" "$name" "$licence" "$folder" >> public/SOURCES.md
+          done < <(node -e "for (const r of require('./games.json').games.filter(g=>g.verified&&g.mode==='local').map(g=>g.source).filter((v,i,a)=>a.indexOf(v)===i)) console.log(r)")
 
+      - name: Generate local game routes from games.json
+        run: |
           node <<'NODE'
           const fs = require('fs');
           const path = require('path');
-          const data = JSON.parse(fs.readFileSync('/tmp/afterglow-repositories.json', 'utf8'));
-          const map = {};
+          const manifest = JSON.parse(fs.readFileSync('games.json','utf8'));
           const root = path.resolve('public');
-          const safeHtml = rel => {
-            if (!rel || path.isAbsolute(rel) || rel.split(/[\\/]/).includes('..')) return false;
-            const full = path.resolve(root, rel);
-            return full.startsWith(root + path.sep) && fs.existsSync(full) &&
-              fs.statSync(full).isFile() && full.toLowerCase().endsWith('.html');
-          };
-          const findIndexes = (dir, rel = '') => {
-            let found = [];
-            if (!fs.existsSync(dir)) return found;
-            for (const ent of fs.readdirSync(dir, {withFileTypes:true})) {
-              if (ent.name === '.git' || ent.name === 'node_modules' || ent.name.startsWith('.')) continue;
-              const child = path.join(dir, ent.name);
-              const childRel = path.posix.join(rel, ent.name);
-              if (ent.isDirectory()) found = found.concat(findIndexes(child, childRel));
-              else if (ent.isFile() && ent.name.toLowerCase() === 'index.html') found.push(childRel);
+          const routes = {};
+          for (const game of manifest.games) {
+            if (!game.verified || game.mode !== 'local') continue;
+            const repo = game.source.match(/github\.com\/([^/]+\/[^/]+)/i)?.[1];
+            if (!repo) throw new Error('Invalid GitHub source for '+game.id);
+            const folder = repo.toLowerCase().replaceAll('/','-');
+            const relative = path.posix.join('games',folder,game.entrypoint);
+            if (!game.entrypoint || path.isAbsolute(game.entrypoint) || game.entrypoint.split(/[\\/]/).includes('..')) {
+              throw new Error('Unsafe entrypoint for '+game.id);
             }
-            return found;
-          };
-          for (const entry of data.entries) {
-            const folder = entry.repo.toLowerCase().replaceAll('/', '-');
-            const base = path.join(root, 'games', folder);
-            if (!fs.existsSync(base)) continue;
-            let chosen = '';
-            if (entry.entry && safeHtml(path.posix.join('games', folder, entry.entry))) chosen = entry.entry;
-            else if (!entry.entry) {
-              const indexes = findIndexes(base);
-              if (indexes.length === 1) chosen = indexes[0];
-              else {
-                for (const common of ['index.html', 'dist/index.html', 'build/index.html', 'public/index.html']) {
-                  if (safeHtml(path.posix.join('games', folder, common))) { chosen = common; break; }
-                }
-              }
+            const full = path.resolve(root,relative);
+            const rel = path.relative(root,full);
+            if (!rel || rel.startsWith('..') || path.isAbsolute(rel) || !fs.existsSync(full) || !fs.statSync(full).isFile()) {
+              throw new Error('Missing entrypoint for '+game.id+': '+relative);
             }
-            if (chosen) {
-              map[entry.id] = './games/' + folder + '/' + chosen.split(path.sep).join('/');
-              console.log('Local cloned game: ' + entry.id + ' -> ' + map[entry.id]);
-            } else console.log('No unambiguous static entrypoint for ' + entry.id + '; not playable in clone-only mode.');
+            routes[game.id] = './'+relative;
           }
-          fs.writeFileSync('public/GAME-SOURCES.json', JSON.stringify(map, null, 2));
+          fs.writeFileSync('public/GAME-SOURCES.json',JSON.stringify(routes,null,2)+'\n');
+          fs.writeFileSync('public/games.json',JSON.stringify(manifest,null,2)+'\n');
           NODE
 
-          echo '' >> public/SOURCES.md
-          echo 'Games without a GitHub repository or with an unverified/non-approved licence remain external and are not copied.' >> public/SOURCES.md
+      - name: Verify manifest, licences, entrypoints and deployment size
+        run: node scripts/verify-games.js
+
+      - name: Add source and licence credits
+        run: |
+          {
+            echo '# Afterglow Arcade game sources'
+            echo
+            echo 'Locally hosted games are shallow clones of verified repositories with approved redistributable licences. Upstream licence and attribution files are retained.'
+            echo
+            cat public/SOURCES.md 2>/dev/null || true
+            echo
+            echo 'Games marked unavailable have not passed the hosting and entrypoint checks. External games link only to their official website.'
+          } > public/SOURCES.md.tmp
+          mv public/SOURCES.md.tmp public/SOURCES.md
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
