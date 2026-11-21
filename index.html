@@ -454,7 +454,7 @@
       $("#header-count").textContent = state.games.length + " GAMES";
     }
 
-    function selectGame(game) {
+    async function selectGame(game) {
       if (!game) return;
       state.selected = game;
       const leaderboardSelect = $("#leaderboard-game");
