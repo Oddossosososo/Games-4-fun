@@ -19,10 +19,12 @@ footer{border-top:1px solid #ffffff12;color:var(--muted);font-size:11px;padding:
 @media(max-width:900px){.content{grid-template-columns:1fr}.player{position:static;grid-row:1}.game-grid{max-height:none;grid-template-columns:repeat(3,minmax(0,1fr))}.stage{height:65vh;min-height:390px}.hero{align-items:start;flex-direction:column}.hero-stats{display:none}}
 @media(max-width:600px){.shell{width:calc(100% - 22px)}.topbar{height:62px}.brand{font-size:19px}.nav-right{font-size:10px}.hero{padding:29px 0 21px}.hero h1{font-size:36px}.controls{align-items:stretch}.filters{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}.chip{white-space:nowrap}.search-wrap,.search{width:100%}.game-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:9px}.player-head{align-items:flex-start}.selected-title{font-size:17px}.actions{max-width:135px}.action{padding:8px 9px}.stage{height:60vh;min-height:360px}.details{padding:13px}.credits-grid{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+
+.account-form{display:grid;gap:12px;margin-top:18px}.account-form label{display:grid;gap:6px;color:#c5cde0;font-size:12px}.account-form input{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;background:#0a101b;color:white;outline:none}.account-form input:focus{border-color:var(--violet)}.account-form button{padding:11px 14px;border:0;border-radius:10px;background:linear-gradient(105deg,#b29eff,#72e8df);color:#101522;font-weight:900}.account-note{color:var(--muted);font-size:11px;line-height:1.6}.account-switch{border:0;background:none;color:#c7bcff;text-decoration:underline;padding:4px}.account-error{color:#ff9baf;min-height:18px;font-size:12px}.account-user{padding:18px 0}.account-user strong{font-size:19px}.account-user button{margin-top:14px}.nav-right .action{padding:7px 11px;font-size:11px}
 </style>
 </head>
 <body>
-<header class="topbar"><div class="shell nav"><div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M16 3.5 28 10.4v11.2L16 28.5 4 21.6V10.4L16 3.5Z" stroke="#B9A8FF" stroke-width="1.7"/><path d="m16 8 7 4v8l-7 4-7-4v-8l7-4Z" stroke="#70E5DF" stroke-width="1.7"/><path d="m16 12 3.5 2v4L16 20l-3.5-2v-4l3.5-2Z" fill="#D9D0FF"/></svg></span><span>afterglow<b>.</b></span></div><div class="nav-right"><span class="live-dot"></span> YOUR GAME BREAK STARTS HERE</div></div></header>
+<header class="topbar"><div class="shell nav"><div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M16 3.5 28 10.4v11.2L16 28.5 4 21.6V10.4L16 3.5Z" stroke="#B9A8FF" stroke-width="1.7"/><path d="m16 8 7 4v8l-7 4-7-4v-8l7-4Z" stroke="#70E5DF" stroke-width="1.7"/><path d="m16 12 3.5 2v4L16 20l-3.5-2v-4l3.5-2Z" fill="#D9D0FF"/></svg></span><span>afterglow<b>.</b></span></div><div class="nav-right"><span class="live-dot"></span> YOUR GAME BREAK STARTS HERE <button class="action" id="account-button" type="button">Account</button></div></div></header>
 <main class="shell">
 <section class="hero"><div><div class="eyebrow">THE ARCADE · YOUR NEXT FAVOURITE GAME</div><h1>Find your next<br>little obsession.</h1><p>A hand-picked collection of browser games. Browse the library, choose a game and jump straight in.</p></div><div class="hero-stats"><div class="stat"><strong id="total-stat">—</strong><span>IN THE LIBRARY</span></div><div class="stat"><strong>∞</strong><span>WAYS TO PLAY</span></div></div></section>
 <section class="controls"><div class="filters" id="filters" aria-label="Filter games"><button class="chip active" data-cat="All">Everything</button></div><label class="search-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg><input class="search" id="search" type="search" placeholder="Search games or categories…" aria-label="Search games"></label></section>
@@ -42,7 +44,86 @@ const $=selector=>document.querySelector(selector);
 const state={games:[],sources:{},selected:null,category:"All",generation:0,timeout:null,loaded:false};
 const loadingTips=["Try the arrow keys first — many classic browser games use them.","A quick restart can reveal a completely different strategy.","Small timing adjustments often matter more than frantic inputs.","Look for patterns before making your next move.","Many arcade games reward patience as much as speed.","If controls feel unfamiliar, check the game’s own instructions.","A clean browser tab can help when a WebGL game is slow to start.","Some games save progress locally in your browser.","Take a moment to learn the controls before chasing a high score.","The best route is not always the fastest-looking one.","Try changing one thing at a time when learning a new game.","Every game in the library has its own creator and story."];
 const escapeHTML=value=>String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
-const categories=games=>["All",...new Set(games.map(game=>game.category).filter(Boolean))];
+
+const SUPABASE_URL="https://zvtrluxlzrihsuvralhg.supabase.co";
+const SUPABASE_KEY="sb_publishable_hwFf-GdHVxzGNYxKHltKbw_7Eq5hTzO";
+const ACCOUNT_API=SUPABASE_URL+"/functions/v1/afterglow-account";
+const accountClient=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const accountState={user:null,mode:"login",storage:{},saveTimer:null};
+function accountButtonLabel(){ $("#account-button").textContent=accountState.user?accountState.user.username:"Account"; }
+function openAccount(){renderAccountPanel();$("#account-modal").classList.add("open");}
+function closeAccount(){$("#account-modal").classList.remove("open");}
+function renderAccountPanel(){
+ const root=$("#account-content");
+ if(accountState.user){
+  root.innerHTML='<div class="account-user"><strong>'+escapeHTML(accountState.user.username)+'</strong><p class="account-note">You are signed in. Progress from supported locally hosted games saves automatically to this account. Guests are never prompted or tracked.</p><p class="account-note" id="cloud-save-status">Cloud saves are ready.</p><button class="action" id="account-logout" type="button">Log out</button></div>';
+  $("#account-logout").addEventListener("click",async()=>{await accountClient.auth.signOut();accountState.user=null;accountState.storage={};accountButtonLabel();renderAccountPanel();});
+  return;
+ }
+ const signup=accountState.mode==="signup";
+ root.innerHTML='<form class="account-form" id="account-form"><p class="account-note">'+(signup?'Create an account with a username and password. No email address is requested.':'Log in to access your saved game progress.')+'</p><label>Username<input name="username" autocomplete="username" minlength="3" maxlength="20" pattern="[A-Za-z0-9_-]{3,20}" required></label><label>Password<input name="password" type="password" autocomplete="'+(signup?'new-password':'current-password')+'" minlength="8" maxlength="72" required></label><div class="account-error" id="account-error" role="status"></div><button type="submit">'+(signup?'Create account':'Log in')+'</button><p class="account-note">'+(signup?'Already have an account?':'New to Afterglow?')+' <button class="account-switch" id="account-switch" type="button">'+(signup?'Log in':'Create account')+'</button></p></form>';
+ $("#account-switch").addEventListener("click",()=>{accountState.mode=signup?"login":"signup";renderAccountPanel();});
+ $("#account-form").addEventListener("submit",async event=>{
+  event.preventDefault();
+  const form=new FormData(event.currentTarget);
+  const error=$("#account-error");
+  const submit=event.currentTarget.querySelector('button[type="submit"]');
+  submit.disabled=true;submit.textContent=signup?"Creating…":"Logging in…";error.textContent="";
+  try{
+   const response=await fetch(ACCOUNT_API,{method:"POST",headers:{"Content-Type":"application/json","apikey":SUPABASE_KEY},body:JSON.stringify({action:signup?"signup":"login",username:form.get("username"),password:form.get("password")})});
+   const result=await response.json();
+   if(!response.ok)throw new Error(result.error||"Account request failed.");
+   const {error:sessionError}=await accountClient.auth.setSession({access_token:result.session.access_token,refresh_token:result.session.refresh_token});
+   if(sessionError)throw sessionError;
+   accountState.user=result.user;accountState.storage={};accountButtonLabel();renderAccountPanel();closeAccount();
+   if(state.selected)chooseGame(state.selected);
+  }catch(err){error.textContent=err.message||"Could not connect. Try again.";}
+  finally{if(document.querySelector("#account-form")){const button=document.querySelector("#account-form button[type=submit]");if(button){button.disabled=false;button.textContent=signup?"Create account":"Log in";}}}
+ });
+}
+async function restoreCloudGameSave(game){
+ if(!accountState.user)return;
+ const {data,error}=await accountClient.from("game_saves").select("save_data").eq("user_id",accountState.user.id).eq("game_id",game.id).maybeSingle();
+ if(error){console.warn("Cloud save read failed:",error.message);return;}
+ const storage=data?.save_data?.storage;
+ accountState.storage=storage&&typeof storage==="object"?storage:{};
+ for(const [key,value] of Object.entries(accountState.storage)){
+  if(key.startsWith("sb-")||key.startsWith("afterglow."))continue;
+  try{if(value===null)localStorage.removeItem(key);else localStorage.setItem(key,String(value));}catch{}
+ }
+}
+function queueCloudSave(game,key,value){
+ if(!accountState.user||!game||!key||key.startsWith("sb-")||key.startsWith("afterglow."))return;
+ accountState.storage[key]=value;
+ clearTimeout(accountState.saveTimer);
+ accountState.saveTimer=setTimeout(async()=>{
+  if(!accountState.user)return;
+  const {error}=await accountClient.from("game_saves").upsert({user_id:accountState.user.id,game_id:game.id,save_data:{storage:accountState.storage},updated_at:new Date().toISOString()},{onConflict:"user_id,game_id"});
+  const status=$("#cloud-save-status");
+  if(status)status.textContent=error?"Cloud save delayed — "+error.message:"Progress saved to your account.";
+  if(error)console.warn("Cloud save failed:",error.message);
+ },700);
+}
+window.addEventListener("storage",event=>{
+ if(!accountState.user||!state.selected||!event.key||!event.url)return;
+ if(!state.sources[state.selected.id]||new URL(event.url).origin!==location.origin)return;
+ const frame=$("#game-frame");
+ if(!frame||!frame.src||new URL(event.url).pathname!==new URL(frame.src).pathname)return;
+ queueCloudSave(state.selected,event.key,event.newValue);
+});
+async function restoreAccountSession(){
+ const {data}=await accountClient.auth.getSession();
+ if(!data.session)return;
+ const {data:userData}=await accountClient.auth.getUser();
+ if(!userData.user)return;
+ const {data:profile}=await accountClient.from("profiles").select("username").eq("id",userData.user.id).maybeSingle();
+ if(profile){accountState.user={id:userData.user.id,username:profile.username};accountButtonLabel();}
+}
+$("#account-button").addEventListener("click",openAccount);
+$("#close-account").addEventListener("click",closeAccount);
+$("#account-modal").addEventListener("click",event=>{if(event.target.id==="account-modal")closeAccount();});
+restoreAccountSession();
+\nconst categories=games=>["All",...new Set(games.map(game=>game.category).filter(Boolean))];
 function renderFilters(){ $("#filters").innerHTML=categories(state.games).map(category=>'<button class="chip '+(state.category===category?"active":"")+'" data-cat="'+escapeHTML(category)+'">'+(category==="All"?"Everything":escapeHTML(category))+"</button>").join(""); }
 function visibleGames(){const query=$("#search").value.trim().toLowerCase();return state.games.filter(game=>(state.category==="All"||game.category===state.category)&&[game.title,game.creator,game.category,game.desc].join(" ").toLowerCase().includes(query));}
 function renderLibrary(){const games=visibleGames();$("#count").textContent=games.length+" of "+state.games.length+" games";$("#total-stat").textContent=state.games.length;$("#game-grid").innerHTML=games.length?games.map(game=>'<button class="game-card '+(state.selected?.id===game.id?"selected":"")+'" type="button" data-game="'+escapeHTML(game.id)+'" aria-label="Play '+escapeHTML(game.title)+'" aria-pressed="'+(state.selected?.id===game.id)+'"><div class="thumb"><video src="./thumbs/'+encodeURIComponent(game.id)+'.mp4" autoplay muted loop playsinline preload="metadata" aria-hidden="true" width="320" height="180"></video><span class="thumb-tag">'+escapeHTML(game.category.toUpperCase())+'</span></div><div class="card-info"><div class="card-title">'+escapeHTML(game.title)+'</div><div class="card-sub">'+escapeHTML(game.creator)+'</div></div></button>').join(""):'<div class="empty">No games match that search. Try another title or category.</div>';}
@@ -53,7 +134,7 @@ function openDestination(){const game=state.selected;if(!game)return "";return l
 function chooseGame(game){if(!game)return;state.selected=game;const generation=++state.generation;clearLoadTimer();const tip=loadingTips[Math.floor(Math.random()*loadingTips.length)];$("#loading-tip-text").textContent=tip;$("#selected-name").textContent=game.title;$("#creator").textContent=game.creator||"Unknown";$("#license").textContent=game.license||"Not listed";$("#category").textContent=game.category||"—";$("#source").innerHTML=game.source?'<a href="'+escapeHTML(game.source)+'" target="_blank" rel="noopener noreferrer">View source repository ↗</a>':game.officialUrl?'<a href="'+escapeHTML(game.officialUrl)+'" target="_blank" rel="noopener noreferrer">Visit game website ↗</a>':"Not available";
 const previous=$("#game-frame");const frame=document.createElement("iframe");frame.id="game-frame";frame.title=game.title+" game";frame.allow="autoplay; fullscreen; gamepad";frame.referrerPolicy="strict-origin-when-cross-origin";frame.loading="eager";previous.replaceWith(frame);
 const url=localUrl(game);const canPlayLocally=!!url&&game.verified&&(game.mode==="local"||game.mode==="bundled")&&game.embeddable;
-if(canPlayLocally){setStatus("Loading "+game.title+"…","Starting the local game. Large games may need a little longer on the first launch.");frame.addEventListener("load",()=>{if(generation!==state.generation)return;clearLoadTimer();$("#status").hidden=true;});frame.addEventListener("error",()=>{if(generation!==state.generation)return;clearLoadTimer();setStatus("This game did not start","Try opening it in a separate tab. The game may have a missing asset.",{spinner:false,retry:true});});frame.src=url;state.timeout=setTimeout(()=>{if(generation!==state.generation)return;setStatus("Still loading?","The game has not finished starting. You can retry or open it in a separate tab.",{spinner:false,retry:true});},35000);}
+if(canPlayLocally){setStatus("Loading "+game.title+"…","Starting the local game. Large games may need a little longer on the first launch.");frame.addEventListener("load",()=>{if(generation!==state.generation)return;clearLoadTimer();$("#status").hidden=true;});frame.addEventListener("error",()=>{if(generation!==state.generation)return;clearLoadTimer();setStatus("This game did not start","Try opening it in a separate tab. The game may have a missing asset.",{spinner:false,retry:true});});(async()=>{if(accountState.user)await restoreCloudGameSave(game);if(generation!==state.generation)return;frame.src=url;})();state.timeout=setTimeout(()=>{if(generation!==state.generation)return;setStatus("Still loading?","The game has not finished starting. You can retry or open it in a separate tab.",{spinner:false,retry:true});},35000);}
 else{frame.src="about:blank";frame.hidden=true;if(game.mode==="external"&&game.verified&&game.officialUrl)setStatus("Ready to play","This game is hosted on its own website. Select Open tab ↗ to launch it.",{spinner:false});else setStatus("Not ready to play here","This entry has not passed the checks needed for safe local hosting.",{spinner:false});}
 const related=state.games.filter(item=>item.id!==game.id&&item.category===game.category).slice(0,5);$("#similar-list").innerHTML=related.length?related.map(item=>'<button type="button" data-similar="'+escapeHTML(item.id)+'">'+escapeHTML(item.title)+'</button>').join(""):'<span class="muted">Explore the library for more games.</span>';renderLibrary();}
 function renderCredits(){$("#credits-grid").innerHTML=state.games.map(game=>'<article class="credit"><strong>'+escapeHTML(game.title)+'</strong><small>Creator: '+escapeHTML(game.creator)+'<br>Licence: '+escapeHTML(game.license)+'<br>'+(game.source?'<a href="'+escapeHTML(game.source)+'" target="_blank" rel="noopener noreferrer">Source repository ↗</a>':game.officialUrl?'<a href="'+escapeHTML(game.officialUrl)+'" target="_blank" rel="noopener noreferrer">Game website ↗</a>':"Source not verified")+'</small></article>').join("");}
