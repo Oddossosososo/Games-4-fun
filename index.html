@@ -1,146 +1,70 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#090b12"><meta name="description" content="Afterglow Arcade — a curated collection of browser games.">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080a12">
+<meta name="description" content="Afterglow Arcade — discover and play a hand-picked collection of browser games.">
 <title>Afterglow Arcade</title>
 <style>
-:root{color-scheme:dark;--bg:#090b12;--panel:#111725;--panel2:#171f30;--line:#283249;--muted:#9aa6bd;--text:#f4f6ff;--violet:#a995ff;--cyan:#70e5df}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 80% -10%,#30244f 0,transparent 38%),var(--bg);color:var(--text);font:14px/1.5 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh}button,input{font:inherit}button{cursor:pointer}.shell{width:min(1440px,calc(100% - 36px));margin:auto}
-header{height:70px;border-bottom:1px solid #ffffff12;background:#090b12df;backdrop-filter:blur(16px);position:sticky;top:0;z-index:5}.nav{height:100%;display:flex;align-items:center;justify-content:space-between}.brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:20px;letter-spacing:-.05em}.brand b{color:var(--violet)}.brand-mark{width:34px;height:34px;display:grid;place-items:center;border:1px solid #a995ff66;border-radius:11px;background:linear-gradient(145deg,#a995ff2b,#70e5df12);box-shadow:0 0 22px #a995ff24}.brand-mark svg{width:23px;height:23px;display:block;filter:drop-shadow(0 0 5px #a995ff88)}.brand-word{white-space:nowrap}.sub{color:var(--muted);font-size:12px}
-.hero{padding:34px 0 24px}.eyebrow{color:var(--cyan);font-size:10px;letter-spacing:.18em;font-weight:900}.hero h1{font-size:clamp(28px,4vw,44px);letter-spacing:-.06em;margin:8px 0 5px}.hero p{margin:0;color:var(--muted)}
-.toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;border-top:1px solid #ffffff12;padding:16px 0}.filters{display:flex;gap:7px;flex-wrap:wrap}.filter{background:#111725;border:1px solid var(--line);color:#b6c0d2;border-radius:99px;padding:7px 12px;font-size:12px}.filter.active{background:#a995ff20;border-color:#a995ff88;color:#eee9ff}.search input{width:min(270px,80vw);background:#111725;border:1px solid var(--line);border-radius:10px;padding:9px 12px;color:white;outline:none}.search input:focus{border-color:var(--violet)}
-.layout{display:grid;grid-template-columns:minmax(330px,.9fr) minmax(0,1.45fr);gap:18px;align-items:start;padding-bottom:38px}.library,.player-panel{background:#0f1521;border:1px solid var(--line);border-radius:18px;overflow:hidden}.panel-head{display:flex;align-items:center;justify-content:space-between;padding:14px 15px;border-bottom:1px solid #ffffff12}.panel-head h2{font-size:14px;margin:0}.count{font-size:11px;color:var(--muted)}
-.game-grid{padding:12px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;max-height:690px;overflow:auto}.game-tile{padding:0;text-align:left;border:1px solid #2a344a;border-radius:13px;overflow:hidden;background:#151d2c;color:var(--text);min-width:0;transition:.18s}.game-tile:hover{transform:translateY(-2px);border-color:#8e7be0}.thumb{height:104px;display:grid;place-items:center;position:relative;overflow:hidden;background:radial-gradient(circle at 50% 40%,var(--glow),var(--shade) 72%)}.thumb:before,.thumb:after{display:none}.thumb .thumb-icon{font-size:48px;line-height:1;filter:drop-shadow(0 8px 14px #0008);transform:translateY(5px)}.thumb{isolation:isolate}.thumb:after{content:"";display:block;position:absolute;width:105px;height:105px;border:1px solid #ffffff30;border-radius:28px;transform:rotate(35deg);background:linear-gradient(135deg,#ffffff12,transparent);box-shadow:0 0 35px var(--glow);z-index:-1}.thumb small{position:absolute;top:8px;left:9px;z-index:2;color:#fff;background:#080b12b8;padding:3px 6px;border-radius:5px;font-size:8px;font-weight:900;letter-spacing:.1em}.player-badge{color:#101522;background:linear-gradient(100deg,#ffe08a,#ffb4d0);padding:3px 7px;border-radius:6px;font-size:9px;font-weight:900;margin-left:7px;vertical-align:middle}.tile-info{padding:9px 10px}.tile-title{font-size:12px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tile-cat{font-size:10px;color:var(--muted)}
-.player-panel{position:sticky;top:84px}.player-titlebar{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}.selected-name{font-size:18px;font-weight:850;letter-spacing:-.03em}.player-actions{display:flex;gap:7px;flex-wrap:wrap}.action{border:1px solid var(--line);border-radius:9px;background:#182133;color:#eef0fa;padding:8px 11px;font-size:11px}.action.primary{background:linear-gradient(100deg,#a995ff,#70e5df);border:0;color:#101522;font-weight:900}.level-link-bar{display:flex;gap:8px;padding:10px 14px;background:#111725;border-top:1px solid #ffffff12}.level-link-bar input{flex:1;min-width:0;background:#090f1a;border:1px solid var(--line);border-radius:9px;padding:9px 11px;color:var(--text);outline:none}.level-link-bar input:focus{border-color:var(--violet)}.frame-wrap{height:min(78vh,780px);min-height:480px;background:#05070d;border-top:1px solid #ffffff12;border-bottom:1px solid #ffffff12;position:relative}.frame-wrap iframe{width:100%;height:100%;border:0;background:#080b13;display:block}.loading-note{position:absolute;inset:0;display:grid;place-content:center;gap:12px;text-align:center;padding:24px;color:#c5cce0;background:#080b13;z-index:2}.loading-note[hidden]{display:none}.loading-spinner{width:30px;height:30px;border:3px solid #ffffff25;border-top-color:var(--violet);border-radius:50%;margin:auto;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.loading-note small{color:var(--muted)}.external-note{height:100%;min-height:320px;display:grid;place-content:center;text-align:center;padding:28px;color:var(--muted);font-size:14px;line-height:1.7}.external-note[hidden]{display:none}.game-details{padding:14px 16px;display:grid;grid-template-columns:1fr 1fr;gap:16px}.detail-label{color:var(--muted);font-size:9px;text-transform:uppercase;letter-spacing:.13em;font-weight:900}.detail-value{font-size:12px;margin-top:4px}.detail-value a,.more-games button{color:#c9c0ff;text-decoration:none}.detail-value a:hover{text-decoration:underline}.more-games{grid-column:1/-1;border-top:1px solid #ffffff12;padding-top:12px}.more-games-list{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}.more-games button{border:1px solid #3a3457;border-radius:99px;background:#a995ff12;padding:5px 9px;font-size:10px}.empty{grid-column:1/-1;padding:30px;text-align:center;color:var(--muted)}
-footer{border-top:1px solid #ffffff12;color:var(--muted);padding:20px 0 30px;font-size:11px}.foot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}.foot button{border:0;background:none;color:#c9c0ff;text-decoration:underline;padding:0}
-.credits{position:fixed;inset:0;background:#05070ded;z-index:30;display:none;overflow:auto;padding:25px}.credits.open{display:block}.credits-box{max-width:820px;margin:5vh auto;background:#111725;border:1px solid var(--line);border-radius:18px;padding:22px}.credits-head{display:flex;justify-content:space-between;align-items:center}.credits h2{margin:0}.credits-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:18px}.credit{border:1px solid var(--line);border-radius:10px;padding:11px}.credit strong{display:block}.credit small{color:var(--muted)}.credit a{color:#c9c0ff}
-#school-disclaimer[hidden]{display:none}
-@media(max-width:850px){.layout{grid-template-columns:1fr}.player-panel{position:static;grid-row:1}.game-grid{max-height:none;grid-template-columns:repeat(3,minmax(0,1fr))}.frame-wrap{height:68vh;min-height:420px}}
-@media(max-width:560px){.shell{width:calc(100% - 22px)}.sub{display:none}.hero{padding:26px 0 18px}.toolbar{align-items:stretch}.search input{width:100%}.search{width:100%}.game-grid{grid-template-columns:repeat(2,minmax(0,1fr));padding:9px;gap:8px}.thumb{height:88px}.thumb .emoji{font-size:34px}.layout{gap:12px}.frame-wrap{height:62vh;min-height:380px}.game-details{grid-template-columns:1fr 1fr}.credits-list{grid-template-columns:1fr}}
+:root{color-scheme:dark;--bg:#080a12;--surface:#101522;--surface2:#151d2d;--line:#273149;--muted:#9aa7bf;--text:#f5f6ff;--violet:#a995ff;--cyan:#70e5df;--radius:18px}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 82% -8%,#30234e 0,transparent 34%),radial-gradient(ellipse at 0 45%,#142b3b66 0,transparent 32%),var(--bg);color:var(--text);font:14px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif}button,input{font:inherit}button{color:inherit;cursor:pointer}a{color:inherit}.shell{width:min(1480px,calc(100% - 40px));margin:auto}
+.topbar{height:72px;position:sticky;top:0;z-index:10;background:#080a12d9;border-bottom:1px solid #ffffff12;backdrop-filter:blur(18px)}.nav{height:100%;display:flex;align-items:center;justify-content:space-between}.brand{display:flex;align-items:center;gap:11px;font-size:21px;font-weight:950;letter-spacing:-.055em}.brand-mark{width:36px;height:36px;display:grid;place-items:center;border:1px solid #a995ff66;border-radius:12px;background:linear-gradient(145deg,#a995ff2b,#70e5df12);box-shadow:0 0 24px #a995ff25}.brand-mark svg{width:24px}.brand b{color:var(--violet)}.nav-right{display:flex;align-items:center;gap:9px;color:var(--muted);font-size:12px}.live-dot{width:7px;height:7px;border-radius:50%;background:#72e4b1;box-shadow:0 0 10px #72e4b1}
+.hero{padding:42px 0 28px;display:flex;align-items:end;justify-content:space-between;gap:20px}.eyebrow{color:var(--cyan);font-size:10px;font-weight:900;letter-spacing:.2em}.hero h1{font-size:clamp(32px,5vw,54px);line-height:1.02;letter-spacing:-.065em;margin:10px 0 9px}.hero p{color:var(--muted);margin:0;max-width:540px}.hero-stats{display:flex;gap:10px}.stat{padding:12px 16px;background:#111827a8;border:1px solid var(--line);border-radius:13px;min-width:92px}.stat strong{display:block;font-size:20px;line-height:1.1}.stat span{color:var(--muted);font-size:10px}
+.controls{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 0;border-top:1px solid #ffffff13;flex-wrap:wrap}.filters{display:flex;gap:7px;flex-wrap:wrap}.chip{border:1px solid var(--line);background:#111725;color:#b7c2d7;padding:8px 12px;border-radius:99px;font-size:11px;transition:.18s}.chip:hover{border-color:#8174c4;color:#fff}.chip.active{background:#a995ff20;border-color:#a995ff88;color:#eeeaff}.search-wrap{position:relative}.search-wrap svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#8591a8;width:16px}.search{width:min(270px,76vw);background:#111725;border:1px solid var(--line);border-radius:11px;padding:10px 12px 10px 36px;color:white;outline:none}.search:focus{border-color:var(--violet);box-shadow:0 0 0 3px #a995ff20}.content{display:grid;grid-template-columns:minmax(330px,.9fr) minmax(0,1.4fr);gap:18px;align-items:start;padding-bottom:42px}
+.panel{background:#0e1420eF;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:0 18px 50px #0002}.panel-head{display:flex;justify-content:space-between;align-items:center;padding:15px 17px;border-bottom:1px solid #ffffff12}.panel-head h2{font-size:13px;margin:0}.muted{color:var(--muted)}.count{font-size:11px;color:var(--muted)}.game-grid{padding:12px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;max-height:740px;overflow:auto;scrollbar-color:#34405a transparent;scrollbar-width:thin}.game-card{padding:0;min-width:0;text-align:left;background:#151d2b;border:1px solid #29344b;border-radius:14px;overflow:hidden;transition:transform .18s,border-color .18s,box-shadow .18s}.game-card:hover{transform:translateY(-3px);border-color:#8174c4;box-shadow:0 10px 24px #0004}.game-card.selected{border-color:#a995ff;box-shadow:0 0 0 1px #a995ff55,0 10px 24px #0004}.thumb{position:relative;aspect-ratio:16/9;background:#101522;overflow:hidden}.thumb img{display:block;width:100%;height:100%;object-fit:cover}.thumb:after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 55%,#080a1280)}.thumb-tag{position:absolute;z-index:1;top:8px;left:8px;padding:4px 7px;border:1px solid #ffffff25;border-radius:6px;background:#080a12b8;color:#fff;font-size:8px;font-weight:900;letter-spacing:.12em}.card-info{padding:10px 11px 11px}.card-title{font-size:12px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.card-sub{font-size:10px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.empty{grid-column:1/-1;padding:34px 15px;text-align:center;color:var(--muted)}
+.player{position:sticky;top:88px}.player-head{padding:15px 17px;display:flex;align-items:center;justify-content:space-between;gap:12px}.player-kicker{font-size:9px;letter-spacing:.16em;font-weight:900;color:var(--cyan)}.selected-title{font-size:19px;font-weight:900;letter-spacing:-.04em;margin-top:2px}.actions{display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end}.action{border:1px solid var(--line);border-radius:9px;background:#192236;padding:8px 11px;font-size:11px;white-space:nowrap}.action:hover{border-color:#8174c4}.action.primary{border:0;background:linear-gradient(105deg,#b29eff,#72e8df);color:#101522;font-weight:900}.stage{height:min(76vh,760px);min-height:430px;position:relative;background:#05070d;border-block:1px solid #ffffff12}.stage iframe{width:100%;height:100%;display:block;border:0;background:#080b13}.stage iframe[hidden]{display:none}.status{position:absolute;inset:0;z-index:2;display:grid;align-content:center;justify-items:center;gap:12px;text-align:center;padding:26px;background:#080b13;color:#e4e8f7}.status[hidden]{display:none}.spinner{width:31px;height:31px;border:3px solid #ffffff25;border-top-color:var(--violet);border-radius:50%;animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.status small{max-width:320px;color:var(--muted)}.status button{margin-top:4px}.details{padding:14px 17px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.detail-label{color:var(--muted);font-size:9px;font-weight:900;letter-spacing:.13em;text-transform:uppercase}.detail-value{font-size:12px;margin-top:4px;overflow-wrap:anywhere}.detail-value a{color:#c7bcff;text-decoration:none}.detail-value a:hover{text-decoration:underline}.similar{grid-column:1/-1;border-top:1px solid #ffffff12;padding-top:12px}.similar-list{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}.similar-list button{border:1px solid #40395f;background:#a995ff12;color:#d7ceff;border-radius:99px;padding:5px 9px;font-size:10px}
+footer{border-top:1px solid #ffffff12;color:var(--muted);font-size:11px;padding:21px 0 30px}.footer-row{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}.footer-row button{border:0;background:none;color:#c9c0ff;text-decoration:underline;padding:0}.modal{position:fixed;inset:0;z-index:30;display:none;overflow:auto;padding:24px;background:#05070ded}.modal.open{display:block}.modal-box{max-width:850px;margin:5vh auto;background:#111725;border:1px solid var(--line);border-radius:18px;padding:22px}.modal-head{display:flex;justify-content:space-between;align-items:center;gap:12px}.modal-head h2{margin:0;font-size:20px}.credits-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:18px}.credit{border:1px solid var(--line);border-radius:11px;padding:11px}.credit strong{display:block}.credit small{color:var(--muted);line-height:1.7}.credit a{color:#c9c0ff}
+@media(max-width:900px){.content{grid-template-columns:1fr}.player{position:static;grid-row:1}.game-grid{max-height:none;grid-template-columns:repeat(3,minmax(0,1fr))}.stage{height:65vh;min-height:390px}.hero{align-items:start;flex-direction:column}.hero-stats{display:none}}
+@media(max-width:600px){.shell{width:calc(100% - 22px)}.topbar{height:62px}.brand{font-size:19px}.nav-right{font-size:10px}.hero{padding:29px 0 21px}.hero h1{font-size:36px}.controls{align-items:stretch}.filters{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}.chip{white-space:nowrap}.search-wrap,.search{width:100%}.game-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:9px}.player-head{align-items:flex-start}.selected-title{font-size:17px}.actions{max-width:135px}.action{padding:8px 9px}.stage{height:60vh;min-height:360px}.details{padding:13px}.credits-grid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 </style>
 </head>
 <body>
-<header><div class="shell nav"><div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16 3.5 28 10.4v11.2L16 28.5 4 21.6V10.4L16 3.5Z" stroke="#B9A8FF" stroke-width="1.7"/><path d="m16 8 7 4v8l-7 4-7-4v-8l7-4Z" stroke="#70E5DF" stroke-width="1.7"/><path d="m16 12 3.5 2v4L16 20l-3.5-2v-4l3.5-2Z" fill="#D9D0FF"/></svg></span><span class="brand-word">afterglow<b>.</b></span></div><div class="sub">A little break, brilliantly played.</div></div></header>
+<header class="topbar"><div class="shell nav"><div class="brand"><span class="brand-mark" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><path d="M16 3.5 28 10.4v11.2L16 28.5 4 21.6V10.4L16 3.5Z" stroke="#B9A8FF" stroke-width="1.7"/><path d="m16 8 7 4v8l-7 4-7-4v-8l7-4Z" stroke="#70E5DF" stroke-width="1.7"/><path d="m16 12 3.5 2v4L16 20l-3.5-2v-4l3.5-2Z" fill="#D9D0FF"/></svg></span><span>afterglow<b>.</b></span></div><div class="nav-right"><span class="live-dot"></span> YOUR GAME BREAK STARTS HERE</div></div></header>
 <main class="shell">
-<section class="hero"><div class="eyebrow">THE INDIE GAME CORNER</div><h1>Pick a game. Jump in.</h1><p>Choose a thumbnail from the library. Your game opens in the player beside it.</p></section>
-<section class="toolbar"><div class="filters" id="filters">
-<button class="filter active" data-cat="All">All</button><button class="filter" data-cat="Rhythm">Rhythm</button><button class="filter" data-cat="Puzzle">Puzzle</button><button class="filter" data-cat="Arcade">Arcade</button><button class="filter" data-cat="Racing">Racing</button><button class="filter" data-cat="Idle">Idle</button><button class="filter" data-cat="Casual">Casual</button><button class="filter" data-cat="Board">Board</button><button class="filter" data-cat="Sports">Sports</button><button class="filter" data-cat="Word &amp; Quiz">Word &amp; Quiz</button><button class="filter" data-cat="3D">3D</button>
-</div><label class="search"><input id="search" type="search" placeholder="Search games…" aria-label="Search games"></label></section>
-<section class="layout">
-<aside class="library"><div class="panel-head"><h2>Game library</h2><span class="count" id="count">21 games</span></div><div class="game-grid" id="game-grid"></div></aside>
-<section class="player-panel" aria-label="Selected game">
-<div class="player-titlebar"><div><div class="detail-label">NOW PLAYING</div><div class="selected-name" id="selected-name">Choose a game</div></div><div class="player-actions"><button class="action" id="open-tab" type="button">Open tab ↗</button><button class="action primary" id="fullscreen" type="button">⛶ Fullscreen</button></div></div>
-<div hidden aria-hidden="true"><input id="level-url" type="url"><button id="load-level" type="button">Load in player</button></div>
-<div class="frame-wrap" id="frame-wrap"><div class="loading-note" id="loading-note" hidden><span class="loading-spinner" aria-hidden="true"></span><strong id="loading-title">Loading game…</strong><small id="loading-detail">Large games can take a little longer on the first launch.</small></div><iframe id="game-frame" title="Selected browser game" allow="autoplay; fullscreen; gamepad" referrerpolicy="strict-origin-when-cross-origin" src="about:blank"></iframe><div class="external-note" id="external-note" hidden>This game is hosted on its official website and cannot be embedded here. Select <strong>Open tab ↗</strong> to play.</div></div>
-<div class="game-details">
-<div><div class="detail-label">Creator</div><div class="detail-value" id="creator">Select a game</div></div>
-<div><div class="detail-label">License</div><div class="detail-value" id="license">—</div></div>
-<div><div class="detail-label">Source</div><div class="detail-value" id="source">—</div></div>
-<div><div class="detail-label">Category</div><div class="detail-value" id="category">—</div></div>
-<div class="more-games"><div class="detail-label">Other games</div><div class="more-games-list" id="other-games"></div></div>
-</div>
-</section>
-</section>
+<section class="hero"><div><div class="eyebrow">THE ARCADE · YOUR NEXT FAVOURITE GAME</div><h1>Find your next<br>little obsession.</h1><p>A hand-picked collection of browser games. Browse the library, choose a game and jump straight in.</p></div><div class="hero-stats"><div class="stat"><strong id="total-stat">—</strong><span>IN THE LIBRARY</span></div><div class="stat"><strong>∞</strong><span>WAYS TO PLAY</span></div></div></section>
+<section class="controls"><div class="filters" id="filters" aria-label="Filter games"><button class="chip active" data-cat="All">Everything</button></div><label class="search-wrap"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="10.8" cy="10.8" r="6.8"/><path d="m16 16 5 5"/></svg><input class="search" id="search" type="search" placeholder="Search games or categories…" aria-label="Search games"></label></section>
+<section class="content">
+<aside class="panel"><div class="panel-head"><h2>Explore the library</h2><span class="count" id="count">Loading…</span></div><div class="game-grid" id="game-grid" aria-live="polite"></div></aside>
+<section class="panel player" aria-label="Game player"><div class="player-head"><div><div class="player-kicker">NOW PLAYING</div><div class="selected-title" id="selected-name">Choose a game</div></div><div class="actions"><button class="action" id="open-tab" type="button">Open tab ↗</button><button class="action primary" id="fullscreen" type="button">⛶ Fullscreen</button></div></div>
+<div class="stage" id="stage"><div class="status" id="status" hidden><span class="spinner" id="spinner"></span><strong id="status-title">Loading game…</strong><small id="status-detail">Preparing the game. The first load may take a moment.</small><button class="action" id="retry" type="button" hidden>Try again</button></div><iframe id="game-frame" title="Selected browser game" allow="autoplay; fullscreen; gamepad" referrerpolicy="strict-origin-when-cross-origin" src="about:blank"></iframe></div>
+<div class="details"><div><div class="detail-label">Creator</div><div class="detail-value" id="creator">Choose a game</div></div><div><div class="detail-label">Licence</div><div class="detail-value" id="license">—</div></div><div><div class="detail-label">Source</div><div class="detail-value" id="source">—</div></div><div><div class="detail-label">Category</div><div class="detail-value" id="category">—</div></div><div class="similar"><div class="detail-label">You might also like</div><div class="similar-list" id="similar-list"></div></div></div>
+</section></section>
 </main>
-<footer><div class="shell foot"><span><strong>Afterglow Arcade</strong> · A curated collection of browser games.</span><span><button id="show-credits" type="button">Credits &amp; Open Source</button> · <span id="school-disclaimer">Remember to enjoy games during free time.</span></span></div></footer>
-<section class="credits" id="credits" role="dialog" aria-modal="true" aria-label="Credits and open source"><div class="credits-box"><div class="credits-head"><h2>Credits &amp; Open Source</h2><button class="action" id="close-credits">Close ✕</button></div><p class="sub">Game names, creators, source repositories and licence information. Games are loaded from locally cloned repositories only when their licence and playable entrypoint are verified.</p><div class="credits-list" id="credits-list"></div></div></section>
+<footer><div class="shell footer-row"><span><strong>Afterglow Arcade</strong> · Made for the joy of playing.</span><span><button id="show-credits" type="button">Credits & open source</button></span></div></footer>
+<section class="modal" id="credits" role="dialog" aria-modal="true" aria-label="Credits and open source"><div class="modal-box"><div class="modal-head"><h2>Credits & open source</h2><button class="action" id="close-credits" type="button">Close ✕</button></div><p class="muted">Game creators, source repositories and licence details. Local copies are included only when their licence and entrypoint have been verified.</p><div class="credits-grid" id="credits-grid"></div></div></section>
 <script>
-let localSources = {};
-let GAMES = [];
-let selectedRuntimeUrl = "";
-let selected = null;
-let activeCat = "All";
-let gameLoadTimer = null;
-let frameGeneration = 0;
-/* Catalogue is loaded from games.json. */
-const $=s=>document.querySelector(s);
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
-function render(){
- const q=$("#search").value.trim().toLowerCase();
- const list=GAMES.filter(g=>(activeCat==="All"||g.category===activeCat)&&[g.title,g.creator,g.category,g.desc].join(" ").toLowerCase().includes(q));
- $("#count").textContent=list.length+" / "+GAMES.length+" games";
- $("#game-grid").innerHTML=list.length?list.map(g=>'<button class="game-tile '+(selected&&selected.id===g.id?'selected':'')+'" type="button" data-id="'+esc(g.id)+'" aria-label="Play '+esc(g.title)+'"><div class="thumb" style="--glow:'+g.glow+';--shade:'+g.shade+'"><small>'+esc(g.category.toUpperCase())+'</small><span class="thumb-icon" aria-hidden="true">'+esc(g.emoji||"🎮")+'</span></div><div class="tile-info"><div class="tile-title">'+esc(g.title)+(g.top15?' <span class="player-badge">TOP 15 PLAYER</span>':'')+'</div><div class="tile-cat">'+esc(g.creator)+'</div></div></button>').join(""):'<div class="empty">No matching games.</div>';
-}
-function choose(g){
- selected=g;$("#selected-name").textContent=g.title;$("#creator").textContent=g.creator;$("#license").textContent=g.license;$("#category").textContent=g.category;$("#source").innerHTML=g.source?'<a href="'+esc(g.source)+'" target="_blank" rel="noopener">GitHub repository ↗</a>':'No verified Git repository';
- const note=$("#external-note"),loading=$("#loading-note");
- const generation=++frameGeneration;
- if(gameLoadTimer){clearTimeout(gameLoadTimer);gameLoadTimer=null;}
- loading.hidden=true;
- selectedRuntimeUrl=localSources[g.id]||"";
- const previousFrame=$("#game-frame");
- const frame=document.createElement("iframe");
- frame.id="game-frame";
- frame.title="Selected browser game";
- frame.allow="autoplay; fullscreen; gamepad";
- frame.referrerPolicy="strict-origin-when-cross-origin";
- previousFrame.replaceWith(frame);
- if(selectedRuntimeUrl && g.verified && g.mode === "local" && g.embeddable){
-   note.hidden=true;frame.hidden=false;loading.hidden=false;
-   $("#loading-title").textContent="Loading "+g.title+"…";
-   $("#loading-detail").textContent="Large games may take a little longer on their first launch.";
-   const expectedUrl=new URL(selectedRuntimeUrl,document.baseURI).href;
-   frame.addEventListener("load",()=>{
-     if(generation!==frameGeneration)return;
-     try{if(frame.contentWindow.location.href!==expectedUrl)return;}catch(_){return;}
-     if(gameLoadTimer){clearTimeout(gameLoadTimer);gameLoadTimer=null;}
-     loading.hidden=true;
-   });
-   frame.src=selectedRuntimeUrl;
-   gameLoadTimer=setTimeout(()=>{
-     if(generation!==frameGeneration)return;
-     loading.hidden=false;
-     $("#loading-title").textContent=g.title+" is taking longer than expected";
-     $("#loading-detail").textContent="Try Open tab ↗. If it still fails, the game may have a missing asset.";
-   },g.id==="hexgl"?60000:30000);
- }
- else{
-   frame.hidden=true;frame.src="about:blank";loading.hidden=true;note.hidden=false;
-   note.textContent=g.mode==="external" && g.officialUrl
-     ?"This game is available on its official website. Select Open tab ↗ to play."
-     :"This game has not passed hosting verification yet, so it is unavailable here.";
- }
- $("#other-games").innerHTML=GAMES.filter(x=>x.id!==g.id).map(x=>'<button type="button" data-other="'+esc(x.id)+'">'+esc(x.title)+'</button>').join("");
- render();
-}
-$("#game-grid").addEventListener("click",e=>{const b=e.target.closest("[data-id]");if(b){const g=GAMES.find(x=>x.id===b.dataset.id);if(g)choose(g)}});
-$("#other-games").addEventListener("click",e=>{const b=e.target.closest("[data-other]");if(b){const g=GAMES.find(x=>x.id===b.dataset.other);if(g)choose(g)}});
-$("#filters").addEventListener("click",e=>{const b=e.target.closest("[data-cat]");if(!b)return;activeCat=b.dataset.cat;document.querySelectorAll(".filter").forEach(x=>x.classList.toggle("active",x===b));render()});
-$("#search").addEventListener("input",render);
-function loadLevelUrl(){alert("Custom external game URLs are disabled in clone-only mode.");}
-$("#open-tab").addEventListener("click",()=>{
- const destination=selectedRuntimeUrl || (selected && selected.mode==="external" && selected.verified ? selected.officialUrl : "");
- if(!destination){alert("This game is not available until its hosting is verified.");return;}
- window.open(new URL(destination,document.baseURI).href,"_blank","noopener,noreferrer");
-});
-$("#load-level").addEventListener("click",loadLevelUrl);$("#level-url").addEventListener("keydown",e=>{if(e.key==="Enter")loadLevelUrl()});
-$("#fullscreen").addEventListener("click",async()=>{const f=$("#frame-wrap");try{if(!document.fullscreenElement)await f.requestFullscreen();else await document.exitFullscreen()}catch(e){alert("Fullscreen is unavailable in this browser.")}});
-$("#show-credits").onclick=()=>$("#credits").classList.add("open");$("#close-credits").onclick=()=>$("#credits").classList.remove("open");$("#credits").addEventListener("click",e=>{if(e.target===$("#credits"))$("#credits").classList.remove("open")});
-function renderCredits(){
- $("#credits-list").innerHTML=GAMES.map(g=>'<div class="credit"><strong>'+esc(g.title)+'</strong><small>Creator: '+esc(g.creator)+'<br>Licence: '+esc(g.license)+'<br>'+(g.source?'<a href="'+esc(g.source)+'" target="_blank" rel="noopener">Source repository ↗</a>':(g.officialUrl?'<a href="'+esc(g.officialUrl)+'" target="_blank" rel="noopener">Official website ↗</a>':'Source not verified'))+'</small></div>').join("");
-}
-function updateSchoolDisclaimer(){const d=new Date(),m=d.getHours()*60+d.getMinutes();$("#school-disclaimer").hidden=!(m>=520&&m<900)}
-updateSchoolDisclaimer();setInterval(updateSchoolDisclaimer,30000);document.addEventListener("visibilitychange",updateSchoolDisclaimer);
-async function initArcade(){
- try{
-   const [manifestResponse,sourcesResponse]=await Promise.all([fetch("./games.json"),fetch("./GAME-SOURCES.json")]);
-   if(!manifestResponse.ok) throw new Error("games.json could not be loaded");
-   const manifest=await manifestResponse.json();
-   GAMES=Array.isArray(manifest.games)?manifest.games:[];
-   localSources=sourcesResponse.ok?await sourcesResponse.json():{};
-   renderCredits();
-   render();
-   if(GAMES.length) choose(GAMES.find(g=>g.id==="clumsy-bird")||GAMES[0]);
-   else throw new Error("The game catalogue is empty");
- }catch(error){
-   $("#selected-name").textContent="Arcade unavailable";
-   $("#external-note").hidden=false;
-   $("#external-note").textContent="The game catalogue could not be loaded. Please refresh the page.";
-   $("#game-frame").hidden=true;
-   console.error("Afterglow startup failed:",error);
- }
-}
-initArcade();
+"use strict";
+const $=selector=>document.querySelector(selector);
+const state={games:[],sources:{},selected:null,category:"All",generation:0,timeout:null,loaded:false};
+const escapeHTML=value=>String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
+const categories=games=>["All",...new Set(games.map(game=>game.category).filter(Boolean))];
+function renderFilters(){ $("#filters").innerHTML=categories(state.games).map(category=>'<button class="chip '+(state.category===category?"active":"")+'" data-cat="'+escapeHTML(category)+'">'+(category==="All"?"Everything":escapeHTML(category))+"</button>").join(""); }
+function visibleGames(){const query=$("#search").value.trim().toLowerCase();return state.games.filter(game=>(state.category==="All"||game.category===state.category)&&[game.title,game.creator,game.category,game.desc].join(" ").toLowerCase().includes(query));}
+function renderLibrary(){const games=visibleGames();$("#count").textContent=games.length+" of "+state.games.length+" games";$("#total-stat").textContent=state.games.length;$("#game-grid").innerHTML=games.length?games.map(game=>'<button class="game-card '+(state.selected?.id===game.id?"selected":"")+'" type="button" data-game="'+escapeHTML(game.id)+'" aria-label="Play '+escapeHTML(game.title)+'" aria-pressed="'+(state.selected?.id===game.id)+'"><div class="thumb"><img src="./thumbs/'+encodeURIComponent(game.id)+'.gif" alt="" loading="lazy" decoding="async" width="320" height="180"><span class="thumb-tag">'+escapeHTML(game.category.toUpperCase())+'</span></div><div class="card-info"><div class="card-title">'+escapeHTML(game.title)+'</div><div class="card-sub">'+escapeHTML(game.creator)+'</div></div></button>').join(""):'<div class="empty">No games match that search. Try another title or category.</div>';}
+function setStatus(title,detail,{spinner=true,retry=false}={}){$("#status").hidden=false;$("#status-title").textContent=title;$("#status-detail").textContent=detail;$("#spinner").hidden=!spinner;$("#retry").hidden=!retry;}
+function clearLoadTimer(){if(state.timeout){clearTimeout(state.timeout);state.timeout=null;}}
+function localUrl(game){return state.sources[game.id]||"";}
+function openDestination(){const game=state.selected;if(!game)return "";return localUrl(game)||(game.mode==="external"&&game.verified?game.officialUrl:"");}
+function chooseGame(game){if(!game)return;state.selected=game;const generation=++state.generation;clearLoadTimer();$("#selected-name").textContent=game.title;$("#creator").textContent=game.creator||"Unknown";$("#license").textContent=game.license||"Not listed";$("#category").textContent=game.category||"—";$("#source").innerHTML=game.source?'<a href="'+escapeHTML(game.source)+'" target="_blank" rel="noopener noreferrer">View source repository ↗</a>':game.officialUrl?'<a href="'+escapeHTML(game.officialUrl)+'" target="_blank" rel="noopener noreferrer">Visit game website ↗</a>':"Not available";
+const previous=$("#game-frame");const frame=document.createElement("iframe");frame.id="game-frame";frame.title=game.title+" game";frame.allow="autoplay; fullscreen; gamepad";frame.referrerPolicy="strict-origin-when-cross-origin";frame.loading="eager";previous.replaceWith(frame);
+const url=localUrl(game);const canPlayLocally=!!url&&game.verified&&game.mode==="local"&&game.embeddable;
+if(canPlayLocally){setStatus("Loading "+game.title+"…","Starting the local game. Large games may need a little longer on the first launch.");frame.addEventListener("load",()=>{if(generation!==state.generation)return;clearLoadTimer();$("#status").hidden=true;});frame.addEventListener("error",()=>{if(generation!==state.generation)return;clearLoadTimer();setStatus("This game did not start","Try opening it in a separate tab. The game may have a missing asset.",{spinner:false,retry:true});});frame.src=url;state.timeout=setTimeout(()=>{if(generation!==state.generation)return;setStatus("Still loading?","The game has not finished starting. You can retry or open it in a separate tab.",{spinner:false,retry:true});},35000);}
+else{frame.src="about:blank";frame.hidden=true;if(game.mode==="external"&&game.verified&&game.officialUrl)setStatus("Ready to play","This game is hosted on its own website. Select Open tab ↗ to launch it.",{spinner:false});else setStatus("Not ready to play here","This entry has not passed the checks needed for safe local hosting.",{spinner:false});}
+const related=state.games.filter(item=>item.id!==game.id&&item.category===game.category).slice(0,5);$("#similar-list").innerHTML=related.length?related.map(item=>'<button type="button" data-similar="'+escapeHTML(item.id)+'">'+escapeHTML(item.title)+'</button>').join(""):'<span class="muted">Explore the library for more games.</span>';renderLibrary();}
+function renderCredits(){$("#credits-grid").innerHTML=state.games.map(game=>'<article class="credit"><strong>'+escapeHTML(game.title)+'</strong><small>Creator: '+escapeHTML(game.creator)+'<br>Licence: '+escapeHTML(game.license)+'<br>'+(game.source?'<a href="'+escapeHTML(game.source)+'" target="_blank" rel="noopener noreferrer">Source repository ↗</a>':game.officialUrl?'<a href="'+escapeHTML(game.officialUrl)+'" target="_blank" rel="noopener noreferrer">Game website ↗</a>':"Source not verified")+'</small></article>').join("");}
+$("#filters").addEventListener("click",event=>{const button=event.target.closest("[data-cat]");if(!button)return;state.category=button.dataset.cat;renderFilters();renderLibrary();});
+$("#search").addEventListener("input",renderLibrary);
+$("#game-grid").addEventListener("click",event=>{const button=event.target.closest("[data-game]");if(button)chooseGame(state.games.find(game=>game.id===button.dataset.game));});
+$("#similar-list").addEventListener("click",event=>{const button=event.target.closest("[data-similar]");if(button)chooseGame(state.games.find(game=>game.id===button.dataset.similar));});
+$("#open-tab").addEventListener("click",()=>{const destination=openDestination();if(!destination){setStatus("No playable link yet","This game is not available until its hosting has been verified.",{spinner:false});return;}window.open(new URL(destination,document.baseURI).href,"_blank","noopener,noreferrer");});
+$("#retry").addEventListener("click",()=>{if(state.selected)chooseGame(state.selected);});
+$("#fullscreen").addEventListener("click",async()=>{try{const stage=$("#stage");if(!document.fullscreenElement)await stage.requestFullscreen();else await document.exitFullscreen();}catch{setStatus("Fullscreen unavailable","Your browser did not allow fullscreen mode.",{spinner:false});}});
+function closeCredits(){$("#credits").classList.remove("open");}
+$("#show-credits").addEventListener("click",()=>$("#credits").classList.add("open"));$("#close-credits").addEventListener("click",closeCredits);$("#credits").addEventListener("click",event=>{if(event.target===$("#credits"))closeCredits();});document.addEventListener("keydown",event=>{if(event.key==="Escape")closeCredits();if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==="k"){event.preventDefault();$("#search").focus();}});
+async function start(){try{const [manifestResponse,sourcesResponse]=await Promise.all([fetch("./games.json",{cache:"no-cache"}),fetch("./GAME-SOURCES.json",{cache:"no-cache"})]);if(!manifestResponse.ok)throw new Error("Could not load games.json ("+manifestResponse.status+")");const manifest=await manifestResponse.json();if(!Array.isArray(manifest.games)||!manifest.games.length)throw new Error("The game catalogue is empty");state.games=manifest.games;state.sources=sourcesResponse.ok?await sourcesResponse.json():{};state.loaded=true;renderFilters();renderLibrary();renderCredits();const preferred=state.games.find(game=>game.id==="clumsy-bird")||state.games.find(game=>game.verified&&game.mode==="local")||state.games[0];chooseGame(preferred);}catch(error){console.error("Afterglow startup:",error);$("#count").textContent="Unavailable";$("#game-grid").innerHTML='<div class="empty">The game library could not load.<br><small>'+escapeHTML(error.message)+'</small></div>';setStatus("Arcade unavailable","Refresh the page in a moment. If the problem continues, the catalogue deployment needs checking.",{spinner:false});}}
+start();
 </script>
-</body></html>
+</body>
+</html>
