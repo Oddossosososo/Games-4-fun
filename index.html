@@ -123,7 +123,8 @@ $("#account-button").addEventListener("click",openAccount);
 $("#close-account").addEventListener("click",closeAccount);
 $("#account-modal").addEventListener("click",event=>{if(event.target.id==="account-modal")closeAccount();});
 restoreAccountSession();
-\nconst categories=games=>["All",...new Set(games.map(game=>game.category).filter(Boolean))];
+
+const categories=games=>["All",...new Set(games.map(game=>game.category).filter(Boolean))];
 function renderFilters(){ $("#filters").innerHTML=categories(state.games).map(category=>'<button class="chip '+(state.category===category?"active":"")+'" data-cat="'+escapeHTML(category)+'">'+(category==="All"?"Everything":escapeHTML(category))+"</button>").join(""); }
 function visibleGames(){const query=$("#search").value.trim().toLowerCase();return state.games.filter(game=>(state.category==="All"||game.category===state.category)&&[game.title,game.creator,game.category,game.desc].join(" ").toLowerCase().includes(query));}
 function renderLibrary(){const games=visibleGames();$("#count").textContent=games.length+" of "+state.games.length+" games";$("#total-stat").textContent=state.games.length;$("#game-grid").innerHTML=games.length?games.map(game=>'<button class="game-card '+(state.selected?.id===game.id?"selected":"")+'" type="button" data-game="'+escapeHTML(game.id)+'" aria-label="Play '+escapeHTML(game.title)+'" aria-pressed="'+(state.selected?.id===game.id)+'"><div class="thumb"><video src="./thumbs/'+encodeURIComponent(game.id)+'.mp4" autoplay muted loop playsinline preload="metadata" aria-hidden="true" width="320" height="180"></video><span class="thumb-tag">'+escapeHTML(game.category.toUpperCase())+'</span></div><div class="card-info"><div class="card-title">'+escapeHTML(game.title)+'</div><div class="card-sub">'+escapeHTML(game.creator)+'</div></div></button>').join(""):'<div class="empty">No games match that search. Try another title or category.</div>';}
