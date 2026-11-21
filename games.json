@@ -489,6 +489,22 @@
       "glow": "#8cb5e8",
       "shade": "#263d5b",
       "desc": "Drop moving blocks and build the tallest tower."
+    },
+    {
+      "id": "run-3",
+      "title": "Run 3",
+      "category": "Arcade",
+      "creator": "Player03",
+      "license": "External game — licence not verified",
+      "mode": "external",
+      "verified": false,
+      "embeddable": false,
+      "officialUrl": "https://player03.com/run/3/beta/",
+      "emoji": "🏃",
+      "glow": "#a78bfa",
+      "shade": "#34245d",
+      "desc": "A fast-paced space-running platform game. Opens on the game's own website.",
+      "auditNote": "External link only. Not mirrored or self-hosted by Afterglow Arcade."
     }
   ]
 }
