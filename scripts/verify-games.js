@@ -65,6 +65,15 @@ for (const game of manifest.games) {
     if (!file || !inside(publicRoot,file) || !fs.existsSync(file) || !fs.statSync(file).isFile() || !file.toLowerCase().endsWith('.html')) {
       errors.push('['+game.id+'] deployed entrypoint missing: '+rel);
     }
+    if (game.id === 'astray' && fs.existsSync(file)) {
+      const html = fs.readFileSync(file, 'utf8');
+      if (/loadTexture\(['"]\/(?:ball|concrete|brick)\.png['"]\)/.test(html)) {
+        errors.push('[astray] root-relative texture paths break under GitHub Pages project URLs');
+      }
+      for (const asset of ['ball.png','concrete.png','brick.png']) {
+        if (!fs.existsSync(path.join(path.dirname(file),asset))) errors.push('[astray] required texture missing: '+asset);
+      }
+    }
     const mapped = sourceMap[game.id];
     if (!mapped || mapped !== './'+rel) errors.push('['+game.id+'] GAME-SOURCES.json mapping does not match manifest');
     const gameDir = folder && path.join(publicRoot,'games',folder);
