@@ -173,12 +173,11 @@
             <select class="online-select" id="leaderboard-game"></select>
           </label>
           <ol class="online-list" id="leaderboard-list"><li>Loading scores…</li></ol>
-          <form class="online-form" id="score-form">
-            <input class="online-input" id="score-name" maxlength="16" pattern="[A-Za-z0-9_-]{3,16}" aria-label="Display name" placeholder="Guest name" required>
-            <input class="online-input" id="score-value" type="number" min="0" max="1000000000" step="1" aria-label="Score" placeholder="Score" required>
-            <button class="action primary" type="submit">Submit score</button>
+          <form class="online-form" id="score-name-form">
+            <input class="online-input" id="score-name" maxlength="16" pattern="[A-Za-z0-9_-]{3,16}" aria-label="Display name" placeholder="Guest nickname" required>
+            <button class="action" type="submit">Save nickname</button>
           </form>
-          <div class="online-status" id="score-status">Scores are public. Use a nickname, not personal information.</div>
+          <div class="online-status" id="score-status">Scores are submitted automatically when supported games end. Use a nickname, not personal information.</div>
         </section>
         <section class="online-card" aria-label="Multiplayer rooms">
           <h3>Multiplayer rooms</h3>
@@ -472,19 +471,14 @@
 
 
     $("#leaderboard-game").addEventListener("change", refreshLeaderboard);
-    $("#score-form").addEventListener("submit", async event => {
+    $("#score-name-form").addEventListener("submit", event => {
       event.preventDefault();
       if (!onlineAPI) return;
-      const status = $("#score-status");
       try {
-        const name = onlineAPI.setDisplayName($("#score-name").value.trim());
-        const score = Number($("#score-value").value);
-        await onlineAPI.submitScore($("#leaderboard-game").value, score, name);
-        status.textContent = "Score submitted!";
-        $("#score-value").value = "";
-        await refreshLeaderboard();
+        onlineAPI.setDisplayName($("#score-name").value.trim());
+        $("#score-status").textContent = "Nickname saved. Supported games submit results automatically.";
       } catch (error) {
-        status.textContent = error.message;
+        $("#score-status").textContent = error.message;
       }
     });
     $("#create-room").addEventListener("click", async () => {
