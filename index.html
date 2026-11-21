@@ -98,6 +98,24 @@
     @media(max-width:900px){.layout{grid-template-columns:1fr}.game-grid{max-height:420px;grid-template-columns:repeat(3,minmax(0,1fr))}.stage{min-height:320px}}
     @media(max-width:600px){.shell{width:min(100% - 22px,1500px)}.hero{display:block;padding-top:30px}.stats{margin-top:18px}.stat{flex:1}.game-grid{grid-template-columns:repeat(2,minmax(0,1fr));max-height:380px}.player-head{align-items:flex-start;flex-direction:column}.actions{justify-content:flex-start}.stage{min-height:250px}.details{grid-template-columns:1fr 1fr}.nav{height:60px}.nav-right{font-size:10px}}
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+  
+    .online-section{margin:0 auto 28px}
+    .online-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+    .online-card{min-width:0;padding:16px;border:1px solid var(--line);border-radius:16px;background:rgba(10,12,25,.38)}
+    .online-card h3{margin:0 0 10px;font-size:14px;letter-spacing:.04em}
+    .online-card p,.online-help{color:var(--muted);font-size:12px;line-height:1.55}
+    .online-field{display:grid;gap:6px;margin:10px 0;color:var(--muted);font-size:11px}
+    .online-input,.online-select{width:100%;min-width:0;border:1px solid var(--line);border-radius:10px;background:#0d1021;color:var(--text);padding:10px 11px;font:inherit}
+    .online-form{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    .online-form .online-input{flex:1 1 110px}
+    .online-list{padding-left:22px;margin:12px 0;color:var(--text);font-size:12px;line-height:1.9}
+    .online-status{min-height:20px;color:var(--muted);font-size:11px;line-height:1.5;margin-top:10px;overflow-wrap:anywhere}
+    .online-feed{max-height:125px;overflow:auto;margin-top:8px;color:var(--muted);font-size:11px;line-height:1.6}
+    .online-feed div{padding:4px 0;border-bottom:1px solid var(--line)}
+    .online-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+    @media(max-width:900px){.online-grid{grid-template-columns:1fr 1fr}}
+    @media(max-width:620px){.online-grid{grid-template-columns:1fr}}
+
   </style>
 </head>
 <body>
@@ -144,6 +162,53 @@
     </section>
   </main>
 
+
+  <section class="shell online-section" aria-label="Online arcade services">
+    <div class="panel">
+      <div class="panel-head"><h2>Online Arcade</h2><span class="count" id="api-status">Connecting services…</span></div>
+      <div class="online-grid">
+        <section class="online-card" aria-label="Leaderboards">
+          <h3>Global leaderboards</h3>
+          <label class="online-field">Game
+            <select class="online-select" id="leaderboard-game"></select>
+          </label>
+          <ol class="online-list" id="leaderboard-list"><li>Loading scores…</li></ol>
+          <form class="online-form" id="score-form">
+            <input class="online-input" id="score-name" maxlength="16" pattern="[A-Za-z0-9_-]{3,16}" aria-label="Display name" placeholder="Guest name" required>
+            <input class="online-input" id="score-value" type="number" min="0" max="1000000000" step="1" aria-label="Score" placeholder="Score" required>
+            <button class="action primary" type="submit">Submit score</button>
+          </form>
+          <div class="online-status" id="score-status">Scores are public. Use a nickname, not personal information.</div>
+        </section>
+        <section class="online-card" aria-label="Multiplayer rooms">
+          <h3>Multiplayer rooms</h3>
+          <p>Create a room and share its six-character code. Realtime rooms support presence and game events.</p>
+          <div class="online-actions">
+            <button class="action primary" id="create-room" type="button">Create room</button>
+            <button class="action" id="leave-room" type="button" disabled>Leave</button>
+          </div>
+          <form class="online-form" id="join-room-form">
+            <input class="online-input" id="room-code" maxlength="6" pattern="[A-Za-z0-9]{6}" aria-label="Room code" placeholder="ROOM CODE" autocomplete="off">
+            <button class="action" type="submit">Join room</button>
+          </form>
+          <div class="online-status" id="room-status">Not in a room.</div>
+          <div class="online-status" id="room-presence">0 players online</div>
+          <form class="online-form" id="room-message-form">
+            <input class="online-input" id="room-message" maxlength="160" aria-label="Room message" placeholder="Send a room message…" required>
+            <button class="action" type="submit">Send</button>
+          </form>
+          <div class="online-feed" id="room-feed" aria-live="polite"></div>
+        </section>
+        <section class="online-card" aria-label="Analytics and saves">
+          <h3>Analytics &amp; progress</h3>
+          <p>First-party event counts help measure game launches and errors. No email, IP address or account ID is recorded by arcade analytics.</p>
+          <p>Guest progress stays in this browser using local storage. The online API is available to self-hosted game frames through <code>window.parent.AfterglowAPI</code>.</p>
+          <div class="online-status" id="analytics-status">Analytics will start when the arcade loads.</div>
+        </section>
+      </div>
+    </div>
+  </section>
+
   <footer class="shell">
     <span>AFTERGLOW ARCADE · A COMMUNITY GAME COLLECTION</span>
     <span><button id="open-library" type="button">Game library &amp; hosting status</button> · <button id="open-credits" type="button">Credits</button></span>
@@ -162,8 +227,17 @@
     <div class="fake-page"><h2>404. That’s an error.</h2><p>The requested document could not be found.</p><p>Press <b>Shift + C</b> again to return to Afterglow Arcade.</p><small>https://docs.google.com/document/u/0/?tgif=d</small></div>
   </div>
 
-  <script>
+  <script type="module">
     "use strict";
+
+    let onlineAPI = null;
+    try {
+      const apiModule = await import("./arcade-api.js");
+      onlineAPI = await apiModule.initArcadeAPI();
+      window.AfterglowAPI = onlineAPI;
+    } catch (error) {
+      console.warn("Online services are unavailable; local arcade mode remains active.", error);
+    }
 
     const $ = selector => document.querySelector(selector);
     const state = { games: [], sources: {}, selected: null, category: "All", query: "", loadTimer: null, generation: 0 };
@@ -238,6 +312,7 @@
         ? '<a href="' + escapeHTML(game.source) + '" target="_blank" rel="noopener noreferrer">View source ↗</a>'
         : game.officialUrl ? '<a href="' + escapeHTML(game.officialUrl) + '" target="_blank" rel="noopener noreferrer">Game website ↗</a>' : "SOURCE NOT LISTED";
       renderGames();
+      if (onlineAPI) onlineAPI.trackEvent("game_open", game.id).catch(() => {});
 
       const url = localURL(game);
       if (!url) {
@@ -252,11 +327,13 @@
         if (generation !== state.generation) return;
         clearTimer();
         $("#stage-status").hidden = true;
+        if (onlineAPI) onlineAPI.trackEvent("game_load_success", game.id).catch(() => {});
       };
       frame.onerror = () => {
         if (generation !== state.generation) return;
         clearTimer();
         setStatus("Game could not load", "The local entrypoint may be missing. Check the deployment and try again.", true);
+        if (onlineAPI) onlineAPI.trackEvent("game_load_error", game.id).catch(() => {});
       };
       state.loadTimer = window.setTimeout(() => {
         if (generation !== state.generation) return;
@@ -289,6 +366,55 @@
       const panel = $("#fake-404");
       panel.hidden = !panel.hidden;
       document.body.style.overflow = panel.hidden ? "" : "hidden";
+    }
+
+    function renderOnlineGames() {
+      const select = $("#leaderboard-game");
+      if (!select) return;
+      select.innerHTML = state.games.map(game =>
+        '<option value="' + escapeHTML(game.id) + '">' + escapeHTML(game.title) + '</option>'
+      ).join("");
+      if (state.selected) select.value = state.selected.id;
+      refreshLeaderboard();
+    }
+
+    async function refreshLeaderboard() {
+      const list = $("#leaderboard-list");
+      if (!onlineAPI) return;
+      try {
+        const rows = await onlineAPI.leaderboard($("#leaderboard-game").value);
+        list.innerHTML = rows.length ? rows.map((row, index) =>
+          '<li><strong>' + escapeHTML(row.display_name) + '</strong> — ' +
+          Number(row.score).toLocaleString() + '</li>'
+        ).join("") : "<li>No scores yet. Set the first record!</li>";
+        onlineAPI.trackEvent("leaderboard_view", $("#leaderboard-game").value).catch(() => {});
+      } catch (error) {
+        list.textContent = error.message;
+      }
+    }
+
+    function showRoomMessage(message) {
+      const feed = $("#room-feed");
+      const line = document.createElement("div");
+      const name = document.createElement("strong");
+      name.textContent = String(message.data?.name || "Player") + ": ";
+      line.append(name, document.createTextNode(String(message.data?.text || "Game event")));
+      feed.prepend(line);
+      while (feed.children.length > 20) feed.lastElementChild.remove();
+    }
+
+    if (onlineAPI) {
+      onlineAPI.onRoomEvent(message => {
+        if (message.type === "chat") showRoomMessage(message);
+        else {
+          const line = document.createElement("div");
+          line.textContent = "Room event received: " + String(message.type || "event");
+          $("#room-feed").prepend(line);
+        }
+      });
+      onlineAPI.onPresence(players => {
+        $("#room-presence").textContent = players.length + " player" + (players.length === 1 ? "" : "s") + " online";
+      });
     }
 
     async function start() {
@@ -339,7 +465,67 @@
       renderGames();
     });
 
-    $("#open-tab").addEventListener("click", openSelected);
+
+    $("#leaderboard-game").addEventListener("change", refreshLeaderboard);
+    $("#score-form").addEventListener("submit", async event => {
+      event.preventDefault();
+      if (!onlineAPI) return;
+      const status = $("#score-status");
+      try {
+        const name = onlineAPI.setDisplayName($("#score-name").value.trim());
+        const score = Number($("#score-value").value);
+        await onlineAPI.submitScore($("#leaderboard-game").value, score, name);
+        status.textContent = "Score submitted!";
+        $("#score-value").value = "";
+        await refreshLeaderboard();
+      } catch (error) {
+        status.textContent = error.message;
+      }
+    });
+    $("#create-room").addEventListener("click", async () => {
+      if (!onlineAPI) return;
+      try {
+        const code = await onlineAPI.createRoom(onlineAPI.displayName);
+        $("#room-code").value = code;
+        $("#room-status").textContent = "Room " + code + " created. Share the code with friends.";
+        $("#leave-room").disabled = false;
+      } catch (error) {
+        $("#room-status").textContent = error.message;
+      }
+    });
+    $("#join-room-form").addEventListener("submit", async event => {
+      event.preventDefault();
+      if (!onlineAPI) return;
+      try {
+        const code = await onlineAPI.joinRoom($("#room-code").value, onlineAPI.displayName);
+        $("#room-code").value = code;
+        $("#room-status").textContent = "Connected to room " + code + ".";
+        $("#leave-room").disabled = false;
+      } catch (error) {
+        $("#room-status").textContent = error.message;
+      }
+    });
+    $("#leave-room").addEventListener("click", async () => {
+      if (!onlineAPI) return;
+      await onlineAPI.leaveRoom();
+      $("#room-status").textContent = "You left the room.";
+      $("#room-presence").textContent = "0 players online";
+      $("#leave-room").disabled = true;
+    });
+    $("#room-message-form").addEventListener("submit", async event => {
+      event.preventDefault();
+      if (!onlineAPI) return;
+      try {
+        const message = $("#room-message").value.trim();
+        if (!message) return;
+        await onlineAPI.sendRoomEvent("chat", { name: onlineAPI.displayName, text: message });
+        $("#room-message").value = "";
+      } catch (error) {
+        $("#room-status").textContent = error.message;
+      }
+    });
+
+        $("#open-tab").addEventListener("click", openSelected);
     $("#retry").addEventListener("click", () => state.selected && selectGame(state.selected));
     $("#fullscreen").addEventListener("click", () => {
       const frame = $("#game-frame");
