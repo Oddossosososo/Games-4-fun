@@ -35,45 +35,57 @@ const replacement=`    moveGodPaddle(cpu, 1, dt);`;
 if(!html.includes(old)) throw new Error('Pong AI block did not match; refusing to patch');
 
 const helperAnchor="  function update(dt){";
-const helper=`  // Shared controller: both paddles use precisely the same GOD CPU logic.
-  function moveGodPaddle(paddle, direction, dt){
-    var targetY = H/2 - paddle.h/2;
-    var movingToward = direction > 0 ? ball.vx > 0 : ball.vx < 0;
-    if (movingToward) {
-      var edgeX = direction > 0 ? paddle.x : paddle.x + paddle.w;
-      var travel = Math.max(0, (direction > 0 ? edgeX - ball.x : ball.x - edgeX) / Math.max(1, Math.abs(ball.vx)));
-      var intercept;
-      if (pongGodWasm) {
-        intercept = pongGodWasm.predict_intercept_y(ball.y, ball.vy, travel, H, ball.r);
-        targetY = pongGodWasm.clamp_paddle_target(intercept, paddle.h, H);
-      } else {
-        var span = H - 2*ball.r;
-        var folded = ((ball.y + ball.vy*travel - ball.r) % (2*span) + 2*span) % (2*span);
-        intercept = ball.r + (folded <= span ? folded : 2*span - folded);
-        targetY = intercept - paddle.h/2;
-      }
-    }
-    // Attack the opponent's weakest lane by selecting an upper/lower-edge strike.
-    var opponent = direction > 0 ? player : cpu;
-    var opponentCenter = opponent.y + opponent.h * 0.5;
-    var desiredHit = opponentCenter < H * 0.5 ? 0.88 : -0.88;
-    if (Math.abs(opponentCenter - H * 0.5) < 10) desiredHit = (rallyHits % 2) ? 0.88 : -0.88;
-    var interceptY = targetY + paddle.h * 0.5;
-    var shotOffset = desiredHit * paddle.h * 0.5;
-    targetY = interceptY - paddle.h * 0.5 - shotOffset;
-    targetY = Math.max(0, Math.min(H - paddle.h, targetY));
-    var previousY = paddle.y;
-    var dy = targetY - paddle.y;
-    var step = AI_MAX_SPEED * dt;
-    if (!Number.isFinite(step) || Math.abs(dy) <= step) paddle.y = targetY;
-    else paddle.y += Math.sign(dy) * step;
-    paddle.y = Math.max(0, Math.min(H - paddle.h, paddle.y));
-    // A bounded last-frame swipe creates spin without destabilising the simulation.
-    paddle.vy = dt > 0 ? Math.max(-1800, Math.min(1800, (paddle.y - previousY) / dt)) : 0;
-    paddle._pretarget = false;
+const helper=`  function predictWallIntercept(y, vy, travelTime, radius){
+    var low=radius, span=H-2*radius;
+    if(span<=0) return H*0.5;
+    var period=span*2, raw=y+vy*Math.max(0,travelTime);
+    var folded=((raw-low)%period+period)%period;
+    return low+(folded<=span?folded:period-folded);
   }
+  function scoreAttackOffset(paddle,direction,interceptY){
+    var opponent=direction>0?player:cpu;
+    var opponentCenter=opponent.y+opponent.h*0.5;
+    var opponentSpeed=direction>0?480:AI_MAX_SPEED;
+    var bestHit=0.9,bestScore=-Infinity;
+    for(var i=-9;i<=9;i++){
+      var hit=i/10, angle=hit*(Math.PI/3);
+      var vx=Math.max(1,Math.cos(angle)*ball.speed), vy=Math.sin(angle)*ball.speed;
+      var opponentX=direction>0?opponent.x+opponent.w:opponent.x;
+      var distanceX=Math.abs((direction>0?opponentX-(paddle.x-ball.r):(paddle.x+paddle.w+ball.r)-opponentX));
+      var travel=distanceX/vx;
+      var landing=predictWallIntercept(interceptY,vy,travel,ball.r);
+      var reachable=opponentSpeed*travel+opponent.h*0.5;
+      var miss=Math.max(0,Math.abs(landing-opponentCenter)-reachable);
+      var score=miss+Math.abs(hit)*0.001;
+      if(score>bestScore){bestScore=score;bestHit=hit;}
+    }
+    return bestHit;
+  }
+  // Identical controller for both paddles: exact intercept, minimax offence, instant recovery.
+  function moveGodPaddle(paddle,direction,dt){
+    var movingToward=direction>0?ball.vx>0:ball.vx<0;
+    var targetY=H*0.5-paddle.h*0.5;
+    if(movingToward){
+      var edgeX=direction>0?paddle.x:paddle.x+paddle.w;
+      var travel=Math.max(0,direction>0?edgeX-ball.x:ball.x-edgeX)/Math.max(1,Math.abs(ball.vx));
+      var intercept=pongGodWasm
+        ?pongGodWasm.predict_intercept_y(ball.y,ball.vy,travel,H,ball.r)
+        :predictWallIntercept(ball.y,ball.vy,travel,ball.r);
+      var hit=scoreAttackOffset(paddle,direction,intercept);
+      targetY=intercept-paddle.h*0.5-hit*paddle.h*0.5;
+    }else{
+      var opponent=direction>0?player:cpu;
+      var bias=Math.max(-H*0.08,Math.min(H*0.08,(opponent.y+opponent.h*0.5-H*0.5)*0.12));
+      targetY=H*0.5-paddle.h*0.5+bias;
+    }
+    targetY=Math.max(0,Math.min(H-paddle.h,targetY));
+    var previous=paddle.y,dy=targetY-paddle.y,step=AI_MAX_SPEED*Math.max(0,dt);
+    if(!Number.isFinite(step)||Math.abs(dy)<=step)paddle.y=targetY;
+    else paddle.y+=Math.sign(dy)*step;
+    paddle.y=Math.max(0,Math.min(H-paddle.h,paddle.y));
+    paddle.vy=dt>0?Math.max(-2400,Math.min(2400,(paddle.y-previous)/dt)):0;
+  }`;
 
-`;
 if(!html.includes(helperAnchor)) throw new Error('Update function anchor missing');
 html=html.replace(helperAnchor,helper+helperAnchor);
 
@@ -161,7 +173,7 @@ const newLoop = `  // 240 Hz physics simulation; rendering remains display-refre
     while (physicsAccumulator > 0 && steps < 2048) {
       // Shrink the physics step as the ball accelerates so it cannot tunnel through paddles.
       var speedNow = Math.max(1, Math.abs(ball.vx), Math.abs(ball.vy));
-      var adaptiveStep = Math.min(PHYSICS_STEP, 3 / speedNow, physicsAccumulator);
+      var adaptiveStep = Math.min(PHYSICS_STEP, Math.max(1 / 20000, 1.5 / speedNow), physicsAccumulator);
       update(adaptiveStep);
       physicsAccumulator -= adaptiveStep;
       steps++;
