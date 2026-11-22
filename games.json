@@ -603,14 +603,16 @@
       "category": "Puzzle",
       "creator": "jbodah",
       "source": "https://github.com/jbodah/game_jam-locked",
-      "officialUrl": "https://jbodah.itch.io/admin-play",
-      "mode": "external",
+      "mode": "local",
       "verified": true,
-      "embeddable": false,
+      "embeddable": true,
       "emoji": "🖥️",
       "glow": "#69b8e8",
       "shade": "#203c59",
-      "desc": "Step into the shoes of an office IT admin locked out of the company system. Snoop through coworkers' desks, sticky notes, and emails to piece together clues and crack their passwords before time runs out."
+      "desc": "Step into the shoes of an office IT admin locked out of the company system. Snoop through coworkers' desks, sticky notes, and emails to piece together clues and crack their passwords before time runs out.",
+      "license": "NOASSERTION",
+      "entrypoint": "web/index.html",
+      "auditNote": "Git-cloned from the original Godot project and exported to HTML5 by Afterglow's build workflow. No upstream GitHub Pages site is required."
     }
   ]
 }
