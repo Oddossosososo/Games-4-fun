@@ -123,7 +123,7 @@
   <header class="topbar">
     <div class="shell nav">
       <a class="brand" href="./" aria-label="Afterglow Arcade home"><span class="brand-mark">✦</span><span>Afterglow <b>Arcade</b></span></a>
-      <div class="nav-right"><span class="live-dot"></span><span>IN THE LIBRARY</span><strong id="header-count">Ready</strong></div>
+      <div class="nav-right"><span class="live-dot"></span><span>IN THE LIBRARY</span><strong id="header-count">Ready</strong><button class="action" id="cloak-toggle" type="button" aria-pressed="false">Cloak</button></div>
     </div>
   </header>
 
@@ -556,14 +556,26 @@
       }).join("");
     }
 
-    function toggleFake404() {
-      const panel = $("#fake-404");
-      panel.hidden = !panel.hidden;
-      document.body.style.overflow = panel.hidden ? "" : "hidden";
-      document.title = panel.hidden ? "Afterglow Arcade" : "Docs";
+    const arcadeTitle = document.title;
+    const arcadeFavicon = document.querySelector('link[rel="icon"]')?.getAttribute("href") || "./favicon.svg";
+    let cloakEnabled = false;
+
+    function toggleCloak(force) {
+      cloakEnabled = typeof force === "boolean" ? force : !cloakEnabled;
+      document.title = cloakEnabled ? "Error" : arcadeTitle;
       const favicon = document.querySelector('link[rel="icon"]');
-      if (favicon) favicon.href = panel.hidden ? "./favicon.svg" : "https://docs.google.com/favicon.ico";
+      if (favicon) {
+        favicon.href = cloakEnabled ? "https://docs.google.com/favicon.ico" : arcadeFavicon;
+        favicon.type = cloakEnabled ? "image/x-icon" : "image/svg+xml";
+      }
+      const button = $("#cloak-toggle");
+      if (button) {
+        button.textContent = cloakEnabled ? "Uncloak" : "Cloak";
+        button.setAttribute("aria-pressed", String(cloakEnabled));
+      }
     }
+
+    $("#cloak-toggle")?.addEventListener("click", () => toggleCloak());
 
     function renderOnlineGames() {
       const select = $("#leaderboard-game");
@@ -849,7 +861,7 @@
         const typing = target instanceof HTMLElement && (target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(target.tagName));
         if (!typing && !window.getSelection()?.toString()) {
           event.preventDefault();
-          toggleFake404();
+          toggleCloak();
         }
       }
     });
