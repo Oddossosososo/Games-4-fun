@@ -1,0 +1,72 @@
+name: Pong Perfect Symmetry
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/improve-pong-ai.js"
+      - "rust/pong-ai.rs"
+      - "games.json"
+      - ".github/workflows/perfect-symmetry.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "scripts/improve-pong-ai.js"
+      - "rust/pong-ai.rs"
+      - "games.json"
+      - ".github/workflows/perfect-symmetry.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pong-perfect-symmetry
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: Build and verify identical GOD CPUs
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out Afterglow
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 26
+
+      - name: Clone Pong source
+        run: |
+          set -euo pipefail
+          mkdir -p public/games/jeffreyhamilton6399-arcadia
+          git clone --depth 1 --single-branch https://github.com/JeffreyHamilton6399/arcadia.git public/games/jeffreyhamilton6399-arcadia
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Compile Rust prediction engine
+        run: |
+          set -euo pipefail
+          cd public/games/jeffreyhamilton6399-arcadia/games/pong
+          rustc --target wasm32-unknown-unknown --crate-type cdylib -C opt-level=3 -C panic=abort "$GITHUB_WORKSPACE/rust/pong-ai.rs" -o pong-ai.wasm
+          test -s pong-ai.wasm
+
+      - name: Apply GOD CPU and Perfect Symmetry mode
+        run: node scripts/improve-pong-ai.js
+
+      - name: Verify Perfect Symmetry implementation
+        run: |
+          set -euo pipefail
+          pong="public/games/jeffreyhamilton6399-arcadia/games/pong/index.html"
+          test -s "$pong"
+          grep -q 'symmetryToggle' "$pong"
+          grep -q 'moveGodPaddle(player, -1, dt)' "$pong"
+          grep -q 'moveGodPaddle(cpu, 1, dt)' "$pong"
+          grep -q 'var AI_MAX_SPEED = 900;' "$pong"
+          grep -q 'var PHYSICS_STEP = 1 / 240;' "$pong"
+          grep -q 'fetch("./pong-ai.wasm")' "$pong"
+          echo "PASS: Perfect Symmetry uses the shared GOD CPU, 900 px/s cap, 240 Hz physics and Rust/WASM predictor."
