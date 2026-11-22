@@ -66,6 +66,44 @@ Deno.serve(async (req: Request) => {
       })) });
     }
 
+    if (action === "add_game") {
+      if (!["owner", "admin"].includes(actorRole)) return reply({ error: "Admin access required." }, 403);
+      const title = String(body.title || "").trim();
+      const description = String(body.description || "").trim();
+      const rawRepo = String(body.repo_url || "").trim();
+      if (title.length < 2 || title.length > 60) return reply({ error: "Game name must be 2–60 characters." }, 400);
+      if (!description || description.length > 300) return reply({ error: "Description must be 1–300 characters." }, 400);
+      let parsed: URL;
+      try { parsed = new URL(rawRepo); } catch { return reply({ error: "Enter a valid GitHub repository URL." }, 400); }
+      const parts = parsed.pathname.replace(/\\.git$/i, "").split("/").filter(Boolean);
+      if (parsed.protocol !== "https:" || parsed.hostname !== "github.com" || parsed.username || parsed.password ||
+          parsed.search || parsed.hash || parts.length !== 2 ||
+          !/^[A-Za-z0-9_.-]{1,100}$/.test(parts[0]) || !/^[A-Za-z0-9_.-]{1,100}$/.test(parts[1])) {
+        return reply({ error: "Use a repository URL like https://github.com/owner/repository." }, 400);
+      }
+      const owner = parts[0];
+      const repository = parts[1].replace(/\\.git$/i, "");
+      const repoUrl = "https://github.com/" + owner + "/" + repository;
+      const id = title.toLowerCase().normalize("NFKD").replace(/[\\u0300-\\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 54).replace(/-$/g, "");
+      if (!id) return reply({ error: "Game name needs at least one letter or number." }, 400);
+      const { data: existing, error: existingError } = await service.from("game_catalog")
+        .select("id").eq("id", id).maybeSingle();
+      if (existingError) throw existingError;
+      if (existing) return reply({ error: "A game with that name is already in the catalogue." }, 409);
+      const { data: game, error: insertError } = await service.from("game_catalog").insert({
+        id, title, category: "Community", creator: owner, license: "Not reviewed",
+        description, emoji: "🎮", glow: "#a78bfa", shade: "#34245d",
+        mode: "external", entrypoint_url: null, official_url: repoUrl,
+        source_url: repoUrl, assets: [], updated_at: new Date().toISOString()
+      }).select("id,title,description,source_url").single();
+      if (insertError) {
+        if (insertError.code === "23505") return reply({ error: "A game with that name is already in the catalogue." }, 409);
+        throw insertError;
+      }
+      return reply({ ok: true, game });
+    }
+
     if (action === "admin_update") {
       const targetId = String(body.user_id || "");
       const nextRole = String(body.role || "member");
