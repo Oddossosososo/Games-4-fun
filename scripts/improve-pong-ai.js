@@ -85,7 +85,7 @@ const helper=`function predictHotmapTarget() {
 function moveGodPaddle(paddle, direction, dt) {
   const previousY = paddle.y;
   let impactY = ball.y;
-  if (direction > 0 && ball.vx < 0 && cpuDifficulty === 'impossible') {
+  if (direction > 0 && ball.vx < 0 && (symmetryMode || cpuDifficulty === 'impossible')) {
     const hotmapTarget = predictHotmapTarget();
     if (hotmapTarget !== null) {
       paddle.y = Math.max(0, Math.min(H - paddle.h, hotmapTarget - paddle.h / 2));
@@ -110,7 +110,7 @@ function moveGodPaddle(paddle, direction, dt) {
   const targetY = pongGodWasm && pongGodWasm.clamp_paddle_target
     ? pongGodWasm.clamp_paddle_target(impactY, paddle.h, H)
     : Math.max(0, Math.min(H - paddle.h, impactY - paddle.h / 2 + edgeAim));
-  const isCpu = direction > 0;
+  const isCpu = direction > 0 && !symmetryMode;
   const aimError = !isCpu || cpuDifficulty === 'impossible' ? 0
     : cpuDifficulty === 'medium' ? Math.sin((rallyHits + 1) * 2.17) * 22
     : Math.sin((rallyHits + 1) * 1.73) * 58;
