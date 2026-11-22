@@ -61,7 +61,7 @@ html=html.replace(stateOld,stateOld+"\n  var symmetryMode = false;\n  var rallyH
 
 const uiAnchor="  <div id=\"stage\">";
 if(!html.includes(uiAnchor)) throw new Error('Stage anchor missing');
-html=html.replace(uiAnchor,'  <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:10px"><button class="btn" id="symmetryToggle" type="button" style="padding:8px 14px;font-size:11px">Mode: Player vs CPU</button><label id="symmetrySpeedWrap" class="hidden" style="display:flex;align-items:center;gap:7px;color:#d8ccff;font-size:10px">START SPEED <select id="symmetryStartSpeed" style="background:#211b3a;color:#fff;border:1px solid #6345a8;border-radius:6px;padding:7px;font:700 11px ui-monospace,monospace"><option value="390">390 · Normal</option><option value="600">600 · Fast</option><option value="900">900 · Very fast</option><option value="1200">1200 · Extreme</option><option value="1600">1600 · Insane</option><option value="2200">2200 · Maximum</option></select></label></div>\n'+uiAnchor);
+html=html.replace(uiAnchor,'  <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:10px"><button class="btn" id="symmetryToggle" type="button" style="padding:8px 14px;font-size:11px">Mode: Player vs CPU</button><label id="symmetrySpeedWrap" class="hidden" style="display:flex;align-items:center;gap:7px;color:#d8ccff;font-size:10px">START SPEED <input id="symmetryStartSpeed" type="number" min="0.01" step="any" value="390" inputmode="decimal" aria-label="Starting ball speed" style="width:112px;background:#211b3a;color:#fff;border:1px solid #6345a8;border-radius:6px;padding:7px;font:700 11px ui-monospace,monospace"></label></div>\n'+uiAnchor);
 
 const hudAnchor="  var loseCEl = document.getElementById('loseC');";
 const hudCode=`  var symmetryToggle = document.getElementById('symmetryToggle');
@@ -94,7 +94,7 @@ html=html.replace("if (keys['ArrowUp']) player.vy = -480;","if (!symmetryMode &&
 html=html.replace("if (keys['ArrowDown']) player.vy = 480;","if (!symmetryMode && keys['ArrowDown']) player.vy = 480;");
 
 html=html.replace(old,replacement);
-html=html.replace('function startGame(){\n reset();started=true;','function startGame(){\n BASE_SPEED = symmetryMode ? Number(symmetryStartSpeed.value) : 390;\n reset();started=true;');
+html=html.replace('function startGame(){\n reset();started=true;','function startGame(){\n var requestedSpeed = Number(symmetryStartSpeed.value);\n BASE_SPEED = symmetryMode && Number.isFinite(requestedSpeed) && requestedSpeed > 0 ? requestedSpeed : 390;\n reset();started=true;');
 html=html.replace('pscore = 0; cscore = 0;','pscore = 0; cscore = 0;\n    rallyHits = 0;');
 html=html.replace('function bouncePaddle(p, hit){','function bouncePaddle(p, hit){\n    rallyHits++;');
 html=html.replace('ball.vy = Math.sin(angle) * ball.speed;',
