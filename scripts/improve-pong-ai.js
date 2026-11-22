@@ -54,7 +54,7 @@ const helper=`  // Shared controller: both paddles use precisely the same GOD CP
       }
     }
     // Add intentional shot placement so both perfect predictors create varied angles.
-    var shotOffset = Math.sin((rallyHits + 1) * 1.37) * paddle.h * 0.30 * (direction > 0 ? 1 : -1);
+    var shotOffset = Math.sin((rallyHits + 1) * 1.37) * paddle.h * 0.40 * (direction > 0 ? 1 : -1);
     targetY -= shotOffset;
     targetY = Math.max(0, Math.min(H - paddle.h, targetY));
     var dy = targetY - paddle.y;
