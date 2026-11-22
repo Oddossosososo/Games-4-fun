@@ -208,10 +208,10 @@ export async function initAccounts() {
     const title = $("#admin-game-title").value.trim();
     const description = $("#admin-game-description").value.trim();
     submit.disabled = true;
-    statusEl.textContent = "Adding game…";
+    statusEl.textContent = "Checking licence and copying game files…";
     try {
       const result = await callAdmin("add_game", { repo_url, title, description });
-      statusEl.textContent = "Added " + result.game.title + " to the shared catalogue. Refreshing…";
+      statusEl.textContent = "Cloned " + result.game.title + " (" + result.game.files + " files) into Afterglow. Refreshing…";
       form.reset();
       window.setTimeout(() => window.location.reload(), 900);
     } catch (error) {
