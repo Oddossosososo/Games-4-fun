@@ -271,6 +271,10 @@
         <label id="account-username-wrap" hidden>Username<input id="account-username" type="text" autocomplete="off" minlength="3" maxlength="20" pattern="[A-Za-z0-9_-]{3,20}"></label>
         <div class="account-actions"><button class="action primary" id="account-submit" type="submit">Sign in</button><button class="action" id="account-switch" type="button">Create account</button></div>
       </form>
+      <form id="account-code-form" autocomplete="off" hidden>
+        <label>6-digit email code<input id="account-code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" placeholder="000000" required></label>
+        <div class="account-actions"><button class="action primary" id="account-verify" type="submit">Verify code</button><button class="action" id="account-resend" type="button">Resend code</button></div>
+      </form>
       <div id="account-signed-in" hidden>
         <p id="account-profile"></p>
         <label>Arcade username<input id="account-profile-name" type="text" minlength="3" maxlength="20" pattern="[A-Za-z0-9_-]{3,20}" placeholder="3–20 letters, numbers, _ or -"></label>
