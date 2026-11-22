@@ -98,7 +98,7 @@ html=html.replace('function startGame(){\n reset();started=true;','function star
 html=html.replace('pscore = 0; cscore = 0;','pscore = 0; cscore = 0;\n    rallyHits = 0;');
 html=html.replace('function bouncePaddle(p, hit){','function bouncePaddle(p, hit){\n    rallyHits++;');
 html=html.replace('var angle = hit * (Math.PI/3);',
-  'var ANGLE_COUNT = 1e+307;\\n    var normalizedOffset = Math.max(-1, Math.min(1, hit));\\n    var quantizedOffset = Math.round(((normalizedOffset + 1) / 2) * (ANGLE_COUNT - 1)) / (ANGLE_COUNT - 1) * 2 - 1;\\n    var bounceAngle = quantizedOffset * (75 * Math.PI / 180);\\n    var angle = bounceAngle;');
+  'var ANGLE_COUNT = 1e+307;\n    var normalizedOffset = Math.max(-1, Math.min(1, hit));\n    var quantizedOffset = Math.round(((normalizedOffset + 1) / 2) * (ANGLE_COUNT - 1)) / (ANGLE_COUNT - 1) * 2 - 1;\n    var bounceAngle = quantizedOffset * (75 * Math.PI / 180);\n    var angle = bounceAngle;');
 html=html.replace('ball.speed = Math.min(MAX_SPEED, ball.speed + SPEED_INC);',
   'ball.speed = Math.min(Number.MAX_VALUE / 4, ball.speed + SPEED_INC);');
 html=html.replace('ball.vy = Math.sin(angle) * ball.speed;',
