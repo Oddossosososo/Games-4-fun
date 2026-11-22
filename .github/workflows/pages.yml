@@ -29,12 +29,13 @@ jobs:
       - name: Prepare static site
         run: |
           mkdir -p public/games
-          cp index.html arcade-api.js games.json public/
+          cp index.html arcade-api.js accounts.js games.json public/
           cp -R games/afterglow public/games/afterglow
 
       - name: Validate browser API scripts
         run: |
           node --input-type=module --check < arcade-api.js
+          node --input-type=module --check < accounts.js
           node -e 'const fs=require("fs");const html=fs.readFileSync("index.html","utf8");const tag="<script type=\"module\">";const start=html.indexOf(tag);const end=html.indexOf("</script>",start);if(start<0||end<0)throw new Error("Main browser module missing");fs.writeFileSync("/tmp/afterglow-main.mjs",html.slice(start+tag.length,end));'
           node --check /tmp/afterglow-main.mjs
 
