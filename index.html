@@ -737,21 +737,19 @@
         }
       } catch (error) { console.warn("Cached catalogue could not be rendered.", error); }
       try {
-        const controller = new AbortController();
-        const timeoutId = window.setTimeout(() => controller.abort(), 2500);
-        let manifest;
-        try {
-          const response = await fetch("./games.json?v=arcade-cache-v3", {
-            cache: "no-cache",
-            signal: controller.signal
-          });
-          if (!response.ok) throw new Error("games.json returned HTTP " + response.status);
-          manifest = await response.json();
-        } finally {
-          window.clearTimeout(timeoutId);
+        let catalogue = null;
+        if (window.AfterglowAccounts?.getCatalog) {
+          try { catalogue = await window.AfterglowAccounts.getCatalog(); }
+          catch (error) { console.warn("Supabase catalogue unavailable; using static manifest.", error); }
         }
-        if (!Array.isArray(manifest.games)) throw new Error("The game catalogue has an invalid format.");
-        renderCatalogue(manifest.games);
+        if (!Array.isArray(catalogue) || !catalogue.length) {
+          const response = await fetch("./games.json?v=arcade-cache-v4", { cache: "no-cache" });
+          if (!response.ok) throw new Error("games.json returned HTTP " + response.status);
+          const manifest = await response.json();
+          catalogue = manifest.games;
+        }
+        if (!Array.isArray(catalogue)) throw new Error("The game catalogue has an invalid format.");
+        renderCatalogue(catalogue);
         localStorage.setItem("afterglow-catalog-cache", JSON.stringify({ savedAt: Date.now(), games: state.games }));
         $("#play-state").textContent = "Choose a game to start.";
         $("#api-status").textContent = onlineAPI ? "Services ready" : "Local mode";
