@@ -132,30 +132,27 @@ jobs:
       - name: Upgrade Pong to Rust-powered GOD CPU
         run: node scripts/improve-pong-ai.js
 
-      - name: Verify Pong Perfect Symmetry mode
+      - name: Verify Pong GOD Mode
         run: |
           set -euo pipefail
           pong="public/games/jeffreyhamilton6399-arcadia/games/pong/index.html"
           test -s "$pong"
           grep -q 'symmetryToggle' "$pong"
           grep -q 'symmetryStartSpeed' "$pong"
-          grep -q 'BASE_SPEED = symmetryMode ? Number(symmetryStartSpeed.value) : 390' "$pong"
+          grep -q 'Number.isFinite(requestedSpeed)' "$pong"
           grep -q 'First to 9 points wins the match' "$pong"
           grep -q 'moveGodPaddle(player, -1, dt)' "$pong"
           grep -q 'moveGodPaddle(cpu, 1, dt)' "$pong"
+          grep -q 'ANGLE_COUNT = 1e+307' "$pong"
+          grep -q '75 \* Math.PI / 180' "$pong"
           grep -q 'var AI_MAX_SPEED = Infinity;' "$pong"
           grep -q 'var MAX_SPEED = Infinity;' "$pong"
-          grep -q 'predictReflectedY' "$pong"
-          grep -q "length: 81" "$pong"
-          grep -q 'staging' "$pong"
-          grep -q 'opponentSpeed' "$pong"
-          grep -q 'bestScore' "$pong"
           grep -q 'spinImpulse' "$pong"
           grep -q 'adaptiveStep' "$pong"
           grep -q 'rallyHits++' "$pong"
           grep -q 'var PHYSICS_STEP = 1 / 240;' "$pong"
           grep -q 'fetch("./pong-ai.wasm")' "$pong"
-          echo "Perfect Symmetry, uncapped GOD CPUs, 81-angle shot search, opponent-aware raycast prediction, impact staging, uncapped spin response and adaptive physics verified."
+          echo "GOD Mode snapping, 1e+307 angle quantization, uncapped acceleration and adaptive physics verified."
 
       - name: Fix cloned game asset paths for GitHub Pages
         run: node scripts/prepare-games.js
