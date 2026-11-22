@@ -114,6 +114,9 @@ jobs:
         with:
           node-version: 26
 
+      - name: Rebuild Pong game logic from scratch (preserve GOD bot)
+        run: node scripts/rebuild-pong-game.js
+
       - name: Set up Rust for Pong GOD CPU
         uses: dtolnay/rust-toolchain@stable
         with:
