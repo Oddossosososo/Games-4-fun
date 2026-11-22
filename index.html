@@ -565,7 +565,7 @@
       document.title = cloakEnabled ? "Error" : arcadeTitle;
       const favicon = document.querySelector('link[rel="icon"]');
       if (favicon) {
-        favicon.href = cloakEnabled ? "https://drive.google.com/favicon.ico" : arcadeFavicon;
+        favicon.href = cloakEnabled ? "https://docs.google.com/favicon.ico" : arcadeFavicon;
         favicon.type = cloakEnabled ? "image/x-icon" : "image/svg+xml";
       }
       const button = $("#cloak-toggle");
