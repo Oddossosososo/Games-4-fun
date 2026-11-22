@@ -36,6 +36,7 @@ jobs:
         run: |
           node --input-type=module --check < arcade-api.js
           node --input-type=module --check < accounts.js
+          node --check scripts/sync-supabase-assets.js
           node -e 'const fs=require("fs");const html=fs.readFileSync("index.html","utf8");const tag="<script type=\"module\">";const start=html.indexOf(tag);const end=html.indexOf("</script>",start);if(start<0||end<0)throw new Error("Main browser module missing");fs.writeFileSync("/tmp/afterglow-main.mjs",html.slice(start+tag.length,end));'
           node --check /tmp/afterglow-main.mjs
 
@@ -199,6 +200,11 @@ jobs:
 
       - name: Verify manifest, licences, entrypoints and deployment size
         run: node scripts/verify-games.js
+
+      - name: Sync verified game files to Supabase Storage
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: node scripts/sync-supabase-assets.js
 
       - name: Add source and licence credits
         run: |
