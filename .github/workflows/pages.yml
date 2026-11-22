@@ -146,7 +146,7 @@ jobs:
           grep -q 'var AI_MAX_SPEED = Infinity;' "$pong"
           grep -q 'var MAX_SPEED = Infinity;' "$pong"
           grep -q 'predictReflectedY' "$pong"
-          grep -q 'candidates = \[-0.48' "$pong"
+          grep -q "length: 81" "$pong"
           grep -q 'staging' "$pong"
           grep -q 'opponentSpeed' "$pong"
           grep -q 'bestScore' "$pong"
