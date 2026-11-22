@@ -275,7 +275,7 @@ export async function initAccounts() {
   $("#account-code-form")?.addEventListener("submit", async event => {
     event.preventDefault();
     const token = $("#account-code").value.trim();
-    if (!/^\\d{6}$/.test(token)) { status("Enter the 6-digit code from your email.", true); return; }
+    if (!/^\d{6}$/.test(token)) { status("Enter the 6-digit code from your email.", true); return; }
     const submit = $("#account-verify");
     submit.disabled = true;
     try {
