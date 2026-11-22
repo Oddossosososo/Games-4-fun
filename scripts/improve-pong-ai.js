@@ -59,7 +59,7 @@ const helper=`  // Shared controller: both paddles use precisely the same GOD CP
     targetY = Math.max(0, Math.min(H - paddle.h, targetY));
     var dy = targetY - paddle.y;
     var step = AI_MAX_SPEED * dt;
-    if (Math.abs(dy) <= step) paddle.y = targetY;
+    if (!Number.isFinite(step) || Math.abs(dy) <= step) paddle.y = targetY;
     else paddle.y += Math.sign(dy) * step;
     paddle.y = Math.max(0, Math.min(H - paddle.h, paddle.y));
     paddle._pretarget = false;
@@ -102,7 +102,7 @@ const hudCode=`  var symmetryToggle = document.getElementById('symmetryToggle');
     cpuLabel.textContent = symmetryMode ? 'Bot B' : 'CPU';
     symmetryToggle.textContent = symmetryMode ? 'Mode: Perfect Symmetry' : 'Mode: Player vs CPU';
     startO.querySelector('p').textContent = symmetryMode
-      ? 'Two identical GOD CPUs compete using the same Rust/WASM prediction, 900 px/s speed cap and 240 Hz physics.'
+      ? 'Two identical uncapped GOD CPUs use instant tracking, Rust/WASM prediction and adaptive high-speed physics.'
       : 'Move your left paddle with mouse, touch, or arrow keys. Each rally speeds the ball up. First to 7 points wins the match.';
   });`;
 if(!html.includes(hudAnchor)) throw new Error('HUD anchor missing');
@@ -148,9 +148,12 @@ const newLoop = `  // 240 Hz physics simulation; rendering remains display-refre
     last = now;
     physicsAccumulator = Math.min(physicsAccumulator + frameDt, 0.1);
     var steps = 0;
-    while (physicsAccumulator >= PHYSICS_STEP && steps < 24) {
-      update(PHYSICS_STEP);
-      physicsAccumulator -= PHYSICS_STEP;
+    while (physicsAccumulator > 0 && steps < 2048) {
+      // Shrink the physics step as the ball accelerates so it cannot tunnel through paddles.
+      var speedNow = Math.max(1, Math.abs(ball.vx), Math.abs(ball.vy));
+      var adaptiveStep = Math.min(PHYSICS_STEP, 3 / speedNow, physicsAccumulator);
+      update(adaptiveStep);
+      physicsAccumulator -= adaptiveStep;
       steps++;
     }
     draw();
@@ -162,4 +165,4 @@ html=html.replace('var MAX_SPEED = 820;','var MAX_SPEED = Infinity;');
 html=html.replace('var SPEED_INC = 28;','var SPEED_INC = 45;');
 html=html.replace('var AI_MAX_SPEED = 360;','var AI_MAX_SPEED = Infinity;\n  var pongGodWasm = null;\n  fetch("./pong-ai.wasm").then(function(r){ if(!r.ok) throw new Error("WASM unavailable"); return r.arrayBuffer(); }).then(function(bytes){ return WebAssembly.instantiate(bytes); }).then(function(result){ pongGodWasm = result.instance.exports; }).catch(function(){ console.warn("Pong GOD CPU: using JavaScript fallback."); });');
 fs.writeFileSync(file,html);
-console.log('Pong GOD CPU patched: Rust/WASM trajectory prediction, reflected wall math, 900 px/s movement, JS fallback.');
+console.log('Pong GOD CPU patched: instant uncapped tracking, reflected-wall prediction, adaptive anti-tunnelling physics and Rust/WASM acceleration.');
