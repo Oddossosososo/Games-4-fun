@@ -120,9 +120,28 @@
     .account-card input{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:#0d1021;color:var(--text)}
     .account-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.account-status{min-height:22px;margin-top:12px;color:var(--cyan);font-size:11px;overflow-wrap:anywhere}
     .account-user{color:var(--cyan);font-size:11px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    #drive-cloak-screen{display:none;position:fixed;inset:0;z-index:99999;background:#fff;color:#202124;font:14px/1.55 Arial,sans-serif;padding:0;overflow:auto}
+    #drive-cloak-screen.active{display:block}
+    .drive-cloak-top{height:64px;border-bottom:1px solid #dadce0;display:flex;align-items:center;padding:0 28px;gap:12px;color:#5f6368;font-size:20px}
+    .drive-cloak-logo{width:28px;height:25px;display:inline-block;background:linear-gradient(120deg,#4285f4 0 33%,#34a853 33% 66%,#fbbc04 66%);clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)}
+    .drive-cloak-content{max-width:600px;margin:110px auto;padding:0 24px}
+    .drive-cloak-content h1{font-size:24px;font-weight:400;margin:0 0 18px;color:#202124}
+    .drive-cloak-content p{color:#5f6368;margin:8px 0}
+    .drive-cloak-content small{display:block;margin-top:28px;color:#80868b}
+    @media(max-width:640px){.drive-cloak-content{margin:70px auto}}
+
 \n  </style>
 </head>
 <body>
+  <div id="drive-cloak-screen" role="status" aria-hidden="true">
+    <div class="drive-cloak-top"><span class="drive-cloak-logo" aria-hidden="true"></span><span>Drive</span></div>
+    <main class="drive-cloak-content">
+      <h1>404. That’s an error.</h1>
+      <p>The requested file could not be found.</p>
+      <p>That’s all we know.</p>
+      <small>Press Shift + C to return.</small>
+    </main>
+  </div>
   <header class="topbar">
     <div class="shell nav">
       <a class="brand" href="./" aria-label="Afterglow Arcade home"><span class="brand-mark">✦</span><span>Afterglow <b>Arcade</b></span></a>
@@ -600,6 +619,11 @@
       if (favicon) {
         favicon.href = cloakEnabled ? "https://drive.google.com/favicon.ico" : arcadeFavicon;
         favicon.type = cloakEnabled ? "image/x-icon" : "image/svg+xml";
+      }
+      const cloakScreen = $("#drive-cloak-screen");
+      if (cloakScreen) {
+        cloakScreen.classList.toggle("active", cloakEnabled);
+        cloakScreen.setAttribute("aria-hidden", String(!cloakEnabled));
       }
       const button = $("#cloak-toggle");
       if (button) {
