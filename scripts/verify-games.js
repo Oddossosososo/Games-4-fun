@@ -55,7 +55,6 @@ for (const game of manifest.games) {
     continue;
   }
   if (game.mode === 'local' || game.mode === 'bundled') {
-    if (!game.entrypoint || path.isAbsolute(game.entrypoint) || game.entrypoint.split(/[\\/]/).includes('..')) errors.push('['+game.id+'] unsafe or missing entrypoint');
     let rel = '';
     let folder = '';
     if (game.mode === 'local') {
@@ -63,6 +62,20 @@ for (const game of manifest.games) {
       if (!approvedLicenses.has(game.license) && !(game.id === 'admin' && game.license === 'NOASSERTION')) errors.push('['+game.id+'] licence is not on the approved list: '+game.license);
       const sourceRepo = game.source?.match(/github\.com\/([^/]+\/[^/]+)/i)?.[1];
       folder = sourceRepo?.toLowerCase().replaceAll('/','-');
+      if (game.repositoryViewer) {
+        const gameDir = folder && path.join(publicRoot,'games',folder);
+        const fileIndex = gameDir && path.join(gameDir,'AFTERGLOW-FILES.json');
+        const mapped = sourceMap[game.id];
+        if (!gameDir || !fs.existsSync(gameDir) || !fs.statSync(gameDir).isDirectory()) errors.push('['+game.id+'] cloned repository missing');
+        if (!fileIndex || !fs.existsSync(fileIndex) || !fs.statSync(fileIndex).isFile()) errors.push('['+game.id+'] repository file index missing');
+        if (!mapped || mapped !== './repository.html?game='+game.id) errors.push('['+game.id+'] repository viewer route missing');
+        if (gameDir && fs.existsSync(gameDir)) {
+          const bytes = folderSize(gameDir);
+          if (bytes > MAX_GAME_BYTES) errors.push('['+game.id+'] repository payload exceeds 120 MiB ('+(bytes/1024/1024).toFixed(1)+' MiB)');
+        }
+        continue;
+      }
+      if (!game.entrypoint || path.isAbsolute(game.entrypoint) || game.entrypoint.split(/[\\/]/).includes('..')) errors.push('['+game.id+'] unsafe or missing entrypoint');
       rel = folder && game.entrypoint ? path.posix.join('games',folder,game.entrypoint) : '';
     } else {
       if (!game.source || !game.source.startsWith('https://github.com/')) errors.push('['+game.id+'] bundled game needs its repository source URL');
