@@ -155,7 +155,7 @@ jobs:
           grep -q 'rallyHits++' "$pong"
           grep -q 'var PHYSICS_STEP = 1 / 240;' "$pong"
           grep -q 'fetch("./pong-ai.wasm")' "$pong"
-          echo "Perfect Symmetry, uncapped GOD CPUs, opponent-aware raycast prediction, minimax targeting, impact staging, spin and adaptive physics verified."
+          echo "Perfect Symmetry, uncapped GOD CPUs, 81-angle shot search, opponent-aware raycast prediction, impact staging, uncapped spin response and adaptive physics verified."
 
       - name: Fix cloned game asset paths for GitHub Pages
         run: node scripts/prepare-games.js
