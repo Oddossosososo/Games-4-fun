@@ -576,6 +576,27 @@
       "shade": "#572b2a",
       "desc": "Hop across roads and rivers while avoiding moving traffic.",
       "auditNote": "Independent, self-contained HTML5 implementation from the MIT-licensed Arcadia repository. The original commercial game's code and assets are not included."
+    },
+    {
+      "id": "fnf",
+      "title": "Friday Night Funkin'",
+      "category": "Rhythm",
+      "creator": "The Funkin' Crew",
+      "license": "Apache-2.0 (code); game assets All Rights Reserved",
+      "officialUrl": "https://ninja-muffin24.itch.io/funkin",
+      "mode": "external",
+      "verified": true,
+      "embeddable": false,
+      "emoji": "🎤",
+      "glow": "#e77da8",
+      "shade": "#54243f",
+      "desc": "Hit the arrows to the beat in this rhythm game.",
+      "audience": "Advanced Children (9–12)",
+      "contentWarnings": [
+        "Mild cartoon violence",
+        "Mild suggestive humour"
+      ],
+      "auditNote": "External official itch.io listing only. Not self-hosted; code and game assets have separate licensing."
     }
   ]
 }
