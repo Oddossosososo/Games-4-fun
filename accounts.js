@@ -29,6 +29,8 @@ function renderUser(current) {
   $("#account-signed-in").hidden = !signedIn;
   $("#account-switch").hidden = signedIn;
   $("#account-open").textContent = signedIn ? "Account" : "Sign in";
+  $("#profile-open").hidden = !signedIn;
+
   $("#account-user").hidden = true;
   $("#account-user").textContent = signedIn ? "Signed in" : "";
   $("#account-profile").textContent = signedIn ? "Your account is signed in." : "";
@@ -60,6 +62,100 @@ async function syncFavorites() {
     if (error) throw error;
   }
 }
+async function callAdmin(action, payload = {}) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) throw new Error("Sign in first.");
+  const response = await fetch(SUPABASE_URL + "/functions/v1/afterglow-admin", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + session.access_token,
+      "apikey": SUPABASE_KEY
+    },
+    body: JSON.stringify({ action, ...payload })
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result.error || "Request failed.");
+  return result;
+}
+function badgeMarkup(role, verified) {
+  const labels = { owner: "✦ OWNER", admin: "◆ ADMIN", vip: "★ VIP", member: "MEMBER" };
+  return (role && role !== "member" ? '<span class="profile-badge ' + role + '">' + labels[role] + '</span>' : '') +
+    (verified ? '<span class="profile-badge verified">✓ VERIFIED</span>' : '');
+}
+async function loadProfilePage() {
+  if (!user) { showModal(true); return; }
+  const statusEl = $("#profile-status");
+  statusEl.textContent = "Loading profile…";
+  $("#profile-page").classList.add("open");
+  try {
+    const [{ data: badge, error: badgeError }, { data: profile, error: profileError }] = await Promise.all([
+      supabase.from("profile_badges").select("display_name,role,is_verified").eq("user_id", user.id).single(),
+      supabase.from("profiles").select("username").eq("id", user.id).maybeSingle()
+    ]);
+    if (badgeError) throw badgeError;
+    if (profileError) throw profileError;
+    const displayName = badge.display_name || "Afterglow";
+    $("#profile-name").textContent = displayName;
+    $("#profile-avatar").textContent = displayName.slice(0,1).toUpperCase();
+    $("#profile-handle").textContent = profile?.username ? "@" + profile.username : "Afterglow member";
+    $("#profile-display-name").value = displayName;
+    $("#profile-badges").innerHTML = badgeMarkup(badge.role, badge.is_verified);
+    const isAdmin = ["owner","admin"].includes(badge.role);
+    $("#admin-panel").hidden = !isAdmin;
+    statusEl.textContent = "";
+    if (isAdmin) await loadAdminUsers(badge.role);
+  } catch (error) { statusEl.textContent = error.message || "Could not load profile."; }
+}
+async function loadAdminUsers(actorRole) {
+  const root = $("#admin-users");
+  root.textContent = "Loading accounts…";
+  try {
+    const { users } = await callAdmin("admin_list");
+    root.replaceChildren();
+    if (!users.length) { root.textContent = "No accounts yet."; return; }
+    for (const account of users) {
+      const row = document.createElement("div");
+      row.className = "admin-user";
+      const name = document.createElement("div");
+      name.innerHTML = '<div class="admin-user-name"></div><div class="admin-user-meta"></div>';
+      name.querySelector(".admin-user-name").textContent = account.display_name || "Afterglow";
+      name.querySelector(".admin-user-meta").textContent = account.username ? "@" + account.username : account.user_id.slice(0,8);
+      const select = document.createElement("select");
+      select.setAttribute("aria-label", "Role for " + (account.display_name || "account"));
+      for (const role of ["member","vip",...(actorRole === "owner" ? ["admin"] : [])]) {
+        const option = document.createElement("option");
+        option.value = role; option.textContent = role.toUpperCase();
+        select.append(option);
+      }
+      select.value = account.role === "owner" ? "member" : account.role;
+      select.disabled = account.role === "owner";
+      const verifiedLabel = document.createElement("label");
+      const verified = document.createElement("input");
+      verified.type = "checkbox"; verified.checked = Boolean(account.is_verified);
+      verified.disabled = account.role === "owner";
+      verifiedLabel.append(verified, document.createTextNode("Verified"));
+      const save = document.createElement("button");
+      save.className = "action"; save.type = "button"; save.textContent = "Save";
+      save.disabled = account.role === "owner";
+      save.addEventListener("click", async () => {
+        save.disabled = true;
+        try {
+          await callAdmin("admin_update", { user_id: account.user_id, role: select.value, is_verified: verified.checked });
+          $("#admin-status").textContent = "Updated " + (account.display_name || "account") + ".";
+          await loadAdminUsers(actorRole);
+        } catch (error) { $("#admin-status").textContent = error.message; save.disabled = false; }
+      });
+      row.append(name, select, verifiedLabel, save);
+      if (account.role === "owner") {
+        const ownerTag = document.createElement("span");
+        ownerTag.className = "profile-badge owner"; ownerTag.textContent = "OWNER";
+        row.append(ownerTag);
+      }
+      root.append(row);
+    }
+  } catch (error) { root.textContent = error.message || "Could not load accounts."; }
+}
 async function syncSaves() {
   if (!user) throw new Error("Sign in first.");
   const prefix = "afterglow-save-v1-";
@@ -88,6 +184,20 @@ async function syncSaves() {
 
 export async function initAccounts() {
   $("#account-open")?.addEventListener("click", () => showModal(true));
+  $("#profile-open")?.addEventListener("click", loadProfilePage);
+  $("#profile-close")?.addEventListener("click", () => $("#profile-page").classList.remove("open"));
+  $("#profile-save")?.addEventListener("click", async () => {
+    const display_name = $("#profile-display-name").value.trim();
+    $("#profile-save").disabled = true;
+    try {
+      await callAdmin("profile_update", { display_name });
+      $("#profile-name").textContent = display_name;
+      $("#profile-avatar").textContent = display_name.slice(0,1).toUpperCase();
+      $("#profile-status").textContent = "Profile saved.";
+    } catch (error) { $("#profile-status").textContent = error.message; }
+    finally { $("#profile-save").disabled = false; }
+  });
+
   $("#account-close")?.addEventListener("click", () => showModal(false));
   $("#account-modal")?.addEventListener("click", event => { if (event.target.id === "account-modal") showModal(false); });
   $("#account-switch")?.addEventListener("click", () => {
