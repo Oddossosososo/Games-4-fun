@@ -502,11 +502,28 @@
         return;
       }
       try {
-        recorderStatus("Choose this arcade tab in the browser's sharing prompt. Recording stops after 8 seconds.");
+        const gameFrame = $("#game-frame");
+        if (!gameFrame || !gameFrame.getClientRects().length) {
+          recorderStatus("The game is not visible. Open a game before recording.");
+          return;
+        }
+        if (!window.CropTarget?.fromElement) {
+          recorderStatus("Game-only recording requires a browser that supports Element Capture. Update Chrome and try again.");
+          return;
+        }
+        recorderStatus("Select this browser tab in the sharing prompt. Only the game frame will be recorded.");
         const stream = await navigator.mediaDevices.getDisplayMedia({
           video: { frameRate: { ideal: 24, max: 30 } },
           audio: false
         });
+        const videoTrack = stream.getVideoTracks()[0];
+        if (!videoTrack?.cropTo) {
+          stream.getTracks().forEach(track => track.stop());
+          recorderStatus("This browser cannot crop the recording to the game frame.");
+          return;
+        }
+        const cropTarget = await window.CropTarget.fromElement(gameFrame);
+        await videoTrack.cropTo(cropTarget);
         state.recordStream = stream;
         const candidates = ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"];
         const mimeType = candidates.find(type => MediaRecorder.isTypeSupported(type)) || "";
@@ -543,7 +560,7 @@
         $("#record-preview").textContent = "■ Stop & save";
         $("#record-preview").disabled = false;
       $("#favorite-toggle").disabled = false;
-        recorderStatus("Recording this shared tab… stop when ready (8-second limit).");
+        recorderStatus("Recording the game only… stop when ready (8-second limit).");
         window.setTimeout(() => {
           if (state.recorder === recorder && recorder.state !== "inactive") stopPreviewRecording();
         }, MAX_RECORD_MS);
