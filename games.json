@@ -596,6 +596,21 @@
         "Mild cartoon violence",
         "Mild suggestive humour"
       ]
+    },
+    {
+      "id": "admin",
+      "title": "Admin",
+      "category": "Puzzle",
+      "creator": "jbodah",
+      "source": "https://github.com/jbodah/game_jam-locked",
+      "officialUrl": "https://jbodah.itch.io/admin-play",
+      "mode": "external",
+      "verified": true,
+      "embeddable": false,
+      "emoji": "🖥️",
+      "glow": "#69b8e8",
+      "shade": "#203c59",
+      "desc": "Step into the shoes of an office IT admin locked out of the company system. Snoop through coworkers' desks, sticky notes, and emails to piece together clues and crack their passwords before time runs out."
     }
   ]
 }
