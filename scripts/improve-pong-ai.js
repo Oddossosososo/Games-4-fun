@@ -126,7 +126,7 @@ function moveGodPaddle(paddle, direction, dt) {
 
 const updateAnchor='  function update(dt){';
 if(!html.includes(updateAnchor)) throw new Error('Update function anchor missing');
-html=html.replace(updateAnchor,helper+'\\n'+updateAnchor);
+html=html.replace(updateAnchor,helper+'\n'+updateAnchor);
 
 const playerOld=`    // player paddle (keyboard control if vy set)
     player.y += player.vy * dt;
@@ -144,7 +144,7 @@ html=html.replace(playerOld,playerNew);
 
 const stateOld='var player, cpu, ball, pscore, cscore, running, started, last, serveTimer, paused;';
 if(!html.includes(stateOld)) throw new Error('State declaration missing');
-html=html.replace(stateOld,stateOld+"\\n  var matchAnalysis = { playerHits: 0, playerMisses: 0, cpuHits: 0, offsets: [], fastestShot: 0 };\\n  var symmetryMode = false;\\n  var rallyHits = 0;\\n  var cpuDifficulty = 'impossible';");
+html=html.replace(stateOld,stateOld+"\n  var matchAnalysis = { playerHits: 0, playerMisses: 0, cpuHits: 0, offsets: [], fastestShot: 0 };\n  var symmetryMode = false;\n  var rallyHits = 0;\n  var cpuDifficulty = 'impossible';");
 
 const uiAnchor="  <div id=\"stage\">";
 if(!html.includes(uiAnchor)) throw new Error('Stage anchor missing');
