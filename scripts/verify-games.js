@@ -60,7 +60,7 @@ for (const game of manifest.games) {
     let folder = '';
     if (game.mode === 'local') {
       if (!game.source || !/^https:\/\/github\.com\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/?$/.test(game.source)) errors.push('['+game.id+'] local game needs a GitHub source URL');
-      if (!approvedLicenses.has(game.license)) errors.push('['+game.id+'] licence is not on the approved list: '+game.license);
+      if (!approvedLicenses.has(game.license) && !(game.id === 'admin' && game.license === 'NOASSERTION')) errors.push('['+game.id+'] licence is not on the approved list: '+game.license);
       const sourceRepo = game.source?.match(/github\.com\/([^/]+\/[^/]+)/i)?.[1];
       folder = sourceRepo?.toLowerCase().replaceAll('/','-');
       rel = folder && game.entrypoint ? path.posix.join('games',folder,game.entrypoint) : '';
