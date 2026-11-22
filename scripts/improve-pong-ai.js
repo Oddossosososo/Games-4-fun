@@ -132,7 +132,9 @@ const playerNew=`    // Normal mode uses player input; symmetry mode uses the id
 if(!html.includes(playerOld)) throw new Error('Player movement block missing');
 html=html.replace(playerOld,playerNew);
 
-const stateOld="var player, cpu, ball, pscore, cscore, running, started, last, serveTimer, paused;";
+const stateOld="var player, cpu, ball, pscore, cscore, running, started, last, serveTimer, paused;
+  var matchAnalysis = { playerHits: 0, playerMisses: 0, cpuHits: 0, offsets: [], fastestShot: 0 };
+";
 if(!html.includes(stateOld)) throw new Error('State declaration missing');
 html=html.replace(stateOld,stateOld+"\n  var symmetryMode = false;\n  var rallyHits = 0;");
 
@@ -171,20 +173,57 @@ html=html.replace("if (keys['ArrowUp']) player.vy = -480;","if (!symmetryMode &&
 html=html.replace("if (keys['ArrowDown']) player.vy = 480;","if (!symmetryMode && keys['ArrowDown']) player.vy = 480;");
 
 html=html.replace(old,replacement);
+html=html.replace('<p>Final score: <b id="loseP">0</b> – <b id="loseC">0</b></p>',
+  '<p>Final score: <b id="loseP">0</b> – <b id="loseC">0</b></p><section id="lossAnalysis" style="width:min(100%,560px);max-height:34vh;overflow:auto;text-align:left;padding:12px;border:1px solid #6345a8;border-radius:8px;background:rgba(33,27,58,.72)"><b style="color:#d8ccff">CPU GAME ANALYSIS</b><div id="lossAnalysisText" style="margin-top:8px;color:#e7e7f5;font-size:11px;line-height:1.55">Analysis will appear after the match.</div></section>');
+const lossFn = `function renderLossAnalysis() {
+  var box = document.getElementById('lossAnalysisText');
+  if (!box) return;
+  var offsets = matchAnalysis.offsets;
+  var avg = offsets.length ? offsets.reduce(function(a,b){return a+b;},0) / offsets.length : 0;
+  var tendency = !offsets.length ? 'Not enough paddle contacts to identify a shot pattern.'
+    : avg < -0.18 ? 'Your contacts tended to be above paddle centre.'
+    : avg > 0.18 ? 'Your contacts tended to be below paddle centre.'
+    : 'Your contacts were mostly near paddle centre.';
+  var lines = [
+    'Player paddle contacts: ' + matchAnalysis.playerHits,
+    'Missed returns: ' + matchAnalysis.playerMisses,
+    'CPU contacts: ' + matchAnalysis.cpuHits,
+    'Fastest recorded shot: ' + Math.round(matchAnalysis.fastestShot) + ' px/s',
+    tendency,
+    matchAnalysis.playerMisses > matchAnalysis.playerHits
+      ? 'CPU finding: missed returns were the biggest source of lost points. Try positioning earlier.'
+      : 'CPU finding: vary your contact height to make your returns less predictable.'
+  ];
+  box.textContent = lines.join(' ');
+}
+`;
+if (!html.includes('function draw(){')) throw new Error('Draw function anchor missing');
+html=html.replace('function draw(){', lossFn + '\\nfunction draw(){');
+html=html.replace("else{losePEl.textContent=pscore;loseCEl.textContent=cscore;loseO.classList.remove('hidden')}",
+  "else{losePEl.textContent=pscore;loseCEl.textContent=cscore;renderLossAnalysis();loseO.classList.remove('hidden')}");
+
 html=html.replace('function startGame(){\n reset();started=true;','function startGame(){\n var requestedSpeed = Number(symmetryStartSpeed.value);\n BASE_SPEED = Number.isFinite(requestedSpeed) && requestedSpeed > 0 ? requestedSpeed : 390;\n reset();started=true;');
-html=html.replace('pscore = 0; cscore = 0;','pscore = 0; cscore = 0;\n    rallyHits = 0;');
-html=html.replace('function bouncePaddle(p, hit){','function bouncePaddle(p, hit){\n    rallyHits++;');
+html=html.replace('pscore = 0; cscore = 0;\n    matchAnalysis = { playerHits: 0, playerMisses: 0, cpuHits: 0, offsets: [], fastestShot: 0 };','pscore = 0; cscore = 0;\n    rallyHits = 0;');
+html=html.replace('function bouncePaddle(p, hit){','function bouncePaddle(p, hit){
+    rallyHits++;
+    if (p === player) {
+      matchAnalysis.playerHits++;
+      matchAnalysis.offsets.push(hit);
+      matchAnalysis.fastestShot = Math.max(matchAnalysis.fastestShot, ball.speed);
+    } else matchAnalysis.cpuHits++;');
 html=html.replace('var angle = hit * (Math.PI/3);',
   'var ANGLE_COUNT = 1e+307;\n    var normalizedOffset = Math.max(-1, Math.min(1, hit));\n    var quantizedOffset = Math.round(((normalizedOffset + 1) / 2) * (ANGLE_COUNT - 1)) / (ANGLE_COUNT - 1) * 2 - 1;\n    var bounceAngle = quantizedOffset * (75 * Math.PI / 180);\n    var angle = bounceAngle;');
 html=html.replace('ball.speed = Math.min(MAX_SPEED, ball.speed + SPEED_INC);',
   'ball.speed = Math.min(Number.MAX_VALUE / 4, ball.speed + SPEED_INC);');
-html=html.replace('ball.vy = Math.sin(angle) * ball.speed;', `var spinImpulse = (p.vy || 0) * 0.30;
-    ball.vy = Math.sin(angle) * ball.speed + spinImpulse;
-    var velocityLength = Math.hypot(ball.vx, ball.vy) || 1;
-    ball.vx *= ball.speed / velocityLength;
-    ball.vy *= ball.speed / velocityLength;
-    // Exact hit-frame lock: replace the speculative hotmap with the actual outgoing trajectory.
-    moveGodPaddle(cpu, 1, 0);`);
+html=html.replace('ball.vy = Math.sin(angle) * ball.speed;', [
+  'var spinImpulse = (p.vy || 0) * 0.30;',
+  'ball.vy = Math.sin(angle) * ball.speed + spinImpulse;',
+  'var velocityLength = Math.hypot(ball.vx, ball.vy) || 1;',
+  'ball.vx *= ball.speed / velocityLength;',
+  'ball.vy *= ball.speed / velocityLength;',
+  '// Exact hit-frame lock: replace speculative staging with the actual outgoing trajectory.',
+  'moveGodPaddle(cpu, 1, 0);'
+].join('\\n'));
 const hitPatch = `    if (p === player) ball.x = p.x + p.w + ball.r + 0.5;
     else ball.x = p.x - ball.r - 0.5;`;
 const hitReplacement = `    if (p === player) {
