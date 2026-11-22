@@ -51,7 +51,7 @@
     .game-card.selected{border-color:var(--purple);box-shadow:0 0 0 1px #b69cff55}
     .shelves{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:0 0 16px}.shelves[hidden]{display:none}.shelf{border:1px solid var(--line);border-radius:16px;padding:14px;background:#141629b8}.shelf h2{font-size:13px;margin:0 0 10px}.shelf-items{display:flex;gap:8px;flex-wrap:wrap}.shelf-items button{border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:#191b30;color:var(--text)}.shelf-items .empty-shelf{color:var(--muted);font-size:11px}.stage.theater{position:fixed;inset:0;z-index:80;aspect-ratio:auto;min-height:0;background:#000}.stage.theater #game-frame{width:100vw;height:100vh}.stage.theater .stage-status{background:#090914}@media(max-width:620px){.shelves{grid-template-columns:1fr}}
     .thumb{position:relative;aspect-ratio:16/9;overflow:hidden;background:linear-gradient(135deg,var(--shade,#34285c),#111528)}
-    .thumb video{display:block;width:100%;height:100%;object-fit:cover}
+    .thumb-image{position:absolute;inset:0;z-index:1;width:100%;height:100%;object-fit:cover}.thumb video{position:absolute;inset:0;z-index:2;display:block;width:100%;height:100%;object-fit:cover}.thumb-fallback{z-index:0}.thumb-tag{z-index:3}
     .thumb-fallback{position:absolute;inset:0;display:grid;place-items:center;font-size:42px;background:radial-gradient(circle at 70% 20%,#ffffff20,transparent 38%),linear-gradient(135deg,var(--shade,#34285c),#101323)}
     .thumb-tag{position:absolute;left:8px;bottom:8px;padding:4px 7px;border:1px solid #ffffff38;border-radius:99px;background:#080914b8;color:#fff;font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
     .card-info{padding:10px 11px}
@@ -583,7 +583,7 @@
         const selected = state.selected?.id === game.id;
         const video = state.previewUrls.get(game.id) || ("./thumbs/" + encodeURIComponent(game.id) + ".mp4");
         return '<button class="game-card ' + (selected ? "selected" : "") + '" type="button" data-game="' + escapeHTML(game.id) + '" aria-pressed="' + selected + '" aria-label="Play ' + escapeHTML(game.title) + '">' +
-          '<div class="thumb" style="' + style + '"><div class="thumb-fallback">' + escapeHTML(game.emoji || "✦") + '</div><video src="' + video + '" autoplay muted loop playsinline preload="none" aria-hidden="true"></video><span class="thumb-tag">' + escapeHTML(censorText(game.category || "Game")) + '</span></div>' +
+          '<div class="thumb" style="' + style + '"><div class="thumb-fallback">' + escapeHTML(game.emoji || "✦") + '</div><img class="thumb-image" src="./thumbs/' + encodeURIComponent(game.id) + '.webp" alt="" loading="lazy" onerror="this.hidden=true"><video src="' + video + '" autoplay muted loop playsinline preload="none" aria-hidden="true" onerror="this.hidden=true"></video><span class="thumb-tag">' + escapeHTML(censorText(game.category || "Game")) + '</span></div>' +
           '<div class="card-info"><div class="card-title">' + escapeHTML(censorText(game.title)) + '</div><div class="card-sub">' + escapeHTML(censorText(game.creator || "Independent creator")) + '</div>' + (game.audience ? '<span class="audience-mark">' + escapeHTML(game.audience) + '</span>' : '') + '</div></button>';
       }).join("") : '<div class="empty">No games match that search. Try another title or category.</div>';
       $("#total-stat").textContent = state.games.length;

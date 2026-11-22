@@ -244,6 +244,14 @@ jobs:
           fs.writeFileSync('public/games.json',JSON.stringify(manifest,null,2)+'\n');
           NODE
 
+      - name: Capture gameplay thumbnails from cloned games
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          npm install --prefix /tmp/afterglow-thumb-tools --no-save playwright@1.55.0
+          /tmp/afterglow-thumb-tools/node_modules/.bin/playwright install --with-deps chromium
+          NODE_PATH=/tmp/afterglow-thumb-tools/node_modules node scripts/generate-thumbnails.js
+
       - name: Verify manifest, licences, entrypoints and deployment size
         run: node scripts/verify-games.js
 
