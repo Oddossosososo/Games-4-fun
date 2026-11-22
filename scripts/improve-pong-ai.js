@@ -53,7 +53,7 @@ const helper=`  // Shared controller: both paddles use precisely the same GOD CP
         targetY = intercept - paddle.h/2;
       }
     }
-    targetY = Math.max(0, Math.min(H - paddle.h, targetY));
+    // Add intentional shot placement so both perfect predictors create varied angles.\n    var shotOffset = Math.sin((rallyHits + 1) * 1.37) * paddle.h * 0.30 * (direction > 0 ? 1 : -1);\n    targetY -= shotOffset;\n    targetY = Math.max(0, Math.min(H - paddle.h, targetY));
     var dy = targetY - paddle.y;
     var step = AI_MAX_SPEED * dt;
     if (Math.abs(dy) <= step) paddle.y = targetY;
@@ -82,7 +82,7 @@ html=html.replace(playerOld,playerNew);
 
 const stateOld="var player, cpu, ball, pscore, cscore, running, started, last, serveTimer, paused;";
 if(!html.includes(stateOld)) throw new Error('State declaration missing');
-html=html.replace(stateOld,stateOld+"\n  var symmetryMode = false;");
+html=html.replace(stateOld,stateOld+"\n  var symmetryMode = false;\\n  var rallyHits = 0;");
 
 const uiAnchor="  <div id=\"stage\">";
 if(!html.includes(uiAnchor)) throw new Error('Stage anchor missing');
@@ -115,7 +115,7 @@ html=html.replace("if (e.key === 'ArrowDown' && !keys['ArrowUp']) player.vy = 0;
 html=html.replace("if (keys['ArrowUp']) player.vy = -480;","if (!symmetryMode && keys['ArrowUp']) player.vy = -480;");
 html=html.replace("if (keys['ArrowDown']) player.vy = 480;","if (!symmetryMode && keys['ArrowDown']) player.vy = 480;");
 
-html=html.replace(old,replacement);
+html=html.replace(old,replacement);\nhtml=html.replace('pscore = 0; cscore = 0;','pscore = 0; cscore = 0;\\n    rallyHits = 0;');\nhtml=html.replace('function bouncePaddle(p, hit){','function bouncePaddle(p, hit){\\n    rallyHits++;');
 const hitPatch = `    if (p === player) ball.x = p.x + p.w + ball.r + 0.5;
     else ball.x = p.x - ball.r - 0.5;`;
 const hitReplacement = `    if (p === player) {
@@ -153,6 +153,6 @@ const newLoop = `  // 240 Hz physics simulation; rendering remains display-refre
   }`;
 if (!html.includes(oldLoop)) throw new Error('Pong frame loop did not match');
 html=html.replace(oldLoop,newLoop);
-html=html.replace('var AI_MAX_SPEED = 360;','var AI_MAX_SPEED = 900;\n  var pongGodWasm = null;\n  fetch("./pong-ai.wasm").then(function(r){ if(!r.ok) throw new Error("WASM unavailable"); return r.arrayBuffer(); }).then(function(bytes){ return WebAssembly.instantiate(bytes); }).then(function(result){ pongGodWasm = result.instance.exports; }).catch(function(){ console.warn("Pong GOD CPU: using JavaScript fallback."); });');
+html=html.replace('var MAX_SPEED = 820;','var MAX_SPEED = 1350;');\nhtml=html.replace('var SPEED_INC = 28;','var SPEED_INC = 45;');\nhtml=html.replace('var AI_MAX_SPEED = 360;','var AI_MAX_SPEED = 900;\n  var pongGodWasm = null;\n  fetch("./pong-ai.wasm").then(function(r){ if(!r.ok) throw new Error("WASM unavailable"); return r.arrayBuffer(); }).then(function(bytes){ return WebAssembly.instantiate(bytes); }).then(function(result){ pongGodWasm = result.instance.exports; }).catch(function(){ console.warn("Pong GOD CPU: using JavaScript fallback."); });');
 fs.writeFileSync(file,html);
 console.log('Pong GOD CPU patched: Rust/WASM trajectory prediction, reflected wall math, 900 px/s movement, JS fallback.');
