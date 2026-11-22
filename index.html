@@ -159,7 +159,9 @@
     .drive-cloak-content small{display:block;margin-top:28px;color:#80868b}
     @media(max-width:640px){.drive-cloak-content{margin:70px auto}}
 
-\n  </style>
+\n  
+    .symmetry-card{margin:0 0 18px;padding:16px;border:1px solid #b69cff55;border-radius:18px;background:linear-gradient(135deg,#19152e,#111827);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.symmetry-card h2{margin:0;font-size:17px}.symmetry-card p{margin:4px 0 0;color:var(--muted);font-size:12px}.symmetry-panel{margin:0 0 18px;padding:14px;border:1px solid #b69cff55;border-radius:18px;background:#0c0d19}.symmetry-panel[hidden]{display:none}.symmetry-panel canvas{display:block;width:100%;max-width:900px;margin:auto;aspect-ratio:16/9;background:#080a13;border-radius:12px}.symmetry-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px}.symmetry-score{font-weight:900;color:var(--cyan);margin-right:auto}
+  </style>
 </head>
 <body>
   <div id="drive-cloak-screen" role="status" aria-hidden="true">
@@ -184,6 +186,8 @@
       <div class="stats" aria-label="Arcade statistics"><div class="stat"><strong id="total-stat">—</strong><span>GAMES</span></div><div class="stat"><strong id="local-stat">—</strong><span>SELF-HOSTED</span></div></div>
     </section>
 
+    <section class="symmetry-card" aria-label="Perfect Symmetry mode"><div><h2>Perfect Symmetry · Bot vs Bot</h2><p>Watch two mirrored CPUs play each other.</p></div><button class="action primary" id="symmetry-open" type="button">Open mode</button></section>
+    <section class="symmetry-panel" id="symmetry-panel" hidden><canvas id="symmetry-canvas" width="960" height="540" aria-label="Bot versus bot pong simulation"></canvas><div class="symmetry-controls"><strong class="symmetry-score" id="symmetry-score">0 — 0</strong><button class="action" id="symmetry-reset" type="button">Reset match</button><button class="action" id="symmetry-close" type="button">Close</button></div></section>
     <section class="toolbar" aria-label="Game filters">
       <div class="filters" id="filters"><button class="chip active" data-category="All">Everything</button></div>
       <label class="search-wrap"><span class="search-icon">⌕</span><input id="search" class="search" type="search" placeholder="Search games…" autocomplete="off" aria-label="Search games"></label><button class="action" id="random-game" type="button">🎲 Random game</button>
@@ -1031,6 +1035,23 @@
     });
     const accountsReady = import("./accounts.js").then(module => module.initAccounts()).catch(error => { console.warn("Account services unavailable.", error); return null; });
     accountsReady.finally(() => start());
+  
+    // Perfect Symmetry: mirrored, physics-only bot-vs-bot exhibition.
+    (() => {
+      const panel=document.getElementById("symmetry-panel"), canvas=document.getElementById("symmetry-canvas"), ctx=canvas.getContext("2d");
+      const scoreEl=document.getElementById("symmetry-score"); if(!panel||!canvas||!ctx)return;
+      const W=canvas.width,H=canvas.height, paddleH=92,paddleW=12, speed=430, ballR=8;
+      let leftScore=0,rightScore=0,ball={x:W/2,y:H/2,vx:340,vy:170},pL=H/2-paddleH/2,pR=pL,raf=0,last=0;
+      function resetBall(dir){ball={x:W/2,y:H/2,vx:dir*340,vy:(Math.random()-.5)*260};pL=pR=H/2-paddleH/2;}
+      function predict(y,vy,t){let span=H-ballR*2, raw=(y-ballR+vy*t),period=span*2,fold=((raw%period)+period)%period;return ballR+(fold<=span?fold:period-fold);}
+      function update(dt){let targetL=H/2-paddleH/2,targetR=targetL;if(ball.vx<0)targetL=predict(ball.y,ball.vy,(paddleW+18-ball.x)/ball.vx*-1)-paddleH/2;else targetR=predict(ball.y,ball.vy,(W-paddleW-18-ball.x)/ball.vx)-paddleH/2;targetL=Math.max(0,Math.min(H-paddleH,targetL));targetR=Math.max(0,Math.min(H-paddleH,targetR));pL+=Math.max(-speed*dt,Math.min(speed*dt,targetL-pL));pR+=Math.max(-speed*dt,Math.min(speed*dt,targetR-pR));ball.x+=ball.vx*dt;ball.y+=ball.vy*dt;if(ball.y<ballR||ball.y>H-ballR){ball.vy*=-1;ball.y=Math.max(ballR,Math.min(H-ballR,ball.y));}if(ball.vx<0&&ball.x-ballR<paddleW+18&&ball.x>24&&ball.y>pL-ballR&&ball.y<pL+paddleH+ballR){ball.vx=Math.abs(ball.vx)*1.025;ball.vy+=(ball.y-(pL+paddleH/2))*3.1;ball.x=paddleW+18+ballR;}if(ball.vx>0&&ball.x+ballR>W-paddleW-18&&ball.x<W-24&&ball.y>pR-ballR&&ball.y<pR+paddleH+ballR){ball.vx=-Math.abs(ball.vx)*1.025;ball.vy+=(ball.y-(pR+paddleH/2))*3.1;ball.x=W-paddleW-18-ballR;}if(ball.x<0){rightScore++;scoreEl.textContent=leftScore+" — "+rightScore;resetBall(1);}if(ball.x>W){leftScore++;scoreEl.textContent=leftScore+" — "+rightScore;resetBall(-1);}}
+      function draw(){ctx.clearRect(0,0,W,H);ctx.fillStyle="#080a13";ctx.fillRect(0,0,W,H);ctx.strokeStyle="#34364c";ctx.setLineDash([10,12]);ctx.beginPath();ctx.moveTo(W/2,0);ctx.lineTo(W/2,H);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle="#b69cff";ctx.fillRect(18,pL,paddleW,paddleH);ctx.fillRect(W-30,pR,paddleW,paddleH);ctx.fillStyle="#74e6df";ctx.beginPath();ctx.arc(ball.x,ball.y,ballR,0,Math.PI*2);ctx.fill();ctx.fillStyle="#a4a5c0";ctx.font="bold 36px system-ui";ctx.textAlign="center";ctx.fillText(leftScore,W/2-70,54);ctx.fillText(rightScore,W/2+70,54);}
+      function loop(now){if(!panel.hidden){let dt=Math.min(.03,(now-last)/1000||0);last=now;update(dt);draw();raf=requestAnimationFrame(loop);}}
+      document.getElementById("symmetry-open").addEventListener("click",()=>{panel.hidden=false;last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);});
+      document.getElementById("symmetry-close").addEventListener("click",()=>{panel.hidden=true;cancelAnimationFrame(raf);});
+      document.getElementById("symmetry-reset").addEventListener("click",()=>{leftScore=rightScore=0;scoreEl.textContent="0 — 0";resetBall(Math.random()<.5?-1:1);});
+    })();
+
   </script>
 </body>
 </html>
