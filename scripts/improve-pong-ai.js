@@ -216,13 +216,15 @@ html=html.replace("else{losePEl.textContent=pscore;loseCEl.textContent=cscore;lo
 
 html=html.replace('function startGame(){\n reset();started=true;','function startGame(){\n var requestedSpeed = Number(symmetryStartSpeed.value);\n BASE_SPEED = Number.isFinite(requestedSpeed) && requestedSpeed > 0 ? requestedSpeed : 390;\n reset();started=true;');
 html=html.replace('pscore = 0; cscore = 0;\n    matchAnalysis = { playerHits: 0, playerMisses: 0, cpuHits: 0, offsets: [], fastestShot: 0 };','pscore = 0; cscore = 0;\n    rallyHits = 0;');
-html=html.replace('function bouncePaddle(p, hit){','function bouncePaddle(p, hit){
-    rallyHits++;
-    if (p === player) {
-      matchAnalysis.playerHits++;
-      matchAnalysis.offsets.push(hit);
-      matchAnalysis.fastestShot = Math.max(matchAnalysis.fastestShot, ball.speed);
-    } else matchAnalysis.cpuHits++;');
+html=html.replace('function bouncePaddle(p, hit){', [
+  'function bouncePaddle(p, hit){',
+  '    rallyHits++;',
+  '    if (p === player) {',
+  '      matchAnalysis.playerHits++;',
+  '      matchAnalysis.offsets.push(hit);',
+  '      matchAnalysis.fastestShot = Math.max(matchAnalysis.fastestShot, ball.speed);',
+  '    } else matchAnalysis.cpuHits++;'
+].join('\\n'));
 html=html.replace('var angle = hit * (Math.PI/3);',
   'var ANGLE_COUNT = 1e+307;\n    var normalizedOffset = Math.max(-1, Math.min(1, hit));\n    var quantizedOffset = Math.round(((normalizedOffset + 1) / 2) * (ANGLE_COUNT - 1)) / (ANGLE_COUNT - 1) * 2 - 1;\n    var bounceAngle = quantizedOffset * (75 * Math.PI / 180);\n    var angle = bounceAngle;');
 html=html.replace('ball.speed = Math.min(MAX_SPEED, ball.speed + SPEED_INC);',
