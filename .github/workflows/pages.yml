@@ -12,7 +12,7 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -137,9 +137,13 @@ jobs:
           grep -q 'symmetryToggle' "$pong"
           grep -q 'moveGodPaddle(player, -1, dt)' "$pong"
           grep -q 'moveGodPaddle(cpu, 1, dt)' "$pong"
-          grep -q 'var AI_MAX_SPEED = 900;' "$pong"
+          grep -q 'var AI_MAX_SPEED = Infinity;' "$pong"
+          grep -q 'var MAX_SPEED = Infinity;' "$pong"
+          grep -q 'desiredHit' "$pong"
+          grep -q 'spinImpulse' "$pong"
+          grep -q 'adaptiveStep' "$pong"
           grep -q 'var PHYSICS_STEP = 1 / 240;' "$pong"
-          echo "Perfect Symmetry mode, shared GOD CPU, 900 px/s cap and 240 Hz physics verified."
+          echo "Perfect Symmetry, uncapped GOD CPUs, raycast prediction, offensive targeting, spin and adaptive physics verified."
 
       - name: Fix cloned game asset paths for GitHub Pages
         run: node scripts/prepare-games.js
