@@ -34,23 +34,6 @@
       "desc": "Slide and combine matching number tiles."
     },
     {
-      "id": "sandspiel",
-      "title": "Sandspiel",
-      "category": "Puzzle",
-      "creator": "Max Bittker",
-      "license": "MIT",
-      "mode": "local",
-      "verified": true,
-      "embeddable": true,
-      "emoji": "🏖️",
-      "glow": "#db9b55",
-      "shade": "#56371e",
-      "desc": "Experiment with falling-sand elements and particles.",
-      "source": "https://github.com/MaxBittker/sandspiel",
-      "entrypoint": "dist/index.html",
-      "auditNote": "MIT-licensed upstream source is built from its Rust/WASM and webpack sources during Pages deployment; hosted locally under this game's route."
-    },
-    {
       "id": "astray",
       "title": "Astray",
       "category": "Arcade",
