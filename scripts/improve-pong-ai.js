@@ -158,8 +158,8 @@ const newLoop = `  // 240 Hz physics simulation; rendering remains display-refre
   }`;
 if (!html.includes(oldLoop)) throw new Error('Pong frame loop did not match');
 html=html.replace(oldLoop,newLoop);
-html=html.replace('var MAX_SPEED = 820;','var MAX_SPEED = 1350;');
+html=html.replace('var MAX_SPEED = 820;','var MAX_SPEED = Infinity;');
 html=html.replace('var SPEED_INC = 28;','var SPEED_INC = 45;');
-html=html.replace('var AI_MAX_SPEED = 360;','var AI_MAX_SPEED = 900;\n  var pongGodWasm = null;\n  fetch("./pong-ai.wasm").then(function(r){ if(!r.ok) throw new Error("WASM unavailable"); return r.arrayBuffer(); }).then(function(bytes){ return WebAssembly.instantiate(bytes); }).then(function(result){ pongGodWasm = result.instance.exports; }).catch(function(){ console.warn("Pong GOD CPU: using JavaScript fallback."); });');
+html=html.replace('var AI_MAX_SPEED = 360;','var AI_MAX_SPEED = Infinity;\n  var pongGodWasm = null;\n  fetch("./pong-ai.wasm").then(function(r){ if(!r.ok) throw new Error("WASM unavailable"); return r.arrayBuffer(); }).then(function(bytes){ return WebAssembly.instantiate(bytes); }).then(function(result){ pongGodWasm = result.instance.exports; }).catch(function(){ console.warn("Pong GOD CPU: using JavaScript fallback."); });');
 fs.writeFileSync(file,html);
 console.log('Pong GOD CPU patched: Rust/WASM trajectory prediction, reflected wall math, 900 px/s movement, JS fallback.');
