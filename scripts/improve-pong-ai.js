@@ -31,29 +31,90 @@ const old=`    // AI: track ball with capped speed, with slight reaction lag/imp
     else cpu.y += Math.sign(dy) * step;
     if (cpu.y < 0) cpu.y = 0;
     if (cpu.y + cpu.h > H) cpu.y = H - cpu.h;`;
-const replacement=`    // Rust/WASM GOD CPU: exact reflected interception, ball-only inputs.
-    var targetY = H/2 - cpu.h/2;
-    if (ball.vx > 0) {
-      var travel = Math.max(0, (cpu.x - ball.x) / Math.max(1, ball.vx));
+const replacement=`    moveGodPaddle(cpu, 1, dt);`;
+if(!html.includes(old)) throw new Error('Pong AI block did not match; refusing to patch');
+
+const helperAnchor="  function update(dt){";
+const helper=`  // Shared controller: both paddles use precisely the same GOD CPU logic.
+  function moveGodPaddle(paddle, direction, dt){
+    var targetY = H/2 - paddle.h/2;
+    var movingToward = direction > 0 ? ball.vx > 0 : ball.vx < 0;
+    if (movingToward) {
+      var edgeX = direction > 0 ? paddle.x : paddle.x + paddle.w;
+      var travel = Math.max(0, (edgeX - ball.x) / Math.max(1, Math.abs(ball.vx)));
       var intercept;
       if (pongGodWasm) {
         intercept = pongGodWasm.predict_intercept_y(ball.y, ball.vy, travel, H, ball.r);
-        targetY = pongGodWasm.clamp_paddle_target(intercept, cpu.h, H);
+        targetY = pongGodWasm.clamp_paddle_target(intercept, paddle.h, H);
       } else {
         var span = H - 2*ball.r;
         var folded = ((ball.y + ball.vy*travel - ball.r) % (2*span) + 2*span) % (2*span);
         intercept = ball.r + (folded <= span ? folded : 2*span - folded);
-        targetY = intercept - cpu.h/2;
+        targetY = intercept - paddle.h/2;
       }
     }
-    targetY = Math.max(0, Math.min(H - cpu.h, targetY));
-    var dy = targetY - cpu.y;
+    targetY = Math.max(0, Math.min(H - paddle.h, targetY));
+    var dy = targetY - paddle.y;
     var step = AI_MAX_SPEED * dt;
-    if (Math.abs(dy) <= step) cpu.y = targetY;
-    else cpu.y += Math.sign(dy) * step;
-    cpu.y = Math.max(0, Math.min(H - cpu.h, cpu.y));
-    cpu._pretarget = false;`;
-if(!html.includes(old)) throw new Error('Pong AI block did not match; refusing to patch');
+    if (Math.abs(dy) <= step) paddle.y = targetY;
+    else paddle.y += Math.sign(dy) * step;
+    paddle.y = Math.max(0, Math.min(H - paddle.h, paddle.y));
+    paddle._pretarget = false;
+  }
+
+`;
+if(!html.includes(helperAnchor)) throw new Error('Update function anchor missing');
+html=html.replace(helperAnchor,helper+helperAnchor);
+
+const playerOld=`    // player paddle (keyboard control if vy set)
+    player.y += player.vy * dt;
+    if (player.y < 0) player.y = 0;
+    if (player.y + player.h > H) player.y = H - player.h;`;
+const playerNew=`    // Normal mode uses player input; symmetry mode uses the identical GOD CPU controller.
+    if (symmetryMode) moveGodPaddle(player, -1, dt);
+    else {
+      player.y += player.vy * dt;
+      if (player.y < 0) player.y = 0;
+      if (player.y + player.h > H) player.y = H - player.h;
+    }`;
+if(!html.includes(playerOld)) throw new Error('Player movement block missing');
+html=html.replace(playerOld,playerNew);
+
+const stateOld="var player, cpu, ball, pscore, cscore, running, started, last, serveTimer, paused;";
+if(!html.includes(stateOld)) throw new Error('State declaration missing');
+html=html.replace(stateOld,stateOld+"\\n  var symmetryMode = false;");
+
+const uiAnchor="  <div id=\"stage\">";
+if(!html.includes(uiAnchor)) throw new Error('Stage anchor missing');
+html=html.replace(uiAnchor,'  <button class="btn" id="symmetryToggle" type="button" style="margin:0 0 10px;padding:8px 14px;font-size:11px">Mode: Player vs CPU</button>\\n'+uiAnchor);
+
+const hudAnchor="  var loseCEl = document.getElementById('loseC');";
+const hudCode=`  var symmetryToggle = document.getElementById('symmetryToggle');
+  var playerLabel = document.querySelector('#hud .you small');
+  var cpuLabel = document.querySelector('#hud .cpu small');
+  symmetryToggle.addEventListener('click', function(){
+    if (started) return;
+    symmetryMode = !symmetryMode;
+    playerLabel.textContent = symmetryMode ? 'Bot A' : 'You';
+    cpuLabel.textContent = symmetryMode ? 'Bot B' : 'CPU';
+    symmetryToggle.textContent = symmetryMode ? 'Mode: Perfect Symmetry' : 'Mode: Player vs CPU';
+    startO.querySelector('p').textContent = symmetryMode
+      ? 'Two identical GOD CPUs compete using the same Rust/WASM prediction, 900 px/s speed cap and 240 Hz physics.'
+      : 'Move your left paddle with mouse, touch, or arrow keys. Each rally speeds the ball up. First to 7 points wins the match.';
+  });`;
+if(!html.includes(hudAnchor)) throw new Error('HUD anchor missing');
+html=html.replace(hudAnchor,hudAnchor+"\\n\\n"+hudCode);
+
+const pointerAnchor="  function pointerToPaddle(clientY){";
+if(!html.includes(pointerAnchor)) throw new Error('Pointer handler missing');
+html=html.replace(pointerAnchor,pointerAnchor+"\\n    if (symmetryMode) return;");
+html=html.replace("if (e.key === 'ArrowUp') { player.vy = -480; e.preventDefault(); }","if (e.key === 'ArrowUp' && !symmetryMode) { player.vy = -480; e.preventDefault(); }");
+html=html.replace("else if (e.key === 'ArrowDown') { player.vy = 480; e.preventDefault(); }","else if (e.key === 'ArrowDown' && !symmetryMode) { player.vy = 480; e.preventDefault(); }");
+html=html.replace("if (e.key === 'ArrowUp' && !keys['ArrowDown']) player.vy = 0;","if (!symmetryMode && e.key === 'ArrowUp' && !keys['ArrowDown']) player.vy = 0;");
+html=html.replace("if (e.key === 'ArrowDown' && !keys['ArrowUp']) player.vy = 0;","if (!symmetryMode && e.key === 'ArrowDown' && !keys['ArrowUp']) player.vy = 0;");
+html=html.replace("if (keys['ArrowUp']) player.vy = -480;","if (!symmetryMode && keys['ArrowUp']) player.vy = -480;");
+html=html.replace("if (keys['ArrowDown']) player.vy = 480;","if (!symmetryMode && keys['ArrowDown']) player.vy = 480;");
+
 html=html.replace(old,replacement);
 const hitPatch = `    if (p === player) ball.x = p.x + p.w + ball.r + 0.5;
     else ball.x = p.x - ball.r - 0.5;`;
