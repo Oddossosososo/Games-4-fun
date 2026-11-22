@@ -209,7 +209,6 @@ const lossFn = `function renderLossAnalysis() {
 `;
 if (!html.includes('function draw(){')) throw new Error('Draw function anchor missing');
 html=html.replace('function draw(){', lossFn + '\nfunction draw(){');
-html=html.replace("drawPaddle(player,'#22d3ee');drawPaddle(cpu,'#8b5cf6');",
 html=html.replace("else{losePEl.textContent=pscore;loseCEl.textContent=cscore;loseO.classList.remove('hidden')}",
   "else{losePEl.textContent=pscore;loseCEl.textContent=cscore;renderLossAnalysis();loseO.classList.remove('hidden')}");
 
