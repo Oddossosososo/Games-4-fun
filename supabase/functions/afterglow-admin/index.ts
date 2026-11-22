@@ -29,7 +29,7 @@ const MIME: Record<string, string> = {
 };
 const excluded = (path: string) =>
   /(^|\/)(\.git|\.github|\.vscode|node_modules|coverage|__tests__|\.next)(\/|$)/i.test(path) ||
-  /(^|\/)(README|CONTRIBUTING|CHANGELOG|LICENSE|CODE_OF_CONDUCT)(\.[^/]*)?$/i.test(path) ||
+  /(^|\/)(README|CONTRIBUTING|CHANGELOG|CODE_OF_CONDUCT)(\.[^/]*)?$/i.test(path) ||
   /\.(map|lock|md|mdx|yml|yaml|toml|rs|c|cc|cpp|h|hpp|py|sh|bat|ps1)$/i.test(path) ||
   /(^|\/)(\.gitignore|\.gitattributes|\.editorconfig|\.npmrc|\.prettierrc)$/i.test(path);
 
