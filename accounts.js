@@ -129,15 +129,16 @@ async function loadAdminUsers(actorRole) {
         select.append(option);
       }
       select.value = account.role === "owner" ? "member" : account.role;
-      select.disabled = account.role === "owner";
+      const locked = account.role === "owner" || (actorRole !== "owner" && account.role === "admin");
+      select.disabled = locked;
       const verifiedLabel = document.createElement("label");
       const verified = document.createElement("input");
       verified.type = "checkbox"; verified.checked = Boolean(account.is_verified);
-      verified.disabled = account.role === "owner";
+      verified.disabled = locked;
       verifiedLabel.append(verified, document.createTextNode("Verified"));
       const save = document.createElement("button");
       save.className = "action"; save.type = "button"; save.textContent = "Save";
-      save.disabled = account.role === "owner";
+      save.disabled = locked;
       save.addEventListener("click", async () => {
         save.disabled = true;
         try {
