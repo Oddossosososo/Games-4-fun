@@ -53,7 +53,10 @@ const helper=`  // Shared controller: both paddles use precisely the same GOD CP
         targetY = intercept - paddle.h/2;
       }
     }
-    // Add intentional shot placement so both perfect predictors create varied angles.\n    var shotOffset = Math.sin((rallyHits + 1) * 1.37) * paddle.h * 0.30 * (direction > 0 ? 1 : -1);\n    targetY -= shotOffset;\n    targetY = Math.max(0, Math.min(H - paddle.h, targetY));
+    // Add intentional shot placement so both perfect predictors create varied angles.
+    var shotOffset = Math.sin((rallyHits + 1) * 1.37) * paddle.h * 0.30 * (direction > 0 ? 1 : -1);
+    targetY -= shotOffset;
+    targetY = Math.max(0, Math.min(H - paddle.h, targetY));
     var dy = targetY - paddle.y;
     var step = AI_MAX_SPEED * dt;
     if (Math.abs(dy) <= step) paddle.y = targetY;
@@ -82,7 +85,7 @@ html=html.replace(playerOld,playerNew);
 
 const stateOld="var player, cpu, ball, pscore, cscore, running, started, last, serveTimer, paused;";
 if(!html.includes(stateOld)) throw new Error('State declaration missing');
-html=html.replace(stateOld,stateOld+"\n  var symmetryMode = false;\\n  var rallyHits = 0;");
+html=html.replace(stateOld,stateOld+"\n  var symmetryMode = false;\n  var rallyHits = 0;");
 
 const uiAnchor="  <div id=\"stage\">";
 if(!html.includes(uiAnchor)) throw new Error('Stage anchor missing');
@@ -115,7 +118,7 @@ html=html.replace("if (e.key === 'ArrowDown' && !keys['ArrowUp']) player.vy = 0;
 html=html.replace("if (keys['ArrowUp']) player.vy = -480;","if (!symmetryMode && keys['ArrowUp']) player.vy = -480;");
 html=html.replace("if (keys['ArrowDown']) player.vy = 480;","if (!symmetryMode && keys['ArrowDown']) player.vy = 480;");
 
-html=html.replace(old,replacement);\nhtml=html.replace('pscore = 0; cscore = 0;','pscore = 0; cscore = 0;\\n    rallyHits = 0;');\nhtml=html.replace('function bouncePaddle(p, hit){','function bouncePaddle(p, hit){\\n    rallyHits++;');
+html=html.replace(old,replacement);\nhtml=html.replace('pscore = 0; cscore = 0;','pscore = 0; cscore = 0;\n    rallyHits = 0;');\nhtml=html.replace('function bouncePaddle(p, hit){','function bouncePaddle(p, hit){\n    rallyHits++;');
 const hitPatch = `    if (p === player) ball.x = p.x + p.w + ball.r + 0.5;
     else ball.x = p.x - ball.r - 0.5;`;
 const hitReplacement = `    if (p === player) {
