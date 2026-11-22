@@ -56,7 +56,7 @@
     .thumb-tag{position:absolute;left:8px;bottom:8px;padding:4px 7px;border:1px solid #ffffff38;border-radius:99px;background:#080914b8;color:#fff;font-size:9px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}
     .card-info{padding:10px 11px}
     .card-title{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;font-weight:850}
-    .card-sub{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:10px;margin-top:2px}
+    .card-sub{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:10px;margin-top:2px}.audience-mark{display:inline-flex;align-items:center;margin-top:7px;padding:3px 7px;border:1px solid #8b9ce877;border-radius:999px;background:#7189e51a;color:#cbd5ff;font-size:9px;font-weight:850}.audience-detail{color:#cbd5ff}
     .player-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 18px;border-bottom:1px solid #ffffff14}
     .player-kicker{color:var(--cyan);font-size:9px;font-weight:900;letter-spacing:.18em}
     .selected-title{font-size:19px;font-weight:900;letter-spacing:-.04em}
@@ -71,7 +71,7 @@
     .stage-status small{max-width:430px;color:var(--muted)}
     .spinner{width:24px;height:24px;border:3px solid #ffffff25;border-top-color:var(--cyan);border-radius:50%;animation:spin .8s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
-    .details{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;padding:15px 18px;border-top:1px solid #ffffff14}
+    .details{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;padding:15px 18px;border-top:1px solid #ffffff14}
     .detail-label{color:var(--muted);font-size:9px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
     .detail-value{margin-top:3px;font-size:11px;overflow-wrap:anywhere}
     .player-foot{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 18px 17px;color:var(--muted);font-size:10px}
@@ -157,7 +157,7 @@
         <div class="details">
           <div><div class="detail-label">Creator</div><div class="detail-value" id="creator">—</div></div>
           <div><div class="detail-label">Licence</div><div class="detail-value" id="license">—</div></div>
-          <div><div class="detail-label">Category</div><div class="detail-value" id="category">—</div></div>
+          <div><div class="detail-label">Category</div><div class="detail-value" id="category">—</div></div><div><div class="detail-label">Audience</div><div class="detail-value audience-detail" id="audience">—</div></div>
         </div>
         <div class="player-foot"><span id="play-state">Select a game to play.</span><span id="source-link">AFTERGLOW ARCADE</span></div><div class="player-foot" style="padding-top:0"><span id="record-status" role="status">Previews are saved only in this browser.</span><button class="action" id="delete-preview" type="button" hidden>Remove saved preview</button></div>
       </section>
@@ -460,7 +460,7 @@
         const video = state.previewUrls.get(game.id) || ("./thumbs/" + encodeURIComponent(game.id) + ".mp4");
         return '<button class="game-card ' + (selected ? "selected" : "") + '" type="button" data-game="' + escapeHTML(game.id) + '" aria-pressed="' + selected + '" aria-label="Play ' + escapeHTML(game.title) + '">' +
           '<div class="thumb" style="' + style + '"><div class="thumb-fallback">' + escapeHTML(game.emoji || "✦") + '</div><video src="' + video + '" autoplay muted loop playsinline preload="none" aria-hidden="true"></video><span class="thumb-tag">' + escapeHTML(censorText(game.category || "Game")) + '</span></div>' +
-          '<div class="card-info"><div class="card-title">' + escapeHTML(censorText(game.title)) + '</div><div class="card-sub">' + escapeHTML(censorText(game.creator || "Independent creator")) + '</div></div></button>';
+          '<div class="card-info"><div class="card-title">' + escapeHTML(censorText(game.title)) + '</div><div class="card-sub">' + escapeHTML(censorText(game.creator || "Independent creator")) + '</div>' + (game.audience ? '<span class="audience-mark">' + escapeHTML(game.audience) + '</span>' : '') + '</div></button>';
       }).join("") : '<div class="empty">No games match that search. Try another title or category.</div>';
       $("#total-stat").textContent = state.games.length;
       $("#local-stat").textContent = state.games.filter(isLocal).length;
@@ -484,6 +484,7 @@
       $("#creator").textContent = censorText(game.creator || "Unknown");
       $("#license").textContent = censorText(game.license || "Not listed");
       $("#category").textContent = censorText(game.category || "—");
+      $("#audience").textContent = censorText(game.audience || "—");
       $("#open-tab").disabled = !destination(game);
       $("#fullscreen").disabled = !(isLocal(game) || hostedURL(game));
       $("#record-preview").disabled = false;
