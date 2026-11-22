@@ -130,7 +130,7 @@ html=html.replace(old,replacement);
 html=html.replace('pscore = 0; cscore = 0;','pscore = 0; cscore = 0;\n    rallyHits = 0;');
 html=html.replace('function bouncePaddle(p, hit){','function bouncePaddle(p, hit){\n    rallyHits++;');
 html=html.replace('ball.vy = Math.sin(angle) * ball.speed;',
-  'var spinImpulse = Math.max(-520, Math.min(520, (p.vy || 0) * 0.30));\\n    ball.vy = Math.sin(angle) * ball.speed + spinImpulse;\\n    ball.speed += Math.min(120, Math.abs(spinImpulse) * 0.08);');
+  'var spinImpulse = Math.max(-520, Math.min(520, (p.vy || 0) * 0.30));\n    ball.vy = Math.sin(angle) * ball.speed + spinImpulse;\n    ball.speed += Math.min(120, Math.abs(spinImpulse) * 0.08);');
 const hitPatch = `    if (p === player) ball.x = p.x + p.w + ball.r + 0.5;
     else ball.x = p.x - ball.r - 0.5;`;
 const hitReplacement = `    if (p === player) {
