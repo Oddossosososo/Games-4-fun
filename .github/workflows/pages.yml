@@ -139,14 +139,17 @@ jobs:
           grep -q 'moveGodPaddle(cpu, 1, dt)' "$pong"
           grep -q 'var AI_MAX_SPEED = Infinity;' "$pong"
           grep -q 'var MAX_SPEED = Infinity;' "$pong"
-          grep -q 'predictWallIntercept' "$pong"
-          grep -q 'scoreAttackOffset' "$pong"
-          grep -q 'desiredHit' "$pong"
-          grep -q 'spinImpulse' "$pong"
+          grep -q 'predictReflectedY' "$pong"
+          grep -q 'candidates = \[-0.48' "$pong"
+          grep -q 'staging' "$pong"
           grep -q 'opponentSpeed' "$pong"
+          grep -q 'bestScore' "$pong"
+          grep -q 'spinImpulse' "$pong"
           grep -q 'adaptiveStep' "$pong"
+          grep -q 'rallyHits++' "$pong"
           grep -q 'var PHYSICS_STEP = 1 / 240;' "$pong"
-          echo "Perfect Symmetry, uncapped GOD CPUs, raycast prediction, offensive targeting, spin and adaptive physics verified."
+          grep -q 'fetch("./pong-ai.wasm")' "$pong"
+          echo "Perfect Symmetry, uncapped GOD CPUs, opponent-aware raycast prediction, minimax targeting, impact staging, spin and adaptive physics verified."
 
       - name: Fix cloned game asset paths for GitHub Pages
         run: node scripts/prepare-games.js
