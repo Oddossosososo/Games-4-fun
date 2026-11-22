@@ -104,8 +104,47 @@ async function loadProfilePage() {
     const isAdmin = ["owner","admin"].includes(badge.role);
     $("#admin-panel").hidden = !isAdmin;
     statusEl.textContent = "";
-    if (isAdmin) await loadAdminUsers(badge.role);
+    if (isAdmin) { await Promise.all([loadAdminUsers(badge.role), loadAdminGames()]); }
   } catch (error) { statusEl.textContent = error.message || "Could not load profile."; }
+}
+async function loadAdminGames() {
+  const root = $("#admin-games");
+  root.textContent = "Loading games…";
+  try {
+    const { games } = await callAdmin("admin_games");
+    root.replaceChildren();
+    if (!games.length) { root.textContent = "No games in the catalogue."; return; }
+    for (const game of games) {
+      const row = document.createElement("div");
+      row.className = "admin-user";
+      const info = document.createElement("div");
+      const title = document.createElement("div");
+      title.className = "admin-user-name";
+      title.textContent = game.title;
+      const meta = document.createElement("div");
+      meta.className = "admin-user-meta";
+      meta.textContent = game.id + " · " + game.mode;
+      info.append(title, meta);
+      const remove = document.createElement("button");
+      remove.className = "action";
+      remove.type = "button";
+      remove.textContent = "Delete";
+      remove.addEventListener("click", async () => {
+        if (!window.confirm('Delete "' + game.title + '" and its stored game files?')) return;
+        remove.disabled = true;
+        try {
+          const result = await callAdmin("delete_game", { game_id: game.id });
+          $("#admin-status").textContent = "Deleted " + result.deleted + ".";
+          await loadAdminGames();
+        } catch (error) {
+          $("#admin-status").textContent = error.message || "Could not delete game.";
+          remove.disabled = false;
+        }
+      });
+      row.append(info, remove);
+      root.append(row);
+    }
+  } catch (error) { root.textContent = error.message || "Could not load games."; }
 }
 async function loadAdminUsers(actorRole) {
   const root = $("#admin-users");
