@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>NealFun — Spend Sandbox</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0c0b15;color:#f5f2ff;font:16px system-ui,sans-serif}main{max-width:1000px;margin:auto;padding:24px}header{position:sticky;top:0;background:#171324;border:1px solid #392b54;border-radius:18px;padding:20px;z-index:2;box-shadow:0 8px 30px #0005}h1{margin:0 0 5px;color:#c6a4ff}small{color:#aaa1c2}.balance{font-size:clamp(2rem,6vw,3.6rem);font-weight:800;color:#a5f3fc;margin:10px 0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-top:16px}.item{background:#171425;border:1px solid #302844;border-radius:16px;padding:15px}.item h3{margin:0 0 6px}.price{color:#a5f3fc;font-weight:700}.count{margin:10px 0;color:#d0c8e4}.buttons{display:flex;gap:8px}.buttons button{flex:1;border:0;border-radius:9px;padding:10px;font-weight:700;cursor:pointer}.buy{background:#9b7bff;color:#110d22}.sell{background:#312845;color:#e8dcff}.buttons button:disabled{opacity:.35;cursor:not-allowed}.reset{background:transparent;border:1px solid #56446f;color:#d8c8ff;padding:8px 12px;border-radius:8px;cursor:pointer}
+</style></head><body><main><header><h1>NealFun · Spend Sandbox</h1><small>Spend a virtual fortune. No real money involved.</small><div class="balance" id="balance">$100,000,000,000</div><button class="reset" id="reset">Reset</button></header><div class="grid" id="items"></div></main>
+<script>
+const initial=100000000000;
+const products=[
+["🍔","Burger",5],["👟","Sneakers",120],["🎮","Game console",500],["📱","Phone",1000],["🚲","Bicycle",1500],["🏖️","Holiday",10000],["🚗","Car",35000],["🏡","House",450000],["🚁","Helicopter",15000000],["🛥️","Yacht",80000000],["🏢","Skyscraper",900000000],["🛰️","Space mission",2500000000]
+];
+let counts=Array(products.length).fill(0),money=initial;
+const fmt=n=>"$"+n.toLocaleString("en-US");
+function render(){document.getElementById("balance").textContent=fmt(money);document.getElementById("items").innerHTML=products.map((p,i)=>'<article class="item"><h3>'+p[0]+' '+p[1]+'</h3><div class="price">'+fmt(p[2])+'</div><div class="count">Owned: '+counts[i].toLocaleString()+'</div><div class="buttons"><button class="sell" data-sell="'+i+'" '+(!counts[i]?'disabled':'')+'>Sell</button><button class="buy" data-buy="'+i+'" '+ (money<p[2]?'disabled':'')+'>Buy</button></div></article>').join("");}
+document.getElementById("items").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;const i=Number(b.dataset.buy??b.dataset.sell);if(b.dataset.buy!==undefined&&money>=products[i][2]){money-=products[i][2];counts[i]++;}else if(b.dataset.sell!==undefined&&counts[i]){money+=products[i][2];counts[i]--;}render();});
+document.getElementById("reset").addEventListener("click",()=>{money=initial;counts=Array(products.length).fill(0);render();});render();
+</script></body></html>
