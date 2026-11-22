@@ -36,7 +36,28 @@ const replacement=`    moveGodPaddle(cpu, 1, dt);`;
 if(!html.includes(old)) throw new Error('Pong AI block did not match; refusing to patch');
 
 const helperAnchor="  function update(dt){";
-const helper="function moveGodPaddle(paddle, direction, dt) {\\n  const previousY = paddle.y;\\n  const wallMin = ball.r;\\n  const wallMax = H - ball.r;\\n  const wallSpan = wallMax - wallMin;\\n  let impactY = ball.y;\\n  // Predict the future intercept for the paddle being approached.\\n  if (ball.vx * direction > 0 && Math.abs(ball.vx) > 1e-9) {\\n    const faceX = direction < 0 ? paddle.x + paddle.w + ball.r : paddle.x - ball.r;\\n    const timeToImpact = Math.max(0, (faceX - ball.x) / ball.vx);\\n    const unfolded = ball.y - wallMin + ball.vy * timeToImpact;\\n    const folded = ((unfolded % (2 * wallSpan)) + (2 * wallSpan)) % (2 * wallSpan);\\n    impactY = wallMin + (folded <= wallSpan ? folded : 2 * wallSpan - folded);\\n  }\\n  const edgeAim = Math.sin((rallyHits + 1) * 1.61803398875 + direction * 0.73) * paddle.h * 0.012;\\n  const desiredY = impactY - paddle.h / 2 + edgeAim;\\n  paddle.y = Math.max(0, Math.min(H - paddle.h, desiredY));\\n  paddle.vy = dt > 0 ? (paddle.y - previousY) / dt : 0;\\n}";
+const helper=`function moveGodPaddle(paddle, direction, dt) {
+  const previousY = paddle.y;
+  let impactY = ball.y;
+  if (ball.vx * direction > 0 && Math.abs(ball.vx) > 1e-9) {
+    const faceX = direction < 0 ? paddle.x + paddle.w + ball.r : paddle.x - ball.r;
+    const timeToImpact = Math.max(0, (faceX - ball.x) / ball.vx);
+    if (pongGodWasm && pongGodWasm.predict_intercept_y) {
+      impactY = pongGodWasm.predict_intercept_y(ball.y, ball.vy, timeToImpact, H, ball.r);
+    } else {
+      const span = H - 2 * ball.r;
+      const raw = ball.y + ball.vy * timeToImpact - ball.r;
+      const folded = ((raw % (2 * span)) + (2 * span)) % (2 * span);
+      impactY = ball.r + (folded <= span ? folded : 2 * span - folded);
+    }
+  }
+  const edgeAim = Math.sin((rallyHits + 1) * 1.61803398875 + direction * 0.73) * paddle.h * 0.008;
+  const targetY = pongGodWasm && pongGodWasm.clamp_paddle_target
+    ? pongGodWasm.clamp_paddle_target(impactY, paddle.h, H)
+    : Math.max(0, Math.min(H - paddle.h, impactY - paddle.h / 2 + edgeAim));
+  paddle.y = Math.max(0, Math.min(H - paddle.h, targetY + edgeAim));
+  paddle.vy = dt > 0 ? (paddle.y - previousY) / dt : 0;
+}`;
 
 if(!html.includes(helperAnchor)) throw new Error('Update function anchor missing');
 html=html.replace(helperAnchor,helper+helperAnchor);
