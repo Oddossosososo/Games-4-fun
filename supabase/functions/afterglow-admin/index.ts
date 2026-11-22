@@ -75,16 +75,16 @@ Deno.serve(async (req: Request) => {
       if (!description || description.length > 300) return reply({ error: "Description must be 1–300 characters." }, 400);
       let parsed: URL;
       try { parsed = new URL(rawRepo); } catch { return reply({ error: "Enter a valid GitHub repository URL." }, 400); }
-      const parts = parsed.pathname.replace(/\\.git$/i, "").split("/").filter(Boolean);
+      const parts = parsed.pathname.replace(/\.git$/i, "").split("/").filter(Boolean);
       if (parsed.protocol !== "https:" || parsed.hostname !== "github.com" || parsed.username || parsed.password ||
           parsed.search || parsed.hash || parts.length !== 2 ||
           !/^[A-Za-z0-9_.-]{1,100}$/.test(parts[0]) || !/^[A-Za-z0-9_.-]{1,100}$/.test(parts[1])) {
         return reply({ error: "Use a repository URL like https://github.com/owner/repository." }, 400);
       }
       const owner = parts[0];
-      const repository = parts[1].replace(/\\.git$/i, "");
+      const repository = parts[1].replace(/\.git$/i, "");
       const repoUrl = "https://github.com/" + owner + "/" + repository;
-      const id = title.toLowerCase().normalize("NFKD").replace(/[\\u0300-\\u036f]/g, "")
+      const id = title.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
         .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 54).replace(/-$/g, "");
       if (!id) return reply({ error: "Game name needs at least one letter or number." }, 400);
       const { data: existing, error: existingError } = await service.from("game_catalog")
