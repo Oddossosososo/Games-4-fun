@@ -198,7 +198,7 @@ const lossFn = `function renderLossAnalysis() {
 }
 `;
 if (!html.includes('function draw(){')) throw new Error('Draw function anchor missing');
-html=html.replace('function draw(){', lossFn + '\\nfunction draw(){');
+html=html.replace('function draw(){', lossFn + '\nfunction draw(){');
 html=html.replace("else{losePEl.textContent=pscore;loseCEl.textContent=cscore;loseO.classList.remove('hidden')}",
   "else{losePEl.textContent=pscore;loseCEl.textContent=cscore;renderLossAnalysis();loseO.classList.remove('hidden')}");
 
@@ -223,7 +223,7 @@ html=html.replace('ball.vy = Math.sin(angle) * ball.speed;', [
   'ball.vy *= ball.speed / velocityLength;',
   '// Exact hit-frame lock: replace speculative staging with the actual outgoing trajectory.',
   'moveGodPaddle(cpu, 1, 0);'
-].join('\\n'));
+].join('\n'));
 const hitPatch = `    if (p === player) ball.x = p.x + p.w + ball.r + 0.5;
     else ball.x = p.x - ball.r - 0.5;`;
 const hitReplacement = `    if (p === player) {
