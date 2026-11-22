@@ -109,48 +109,6 @@ jobs:
           done < <(node -e "for (const r of require('./games.json').games.filter(g=>g.verified&&g.mode==='local').map(g=>g.source).filter((v,i,a)=>a.indexOf(v)===i)) console.log(r)")
 
 
-      - name: Export Admin Godot project to HTML5
-        if: hashFiles('public/games/jbodah-game_jam-locked/project.godot') != ''
-        shell: bash
-        run: |
-          set -euo pipefail
-          game_dir="$PWD/public/games/jbodah-game_jam-locked"
-          mkdir -p "$game_dir/web"
-          cat > "$game_dir/export_presets.cfg" <<'PRESET'
-          [preset.0]
-          name="HTML5"
-          platform="HTML5"
-          runnable=true
-          custom_features=""
-          export_filter="all_resources"
-          include_filter=""
-          exclude_filter=""
-          export_path="web/index.html"
-          script_export_mode=1
-          script_encryption_key=""
-
-          [preset.0.options]
-          vram_texture_compression/for_desktop=true
-          vram_texture_compression/for_mobile=false
-          html/custom_html_shell=""
-          html/head_include=""
-          html/canvas_resize_policy=2
-          html/experimental_virtual_keyboard=false
-          progressive_web_app/enabled=false
-          progressive_web_app/offline_page=""
-          progressive_web_app/display=1
-          progressive_web_app/orientation=0
-          progressive_web_app/icon_144x144=""
-          progressive_web_app/icon_180x180=""
-          progressive_web_app/icon_512x512=""
-          PRESET
-          docker run --rm -v "$game_dir:/project" -w /project barichello/godot-ci:3.6.2 godot --no-window --editor --path /project --quit
-          docker run --rm -v "$game_dir:/project" -w /project barichello/godot-ci:3.6.2 godot --no-window --path /project --export "HTML5" web/index.html
-          test -s "$game_dir/web/index.html"
-          # Keep only the browser export; don't ship editable project source or import caches.
-          find "$game_dir" -mindepth 1 -maxdepth 1 ! -name web -exec rm -rf {} +
-          echo "Godot HTML5 export created successfully."
-
       - name: Use Node.js 24 for Sandspiel's dependency tree
         if: hashFiles('public/games/maxbittker-sandspiel/package.json') != ''
         uses: actions/setup-node@v4
@@ -211,7 +169,7 @@ jobs:
       - name: Fix cloned game asset paths for GitHub Pages
         run: node scripts/prepare-games.js
 
-      - name: Generate local game routes from games.json
+      - name: Index cloned repositories and generate game routes
         run: |
           node <<'NODE'
           const fs = require('fs');
@@ -219,6 +177,8 @@ jobs:
           const manifest = JSON.parse(fs.readFileSync('games.json','utf8'));
           const root = path.resolve('public');
           const routes = {};
+          const imageExt = new Set(['.png','.jpg','.jpeg','.webp','.gif','.svg']);
+          const textExt = new Set(['.html','.htm','.css','.js','.mjs','.json','.md','.txt','.gd','.tscn','.tres','.godot','.cfg','.rb','.yml','.yaml','.xml','.csv','.toml','.sh']);
           for (const game of manifest.games) {
             if (!game.verified || !['local','bundled'].includes(game.mode)) continue;
             let relative;
@@ -228,16 +188,36 @@ jobs:
               const repo = game.source.match(/github\.com\/([^/]+\/[^/]+)/i)?.[1];
               if (!repo) throw new Error('Invalid GitHub source for '+game.id);
               const folder = repo.toLowerCase().replaceAll('/','-');
+              const gameDir = path.resolve(root,'games',folder);
+              if (game.repositoryViewer) {
+                if (!fs.existsSync(gameDir) || !fs.statSync(gameDir).isDirectory()) throw new Error('Cloned repository missing for '+game.id);
+                const files = [];
+                function walk(dir) {
+                  for (const entry of fs.readdirSync(dir,{withFileTypes:true})) {
+                    if (['.git','node_modules','.godot','coverage'].includes(entry.name)) continue;
+                    const full = path.join(dir,entry.name);
+                    if (entry.isDirectory()) walk(full);
+                    else if (entry.isFile()) {
+                      const rel = path.relative(gameDir,full).split(path.sep).join('/');
+                      if (rel === 'AFTERGLOW-FILES.json') continue;
+                      const ext = path.extname(rel).toLowerCase();
+                      files.push({path:rel,size:fs.statSync(full).size,kind:imageExt.has(ext)?'image':textExt.has(ext)?'text':'binary'});
+                    }
+                  }
+                }
+                walk(gameDir);
+                files.sort((a,b)=>a.path.localeCompare(b.path));
+                fs.writeFileSync(path.join(gameDir,'AFTERGLOW-FILES.json'),JSON.stringify({repository:game.source,files},null,2)+'\n');
+                routes[game.id] = './repository.html?game='+encodeURIComponent(game.id);
+                console.log('Indexed '+files.length+' files for '+game.title);
+                continue;
+              }
               relative = path.posix.join('games',folder,game.entrypoint);
             }
-            if (!game.entrypoint || path.isAbsolute(game.entrypoint) || game.entrypoint.split(/[\\/]/).includes('..')) {
-              throw new Error('Unsafe entrypoint for '+game.id);
-            }
+            if (!game.entrypoint || path.isAbsolute(game.entrypoint) || game.entrypoint.split(/[\\/]/).includes('..')) throw new Error('Unsafe entrypoint for '+game.id);
             const full = path.resolve(root,relative);
             const rel = path.relative(root,full);
-            if (!rel || rel.startsWith('..') || path.isAbsolute(rel) || !fs.existsSync(full) || !fs.statSync(full).isFile()) {
-              throw new Error('Missing entrypoint for '+game.id+': '+relative);
-            }
+            if (!rel || rel.startsWith('..') || path.isAbsolute(rel) || !fs.existsSync(full) || !fs.statSync(full).isFile()) throw new Error('Missing entrypoint for '+game.id+': '+relative);
             routes[game.id] = './'+relative;
           }
           fs.writeFileSync('public/GAME-SOURCES.json',JSON.stringify(routes,null,2)+'\n');
