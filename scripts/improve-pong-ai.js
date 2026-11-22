@@ -35,44 +35,6 @@ const old=`    // AI: track ball with capped speed, with slight reaction lag/imp
 const replacement=`    moveGodPaddle(cpu, 1, dt);`;
 if(!html.includes(old)) throw new Error('Pong AI block did not match; refusing to patch');
 
-const helperAnchor="function predictPlayerGuideY() {
-  if (!ball || ball.vx >= -1e-9) return null;
-  const faceX = player.x + player.w + ball.r;
-  const time = Math.max(0, (faceX - ball.x) / ball.vx);
-  if (!Number.isFinite(time) || time < 0) return null;
-  if (pongGodWasm && pongGodWasm.predict_intercept_y) {
-    return pongGodWasm.predict_intercept_y(ball.y, ball.vy, time, H, ball.r);
-  }
-  const span = H - 2 * ball.r;
-  if (span <= 0) return H / 2;
-  const raw = ball.y + ball.vy * time - ball.r;
-  const folded = ((raw % (2 * span)) + (2 * span)) % (2 * span);
-  return ball.r + (folded <= span ? folded : 2 * span - folded);
-}
-
-function drawPlayerGuide() {
-  if (!playerGuideActive || symmetryMode) return;
-  const guideTop = Math.max(0, Math.min(H - player.h, playerGuideY - player.h / 2));
-  ctx.save();
-  ctx.globalAlpha = 0.28;
-  ctx.strokeStyle = '#67e8f9';
-  ctx.fillStyle = 'rgba(34,211,238,.10)';
-  ctx.lineWidth = 2;
-  ctx.setLineDash([7, 6]);
-  roundRect(ctx, player.x - 5, guideTop, player.w + 10, player.h, 6);
-  ctx.fill();
-  ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.globalAlpha = 0.72;
-  ctx.fillStyle = '#a5f3fc';
-  ctx.font = '700 10px ui-monospace,monospace';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('AIM HERE', player.x + player.w + 9, guideTop + player.h / 2);
-  ctx.restore();
-}
-
-  function update(dt){";
 const helper=`function predictHotmapTarget() {
   // Forecast the likely landing zones from a spread of possible player contact offsets.
   if (ball.vx >= 0 || Math.abs(ball.vx) < 1e-9) return null;
@@ -162,8 +124,9 @@ function moveGodPaddle(paddle, direction, dt) {
   paddle._stagedHotmap = false;
 }`;
 
-if(!html.includes(helperAnchor)) throw new Error('Update function anchor missing');
-html=html.replace(helperAnchor,helper+helperAnchor);
+const updateAnchor='  function update(dt){';
+if(!html.includes(updateAnchor)) throw new Error('Update function anchor missing');
+html=html.replace(updateAnchor,helper+'\\n'+updateAnchor);
 
 const playerOld=`    // player paddle (keyboard control if vy set)
     player.y += player.vy * dt;
@@ -175,22 +138,13 @@ const playerNew=`    // Normal mode uses player input; symmetry mode uses the id
       player.y += player.vy * dt;
       if (player.y < 0) player.y = 0;
       if (player.y + player.h > H) player.y = H - player.h;
-    }
-    // Translucent guide glides toward the predicted crossing point on the player's court.
-    var guideTarget = !symmetryMode ? predictPlayerGuideY() : null;
-    playerGuideActive = guideTarget !== null;
-    if (playerGuideActive) {
-      var guideEase = 1 - Math.exp(-Math.max(0, dt) * 8);
-      playerGuideY += (guideTarget - playerGuideY) * guideEase;
     }`;
 if(!html.includes(playerOld)) throw new Error('Player movement block missing');
 html=html.replace(playerOld,playerNew);
 
-const stateOld=`var player, cpu, ball, pscore, cscore, running, started, last, serveTimer, paused;
-  var matchAnalysis = { playerHits: 0, playerMisses: 0, cpuHits: 0, offsets: [], fastestShot: 0 };
-`;
+const stateOld='var player, cpu, ball, pscore, cscore, running, started, last, serveTimer, paused;';
 if(!html.includes(stateOld)) throw new Error('State declaration missing');
-html=html.replace(stateOld,stateOld+"\n  var symmetryMode = false;\n  var rallyHits = 0;\n  var cpuDifficulty = 'impossible';\n  var playerGuideY = H / 2;\n  var playerGuideActive = false;");
+html=html.replace(stateOld,stateOld+"\\n  var matchAnalysis = { playerHits: 0, playerMisses: 0, cpuHits: 0, offsets: [], fastestShot: 0 };\\n  var symmetryMode = false;\\n  var rallyHits = 0;\\n  var cpuDifficulty = 'impossible';");
 
 const uiAnchor="  <div id=\"stage\">";
 if(!html.includes(uiAnchor)) throw new Error('Stage anchor missing');
@@ -256,7 +210,6 @@ const lossFn = `function renderLossAnalysis() {
 if (!html.includes('function draw(){')) throw new Error('Draw function anchor missing');
 html=html.replace('function draw(){', lossFn + '\nfunction draw(){');
 html=html.replace("drawPaddle(player,'#22d3ee');drawPaddle(cpu,'#8b5cf6');",
-  "drawPlayerGuide();drawPaddle(player,'#22d3ee');drawPaddle(cpu,'#8b5cf6');");
 html=html.replace("else{losePEl.textContent=pscore;loseCEl.textContent=cscore;loseO.classList.remove('hidden')}",
   "else{losePEl.textContent=pscore;loseCEl.textContent=cscore;renderLossAnalysis();loseO.classList.remove('hidden')}");
 
