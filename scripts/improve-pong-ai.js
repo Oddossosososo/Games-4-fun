@@ -178,10 +178,13 @@ html=html.replace('var angle = hit * (Math.PI/3);',
   'var ANGLE_COUNT = 1e+307;\n    var normalizedOffset = Math.max(-1, Math.min(1, hit));\n    var quantizedOffset = Math.round(((normalizedOffset + 1) / 2) * (ANGLE_COUNT - 1)) / (ANGLE_COUNT - 1) * 2 - 1;\n    var bounceAngle = quantizedOffset * (75 * Math.PI / 180);\n    var angle = bounceAngle;');
 html=html.replace('ball.speed = Math.min(MAX_SPEED, ball.speed + SPEED_INC);',
   'ball.speed = Math.min(Number.MAX_VALUE / 4, ball.speed + SPEED_INC);');
-html=html.replace('ball.vy = Math.sin(angle) * ball.speed;',
-  'var spinImpulse = (p.vy || 0) * 0.30;\n    ball.vy = Math.sin(angle) * ball.speed + spinImpulse;\n    var velocityLength = Math.hypot(ball.vx, ball.vy) || 1;\n    ball.vx *= ball.speed / velocityLength;\n    ball.vy *= ball.speed / velocityLength;
+html=html.replace('ball.vy = Math.sin(angle) * ball.speed;', `var spinImpulse = (p.vy || 0) * 0.30;
+    ball.vy = Math.sin(angle) * ball.speed + spinImpulse;
+    var velocityLength = Math.hypot(ball.vx, ball.vy) || 1;
+    ball.vx *= ball.speed / velocityLength;
+    ball.vy *= ball.speed / velocityLength;
     // Exact hit-frame lock: replace the speculative hotmap with the actual outgoing trajectory.
-    moveGodPaddle(cpu, 1, 0);');
+    moveGodPaddle(cpu, 1, 0);`);
 const hitPatch = `    if (p === player) ball.x = p.x + p.w + ball.r + 0.5;
     else ball.x = p.x - ball.r - 0.5;`;
 const hitReplacement = `    if (p === player) {
