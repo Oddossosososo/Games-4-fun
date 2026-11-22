@@ -51,53 +51,31 @@ const helper=`  function moveGodPaddle(paddle, direction, dt) {
   
     if (movingToward) {
       const edgeX = direction > 0 ? paddle.x : paddle.x + paddle.w;
-      const distanceX = Math.max(
-        0,
-        direction > 0 ? edgeX - ball.x : ball.x - edgeX
-      );
+      const distanceX = Math.max(0, direction > 0 ? edgeX - ball.x : ball.x - edgeX);
       const travelTime = distanceX / Math.max(1e-9, Math.abs(ball.vx));
       const interceptY = foldY(ball.y + ball.vy * travelTime);
-  
-      // Predict the player's reachable interval and choose the hardest legal angle.
       const playerSpeed = player.maxSpeed ?? player.speed ?? 480;
       const playerVelocity = player.vy || 0;
       const reachableCenter = playerCenter + playerVelocity * travelTime;
       const reachableRadius = player.h / 2 + playerSpeed * travelTime;
       const candidates = [-0.48, -0.36, -0.24, 0, 0.24, 0.36, 0.48];
-  
       let bestOffset = 0;
       let bestScore = -Infinity;
   
       for (const offset of candidates) {
         const impactY = interceptY + offset * paddle.h;
-        const normalizedOffset = Math.max(
-          -0.99,
-          Math.min(0.99, offset / 0.48)
-        );
+        const normalizedOffset = Math.max(-0.99, Math.min(0.99, offset / 0.48));
         const angle = normalizedOffset * (Math.PI / 3);
         const vx = Math.max(1e-9, Math.abs(ball.speed * Math.cos(angle)));
         const vy = ball.speed * Math.sin(angle);
-        const opponentX = direction > 0
-          ? player.x + player.w
-          : player.x;
-        const horizontalDistance = Math.abs(
-          direction > 0
-            ? opponentX - edgeX
-            : edgeX - opponentX
-        );
+        const opponentX = direction > 0 ? player.x + player.w : player.x;
+        const horizontalDistance = Math.abs(direction > 0 ? opponentX - edgeX : edgeX - opponentX);
         const returnTime = horizontalDistance / vx;
         const landingY = foldY(impactY + vy * returnTime);
         const futurePlayerY = reachableCenter + playerVelocity * returnTime;
-        const missDistance = Math.max(
-          0,
-          Math.abs(landingY - futurePlayerY) -
-            (reachableRadius + playerSpeed * returnTime)
-        );
-        const score =
-          missDistance +
-          Math.abs(offset) * 0.01 +
-          Math.abs(angle) * 0.001;
-  
+        const missDistance = Math.max(0, Math.abs(landingY - futurePlayerY) -
+          (reachableRadius + playerSpeed * returnTime));
+        const score = missDistance + Math.abs(offset) * 0.01 + Math.abs(angle) * 0.001;
         if (score > bestScore) {
           bestScore = score;
           bestOffset = offset;
@@ -105,54 +83,30 @@ const helper=`  function moveGodPaddle(paddle, direction, dt) {
       }
   
       const desiredImpactY = interceptY + bestOffset * paddle.h;
-      const desiredTop = Math.max(
-        0,
-        Math.min(H - paddle.h, desiredImpactY - paddle.h / 2)
-      );
-  
-      // Delay the final 12px correction until the last 1–2 frames.
+      const desiredTop = Math.max(0, Math.min(H - paddle.h, desiredImpactY - paddle.h / 2));
       const framesToImpact = travelTime / Math.max(dt, 1 / 240);
       const stagingOffset = framesToImpact > 2
         ? Math.sign(desiredTop - paddle.y) * 12
         : 0;
       targetY = desiredTop - stagingOffset;
     } else {
-      // Defensive reset: midpoint of the player's extreme legal return paths.
       const playerMin = radius + player.h / 2;
       const playerMax = H - radius - player.h / 2;
       const geometricMidpoint = (playerMin + playerMax) / 2;
-      const predictedPlayerCenter = Math.max(
-        playerMin,
-        Math.min(
-          playerMax,
-          playerCenter + (player.vy || 0) *
-            (Math.abs(ball.x - player.x) /
-              Math.max(1e-9, Math.abs(ball.vx)))
-        )
-      );
-  
-      targetY =
-        (geometricMidpoint + predictedPlayerCenter) / 2 -
-        paddle.h / 2;
+      const predictedPlayerCenter = Math.max(playerMin, Math.min(playerMax,
+        playerCenter + (player.vy || 0) *
+        (Math.abs(ball.x - player.x) / Math.max(1e-9, Math.abs(ball.vx)))));
+      targetY = (geometricMidpoint + predictedPlayerCenter) / 2 - paddle.h / 2;
     }
   
     targetY = Math.max(0, Math.min(H - paddle.h, targetY));
-  
     const previousY = paddle.y;
     const maxSpeed = paddle.maxSpeed ?? AI_MAX_SPEED;
-    const step = Number.isFinite(maxSpeed)
-      ? Math.max(0, maxSpeed * dt)
-      : Infinity;
+    const step = Number.isFinite(maxSpeed) ? Math.max(0, maxSpeed * dt) : Infinity;
     const delta = targetY - paddle.y;
-  
-    paddle.y = Math.abs(delta) <= step
-      ? targetY
-      : paddle.y + Math.sign(delta) * step;
-  
+    paddle.y = Math.abs(delta) <= step ? targetY : paddle.y + Math.sign(delta) * step;
     paddle.y = Math.max(0, Math.min(H - paddle.h, paddle.y));
-    paddle.vy = dt > 0
-      ? (paddle.y - previousY) / dt
-      : 0;
+    paddle.vy = dt > 0 ? (paddle.y - previousY) / dt : 0;
   }`;
 
 if(!html.includes(helperAnchor)) throw new Error('Update function anchor missing');
