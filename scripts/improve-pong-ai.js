@@ -51,9 +51,47 @@ const replacement=`    // Rust/WASM GOD CPU: exact reflected interception, ball-
     var step = AI_MAX_SPEED * dt;
     if (Math.abs(dy) <= step) cpu.y = targetY;
     else cpu.y += Math.sign(dy) * step;
-    cpu.y = Math.max(0, Math.min(H - cpu.h, cpu.y));`;
+    cpu.y = Math.max(0, Math.min(H - cpu.h, cpu.y));
+    cpu._pretarget = false;`;
 if(!html.includes(old)) throw new Error('Pong AI block did not match; refusing to patch');
 html=html.replace(old,replacement);
-html=html.replace('var AI_MAX_SPEED = 360;','var AI_MAX_SPEED = 720;\n  var pongGodWasm = null;\n  fetch("./pong-ai.wasm").then(function(r){ if(!r.ok) throw new Error("WASM unavailable"); return r.arrayBuffer(); }).then(function(bytes){ return WebAssembly.instantiate(bytes); }).then(function(result){ pongGodWasm = result.instance.exports; }).catch(function(){ console.warn("Pong GOD CPU: using JavaScript fallback."); });');
+const hitPatch = `    if (p === player) ball.x = p.x + p.w + ball.r + 0.5;
+    else ball.x = p.x - ball.r - 0.5;`;
+const hitReplacement = `    if (p === player) {
+      ball.x = p.x + p.w + ball.r + 0.5;
+      cpu._pretarget = true;
+    } else {
+      ball.x = p.x - ball.r - 0.5;
+    }`;
+if (!html.includes(hitPatch)) throw new Error('Pong hit handler did not match');
+html=html.replace(hitPatch,hitReplacement);
+const oldLoop = `  function loop(now){
+    if (!started) return;
+    var dt = Math.min(0.033, (now - last) / 1000);
+    last = now;
+    update(dt);
+    draw();
+    requestAnimationFrame(loop);
+  }`;
+const newLoop = `  // 240 Hz physics simulation; rendering remains display-refresh paced.
+  var physicsAccumulator = 0;
+  var PHYSICS_STEP = 1 / 240;
+  function loop(now){
+    if (!started) return;
+    var frameDt = Math.min(0.1, Math.max(0, (now - last) / 1000));
+    last = now;
+    physicsAccumulator = Math.min(physicsAccumulator + frameDt, 0.1);
+    var steps = 0;
+    while (physicsAccumulator >= PHYSICS_STEP && steps < 24) {
+      update(PHYSICS_STEP);
+      physicsAccumulator -= PHYSICS_STEP;
+      steps++;
+    }
+    draw();
+    requestAnimationFrame(loop);
+  }`;
+if (!html.includes(oldLoop)) throw new Error('Pong frame loop did not match');
+html=html.replace(oldLoop,newLoop);
+html=html.replace('var AI_MAX_SPEED = 360;','var AI_MAX_SPEED = 900;\n  var pongGodWasm = null;\n  fetch("./pong-ai.wasm").then(function(r){ if(!r.ok) throw new Error("WASM unavailable"); return r.arrayBuffer(); }).then(function(bytes){ return WebAssembly.instantiate(bytes); }).then(function(result){ pongGodWasm = result.instance.exports; }).catch(function(){ console.warn("Pong GOD CPU: using JavaScript fallback."); });');
 fs.writeFileSync(file,html);
 console.log('Pong GOD CPU patched: Rust/WASM trajectory prediction, reflected wall math, 720 px/s movement, JS fallback.');
