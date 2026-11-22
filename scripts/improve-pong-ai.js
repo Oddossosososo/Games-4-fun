@@ -46,6 +46,14 @@ const helper=`function predictHotmapTarget() {
   const bins = new Array(32).fill(0);
   const span = H - 2 * ball.r;
   if (span <= 0) return null;
+  const impactTime = framesToPlayer * PHYSICS_STEP;
+  const impactBallY = pongGodWasm && pongGodWasm.predict_intercept_y
+    ? pongGodWasm.predict_intercept_y(ball.y, ball.vy, impactTime, H, ball.r)
+    : (function(){
+        const raw = ball.y + ball.vy * impactTime - ball.r;
+        const folded = ((raw % (2 * span)) + (2 * span)) % (2 * span);
+        return ball.r + (folded <= span ? folded : 2 * span - folded);
+      })();
   const nextSpeed = ball.speed + SPEED_INC;
   for (let i = 0; i <= 64; i++) {
     const contactOffset = -1 + (2 * i / 64);
@@ -59,9 +67,9 @@ const helper=`function predictHotmapTarget() {
     const targetFaceX = cpu.x - ball.r;
     const flight = Math.max(0, (targetFaceX - playerFaceX) / vx);
     const predicted = pongGodWasm && pongGodWasm.predict_intercept_y
-      ? pongGodWasm.predict_intercept_y(ball.y, vy, flight, H, ball.r)
+      ? pongGodWasm.predict_intercept_y(impactBallY, vy, flight, H, ball.r)
       : (function(){
-          const raw = ball.y + vy * flight - ball.r;
+          const raw = impactBallY + vy * flight - ball.r;
           const folded = ((raw % (2 * span)) + (2 * span)) % (2 * span);
           return ball.r + (folded <= span ? folded : 2 * span - folded);
         })();
