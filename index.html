@@ -597,12 +597,9 @@
       const games = filteredGames();
       $("#count").textContent = games.length + " of " + state.games.length + " games";
       $("#game-grid").innerHTML = games.length ? games.map(game => {
-        const style = "--shade:" + escapeHTML(game.shade || "#292044");
         const selected = state.selected?.id === game.id;
-        const video = state.previewUrls.get(game.id) || ("./thumbs/" + encodeURIComponent(game.id) + ".mp4");
         return '<button class="game-card ' + (selected ? "selected" : "") + '" type="button" data-game="' + escapeHTML(game.id) + '" aria-pressed="' + selected + '" aria-label="Play ' + escapeHTML(game.title) + '">' +
-          '<div class="thumb" style="' + style + '"><div class="thumb-fallback">' + escapeHTML(game.emoji || "✦") + '</div><img class="thumb-image" src="' + escapeHTML(game.thumbnail || ("./thumbs/" + encodeURIComponent(game.id) + ".webp")) + '" alt="" loading="lazy" onerror="this.hidden=true"><video src="' + video + '" autoplay muted loop playsinline preload="none" aria-hidden="true" onerror="this.hidden=true"></video><span class="thumb-tag">' + escapeHTML(censorText(game.category || "Game")) + '</span></div>' +
-          '<div class="card-info"><div class="card-title">' + escapeHTML(censorText(game.title)) + '</div><div class="card-sub">' + escapeHTML(censorText(game.creator || "Independent creator")) + '</div>' + (game.audience ? '<span class="audience-mark">' + escapeHTML(game.audience) + '</span>' : '') + '</div></button>';
+          '<div class="card-info"><div class="card-title">' + escapeHTML(game.emoji || "✦") + ' ' + escapeHTML(censorText(game.title)) + '</div><div class="card-sub">' + escapeHTML(censorText(game.category || "Game")) + ' · ' + escapeHTML(censorText(game.creator || "Independent creator")) + '</div>' + (game.audience ? '<span class="audience-mark">' + escapeHTML(game.audience) + '</span>' : '') + '</div></button>';
       }).join("") : '<div class="empty">No games match that search. Try another title or category.</div>';
       $("#total-stat").textContent = state.games.length;
       $("#local-stat").textContent = state.games.filter(isLocal).length;
