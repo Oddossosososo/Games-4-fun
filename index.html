@@ -846,6 +846,20 @@
           catalogue = manifest.games;
         }
         if (!Array.isArray(catalogue)) throw new Error("The game catalogue has an invalid format.");
+        // Keep built-in manifest entries (including repository viewers) visible
+        // when Supabase has its own non-empty catalogue.
+        try {
+          const response = await fetch("./games.json?v=arcade-cache-v5", { cache: "no-cache" });
+          if (response.ok) {
+            const manifest = await response.json();
+            const known = new Set(catalogue.map(game => game.id));
+            for (const game of (manifest.games || [])) {
+              if (!known.has(game.id)) catalogue.push(game);
+            }
+          }
+        } catch (error) {
+          console.warn("Static catalogue additions could not be merged.", error);
+        }
         renderCatalogue(catalogue);
         localStorage.setItem("afterglow-catalog-cache", JSON.stringify({ savedAt: Date.now(), games: state.games }));
         $("#play-state").textContent = "Choose a game to start.";
