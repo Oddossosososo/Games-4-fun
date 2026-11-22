@@ -120,6 +120,35 @@
     .account-card input{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:#0d1021;color:var(--text)}
     .account-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.account-status{min-height:22px;margin-top:12px;color:var(--cyan);font-size:11px;overflow-wrap:anywhere}
     .account-user{color:var(--cyan);font-size:11px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .profile-page{position:fixed;inset:0;z-index:90;display:none;overflow:auto;padding:24px;background:#080811f5;backdrop-filter:blur(16px)}
+    .profile-page.open{display:block}
+    .profile-wrap{width:min(900px,100%);margin:28px auto;border:1px solid var(--line);border-radius:22px;background:linear-gradient(150deg,#191b31,#101222);box-shadow:0 30px 100px #0009;overflow:hidden}
+    .profile-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 22px;border-bottom:1px solid #ffffff18}
+    .profile-top strong{font-size:15px;letter-spacing:-.03em}
+    .profile-content{padding:24px}
+    .profile-hero{display:flex;align-items:center;gap:18px;padding:10px 0 24px}
+    .profile-avatar{width:76px;height:76px;flex:none;display:grid;place-items:center;border:1px solid #b69cff88;border-radius:24px;background:linear-gradient(145deg,#b69cff35,#74e6df18);font-size:34px;font-weight:950;color:var(--purple)}
+    .profile-name{font-size:28px;font-weight:950;letter-spacing:-.06em;overflow-wrap:anywhere}
+    .profile-handle{color:var(--muted);font-size:12px}
+    .profile-badges{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}
+    .profile-badge{display:inline-flex;align-items:center;gap:5px;border:1px solid #ffffff24;border-radius:999px;padding:4px 9px;background:#ffffff0a;font-size:10px;font-weight:900}
+    .profile-badge.verified{border-color:#55cbb788;background:#55cbb71a;color:#8df0df}
+    .profile-badge.owner{border-color:#e6c46a88;background:#e6c46a1a;color:#ffe29a}
+    .profile-badge.admin{border-color:#b69cff88;background:#b69cff1a;color:#d6c4ff}
+    .profile-badge.vip{border-color:#f18bc288;background:#f18bc21a;color:#ffb6dc}
+    .profile-section{margin-top:16px;padding:18px;border:1px solid var(--line);border-radius:16px;background:#0d1020a8}
+    .profile-section h3{margin:0 0 12px;font-size:14px}
+    .profile-section p{color:var(--muted);font-size:11px}
+    .profile-section label{display:grid;gap:6px;max-width:420px;margin:10px 0;color:var(--muted);font-size:11px}
+    .profile-section input,.admin-user select{width:100%;padding:10px;border:1px solid var(--line);border-radius:10px;background:#141629;color:var(--text)}
+    .admin-list{display:grid;gap:9px}
+    .admin-user{display:grid;grid-template-columns:minmax(0,1fr) 110px auto auto auto;align-items:center;gap:9px;padding:11px;border:1px solid #ffffff16;border-radius:12px;background:#15172a}
+    .admin-user-name{min-width:0;overflow-wrap:anywhere;font-size:12px;font-weight:850}
+    .admin-user-meta{color:var(--muted);font-size:10px}
+    .admin-user label{display:flex;align-items:center;gap:5px;margin:0;font-size:10px;color:var(--muted)}
+    .admin-user input[type=checkbox]{width:auto}
+    .profile-status{min-height:20px;margin-top:9px;color:var(--cyan);font-size:11px}
+    @media(max-width:680px){.profile-page{padding:10px}.profile-wrap{margin:8px auto}.profile-content{padding:16px}.admin-user{grid-template-columns:1fr 100px}.admin-user label,.admin-user button{grid-column:auto}}
     #drive-cloak-screen{display:none;position:fixed;inset:0;z-index:99999;background:#fff;color:#202124;font:14px/1.55 Arial,sans-serif;padding:0;overflow:auto}
     #drive-cloak-screen.active{display:block}
     .drive-cloak-top{height:64px;border-bottom:1px solid #dadce0;display:flex;align-items:center;padding:0 28px;gap:12px;color:#5f6368;font-size:20px}
@@ -145,7 +174,7 @@
   <header class="topbar">
     <div class="shell nav">
       <a class="brand" href="./" aria-label="Afterglow Arcade home"><span class="brand-mark">✦</span><span>Afterglow <b>Arcade</b></span></a>
-      <div class="nav-right"><span class="live-dot"></span><span>IN THE LIBRARY</span><strong id="header-count">Ready</strong><button class="account-button" id="account-open" type="button">Sign in</button><span class="account-user" id="account-user" hidden></span><button class="action" id="cloak-toggle" type="button" aria-pressed="false">Cloak</button></div>
+      <div class="nav-right"><span class="live-dot"></span><span>IN THE LIBRARY</span><strong id="header-count">Ready</strong><button class="account-button" id="account-open" type="button">Sign in</button><span class="account-user" id="account-user" hidden></span><button class="action" id="profile-open" type="button" hidden>Profile</button><button class="action" id="cloak-toggle" type="button" aria-pressed="false">Cloak</button></div>
     </div>
   </header>
 
@@ -260,6 +289,29 @@
   </section>
 
 
+
+  <section class="profile-page" id="profile-page" aria-label="Afterglow profile">
+    <div class="profile-wrap">
+      <div class="profile-top"><strong>Afterglow · Profile</strong><button class="action" id="profile-close" type="button">Close</button></div>
+      <div class="profile-content">
+        <div class="profile-hero">
+          <div class="profile-avatar" id="profile-avatar">A</div>
+          <div><div class="profile-name" id="profile-name">Afterglow</div><div class="profile-handle" id="profile-handle">Your arcade profile</div><div class="profile-badges" id="profile-badges"></div></div>
+        </div>
+        <section class="profile-section">
+          <h3>Profile settings</h3>
+          <label>Display name<input id="profile-display-name" type="text" maxlength="40" autocomplete="off" placeholder="Afterglow"></label>
+          <button class="action primary" id="profile-save" type="button">Save profile</button>
+          <div class="profile-status" id="profile-status" role="status" aria-live="polite"></div>
+        </section>
+        <section class="profile-section" id="admin-panel" hidden>
+          <h3>Admin panel</h3><p>Manage account badges and access. Owner privileges are protected.</p>
+          <div class="admin-list" id="admin-users"><p>Loading accounts…</p></div>
+          <div class="profile-status" id="admin-status" role="status" aria-live="polite"></div>
+        </section>
+      </div>
+    </div>
+  </section>
 
   <section class="account-modal" id="account-modal" role="dialog" aria-modal="true" aria-labelledby="account-title">
     <div class="account-card">
