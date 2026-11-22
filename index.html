@@ -904,7 +904,8 @@
       });
       document.querySelectorAll(".online-card").forEach(panel => { if (panel.id.startsWith("online-")) panel.hidden = panel.id !== tab.dataset.onlineTab; });
     });
-    const accountsReady = import("./accounts.js").then(module => module.initAccounts()).catch(error => { console.warn("Account services unavailable.", error); return null; });\n    accountsReady.finally(() => start());
+    const accountsReady = import("./accounts.js").then(module => module.initAccounts()).catch(error => { console.warn("Account services unavailable.", error); return null; });
+    accountsReady.finally(() => start());
   </script>
 </body>
 </html>
