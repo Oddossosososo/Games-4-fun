@@ -583,10 +583,10 @@
       "category": "Rhythm",
       "creator": "The Funkin' Crew",
       "license": "Apache-2.0 (code); game assets All Rights Reserved",
-      "officialUrl": "https://ninja-muffin24.itch.io/funkin",
-      "mode": "hosted",
+      "officialUrl": "https://www.newgrounds.com/portal/view/770371",
+      "mode": "external",
       "verified": true,
-      "embeddable": true,
+      "embeddable": false,
       "emoji": "🎤",
       "glow": "#e77da8",
       "shade": "#54243f",
@@ -596,9 +596,7 @@
         "Mild cartoon violence",
         "Mild suggestive humour"
       ],
-      "auditNote": "Uses itch.io's official Game Embed endpoint (supported embedding method), not the protected raw HTML CDN. The game is served by itch.io; assets are not copied into Afterglow.",
-      "source": "https://ninja-muffin24.itch.io/funkin",
-      "hostedUrl": "https://itch.io/embed/2876359?linkback=true"
+      "auditNote": "The game code is Apache-2.0, but the bundled game assets are All Rights Reserved. Do not redistribute the complete game; link to the official browser demo instead. Not self-hosted."
     }
   ]
 }
