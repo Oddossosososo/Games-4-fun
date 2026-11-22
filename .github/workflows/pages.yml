@@ -109,55 +109,6 @@ jobs:
           done < <(node -e "for (const r of require('./games.json').games.filter(g=>g.verified&&g.mode==='local').map(g=>g.source).filter((v,i,a)=>a.indexOf(v)===i)) console.log(r)")
 
 
-      - name: Use Node.js 24 for Sandspiel's dependency tree
-        if: hashFiles('public/games/maxbittker-sandspiel/package.json') != ''
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-
-      - name: Set up Rust for Sandspiel WASM
-        if: hashFiles('public/games/maxbittker-sandspiel/package.json') != ''
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          targets: wasm32-unknown-unknown
-      - name: Compile Sandspiel WASM and browser bundle
-        if: hashFiles('public/games/maxbittker-sandspiel/package.json') != ''
-        shell: bash
-        run: |
-          set -euo pipefail
-          cd public/games/maxbittker-sandspiel
-          cargo install wasm-pack --locked
-          yarn install --non-interactive
-          node <<'NODE'
-          const fs = require('fs');
-          const webpackPath = 'webpack.config.js';
-          let webpack = fs.readFileSync(webpackPath, 'utf8');
-          webpack = webpack.replace('publicPath: "/"', 'publicPath: "./"');
-          fs.writeFileSync(webpackPath, webpack);
-
-          const appPath = 'js/app.js';
-          let app = fs.readFileSync(appPath, 'utf8');
-          app = app.replace('<Router>', '<Router basename={window.location.pathname.slice(0, window.location.pathname.indexOf("/dist/index.html"))}>');
-          fs.writeFileSync(appPath, app);
-
-          const htmlPath = 'index.html';
-          let html = fs.readFileSync(htmlPath, 'utf8');
-          html = html.replaceAll('="/assets/', '="./assets/');
-          html = html.replaceAll('="/styles.css"', '="./styles.css"');
-          html = html.replaceAll('="/manifest.json"', '="./manifest.json"');
-          html = html.replace(/<script[^>]*googlesyndication[^>]*><\/script>/g, '');
-          html = html.replace(/<script[^>]*googletagmanager[^>]*><\/script>/g, '');
-          html = html.replace(/<script[^>]*a\.sandspiel\.club\/app\.js[^>]*><\/script>/g, '');
-          html = html.replace(/<noscript>[\s\S]*?<\/noscript>/g, '');
-          fs.writeFileSync(htmlPath, html);
-          NODE
-          yarn build
-
-          # Keep only the compiled site. Webpack bundles the WASM into dist/,
-          # so Rust build outputs and npm dependencies are not needed at runtime.
-          rm -rf node_modules crate/target crate/pkg
-          test -s dist/index.html
-
       - name: Restore Node.js 26 LTS for remaining build steps
         uses: actions/setup-node@v4
         with:
