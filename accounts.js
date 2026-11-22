@@ -26,8 +26,8 @@ function renderUser(current) {
   $("#account-switch").hidden = signedIn;
   $("#account-open").textContent = signedIn ? "Account" : "Sign in";
   $("#account-user").hidden = true;
-  $("#account-user").textContent = signedIn ? (user.email || "Signed in") : "";
-  $("#account-profile").textContent = signedIn ? "Signed in as " + (user.email || "your account") : "";
+  $("#account-user").textContent = signedIn ? "Signed in" : "";
+  $("#account-profile").textContent = signedIn ? "Your account is signed in." : "";
   if (signedIn) window.setTimeout(() => loadProfile(), 0);
   else status("");
 }
