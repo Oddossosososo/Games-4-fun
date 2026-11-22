@@ -584,9 +584,9 @@
       "creator": "The Funkin' Crew",
       "license": "Apache-2.0 (code); game assets All Rights Reserved",
       "officialUrl": "https://github.com/anime-kun32/Friday-Night-Funkin-html",
-      "mode": "external",
+      "mode": "hosted",
       "verified": true,
-      "embeddable": false,
+      "embeddable": true,
       "emoji": "🎤",
       "glow": "#e77da8",
       "shade": "#54243f",
@@ -596,7 +596,7 @@
         "Mild cartoon violence",
         "Mild suggestive humour"
       ],
-      "auditNote": "Links to the requested HTML5 source repository. The repository contains broad fan-content permission text, but its bundled asset licence also states that game content may not be publicly redistributed by third parties. Keep external until redistribution rights for the complete build are clear; do not self-host the bundled assets."
+      "hostedUrl": "https://raw.githack.com/anime-kun32/Friday-Night-Funkin-html/main/html5_build/index.html"
     }
   ]
 }
