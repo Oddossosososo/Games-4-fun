@@ -36,7 +36,7 @@ const replacement=`    moveGodPaddle(cpu, 1, dt);`;
 if(!html.includes(old)) throw new Error('Pong AI block did not match; refusing to patch');
 
 const helperAnchor="  function update(dt){";
-const helper="function moveGodPaddle(paddle, direction, dt) {\n  const previousY = paddle.y;\n  const edgeAim = Math.sin((rallyHits + 1) * 1.61803398875 + direction * 0.73) * paddle.h * 0.035;\n  const desiredY = ball.y - paddle.h / 2 + edgeAim;\n  paddle.y = Math.max(0, Math.min(H - paddle.h, desiredY));\n  paddle.vy = dt > 0 ? (paddle.y - previousY) / dt : 0;\n}";
+const helper="function moveGodPaddle(paddle, direction, dt) {\\n  const previousY = paddle.y;\\n  const wallMin = ball.r;\\n  const wallMax = H - ball.r;\\n  const wallSpan = wallMax - wallMin;\\n  let impactY = ball.y;\\n  // Predict the future intercept for the paddle being approached.\\n  if (ball.vx * direction > 0 && Math.abs(ball.vx) > 1e-9) {\\n    const faceX = direction < 0 ? paddle.x + paddle.w + ball.r : paddle.x - ball.r;\\n    const timeToImpact = Math.max(0, (faceX - ball.x) / ball.vx);\\n    const unfolded = ball.y - wallMin + ball.vy * timeToImpact;\\n    const folded = ((unfolded % (2 * wallSpan)) + (2 * wallSpan)) % (2 * wallSpan);\\n    impactY = wallMin + (folded <= wallSpan ? folded : 2 * wallSpan - folded);\\n  }\\n  const edgeAim = Math.sin((rallyHits + 1) * 1.61803398875 + direction * 0.73) * paddle.h * 0.012;\\n  const desiredY = impactY - paddle.h / 2 + edgeAim;\\n  paddle.y = Math.max(0, Math.min(H - paddle.h, desiredY));\\n  paddle.vy = dt > 0 ? (paddle.y - previousY) / dt : 0;\\n}";
 
 if(!html.includes(helperAnchor)) throw new Error('Update function anchor missing');
 html=html.replace(helperAnchor,helper+helperAnchor);
