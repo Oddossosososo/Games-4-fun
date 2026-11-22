@@ -146,7 +146,7 @@ const stateOld=`var player, cpu, ball, pscore, cscore, running, started, last, s
   var matchAnalysis = { playerHits: 0, playerMisses: 0, cpuHits: 0, offsets: [], fastestShot: 0 };
 `;
 if(!html.includes(stateOld)) throw new Error('State declaration missing');
-html=html.replace(stateOld,stateOld+"\n  var symmetryMode = false;\n  var rallyHits = 0;");
+html=html.replace(stateOld,stateOld+"\n  var symmetryMode = false;\n  var rallyHits = 0;\n  var cpuDifficulty = 'impossible';");
 
 const uiAnchor="  <div id=\"stage\">";
 if(!html.includes(uiAnchor)) throw new Error('Stage anchor missing');
