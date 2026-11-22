@@ -584,9 +584,9 @@
       "creator": "The Funkin' Crew",
       "license": "Apache-2.0 (code); game assets All Rights Reserved",
       "officialUrl": "https://ninja-muffin24.itch.io/funkin",
-      "mode": "external",
+      "mode": "hosted",
       "verified": true,
-      "embeddable": false,
+      "embeddable": true,
       "emoji": "🎤",
       "glow": "#e77da8",
       "shade": "#54243f",
@@ -596,7 +596,9 @@
         "Mild cartoon violence",
         "Mild suggestive humour"
       ],
-      "auditNote": "External official itch.io listing only. Not self-hosted; code and game assets have separate licensing."
+      "auditNote": "Runs the official HTML5 game frame hosted on itch.io's HTML CDN directly inside Afterglow's player; does not display the itch.io listing page or copy game assets. Game assets remain All Rights Reserved.",
+      "hostedUrl": "https://html-classic.itch.zone/html/16944508-1877713/index.html?v=1786550551",
+      "source": "https://ninja-muffin24.itch.io/funkin"
     }
   ]
 }
