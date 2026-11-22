@@ -41,7 +41,7 @@ const helper=`  // Shared controller: both paddles use precisely the same GOD CP
     var movingToward = direction > 0 ? ball.vx > 0 : ball.vx < 0;
     if (movingToward) {
       var edgeX = direction > 0 ? paddle.x : paddle.x + paddle.w;
-      var travel = Math.max(0, (edgeX - ball.x) / Math.max(1, Math.abs(ball.vx)));
+      var travel = Math.max(0, (direction > 0 ? edgeX - ball.x : ball.x - edgeX) / Math.max(1, Math.abs(ball.vx)));
       var intercept;
       if (pongGodWasm) {
         intercept = pongGodWasm.predict_intercept_y(ball.y, ball.vy, travel, H, ball.r);
@@ -82,11 +82,11 @@ html=html.replace(playerOld,playerNew);
 
 const stateOld="var player, cpu, ball, pscore, cscore, running, started, last, serveTimer, paused;";
 if(!html.includes(stateOld)) throw new Error('State declaration missing');
-html=html.replace(stateOld,stateOld+"\\n  var symmetryMode = false;");
+html=html.replace(stateOld,stateOld+"\n  var symmetryMode = false;");
 
 const uiAnchor="  <div id=\"stage\">";
 if(!html.includes(uiAnchor)) throw new Error('Stage anchor missing');
-html=html.replace(uiAnchor,'  <button class="btn" id="symmetryToggle" type="button" style="margin:0 0 10px;padding:8px 14px;font-size:11px">Mode: Player vs CPU</button>\\n'+uiAnchor);
+html=html.replace(uiAnchor,'  <button class="btn" id="symmetryToggle" type="button" style="margin:0 0 10px;padding:8px 14px;font-size:11px">Mode: Player vs CPU</button>\n'+uiAnchor);
 
 const hudAnchor="  var loseCEl = document.getElementById('loseC');";
 const hudCode=`  var symmetryToggle = document.getElementById('symmetryToggle');
@@ -103,11 +103,11 @@ const hudCode=`  var symmetryToggle = document.getElementById('symmetryToggle');
       : 'Move your left paddle with mouse, touch, or arrow keys. Each rally speeds the ball up. First to 7 points wins the match.';
   });`;
 if(!html.includes(hudAnchor)) throw new Error('HUD anchor missing');
-html=html.replace(hudAnchor,hudAnchor+"\\n\\n"+hudCode);
+html=html.replace(hudAnchor,hudAnchor+"\n\n"+hudCode);
 
 const pointerAnchor="  function pointerToPaddle(clientY){";
 if(!html.includes(pointerAnchor)) throw new Error('Pointer handler missing');
-html=html.replace(pointerAnchor,pointerAnchor+"\\n    if (symmetryMode) return;");
+html=html.replace(pointerAnchor,pointerAnchor+"\n    if (symmetryMode) return;");
 html=html.replace("if (e.key === 'ArrowUp') { player.vy = -480; e.preventDefault(); }","if (e.key === 'ArrowUp' && !symmetryMode) { player.vy = -480; e.preventDefault(); }");
 html=html.replace("else if (e.key === 'ArrowDown') { player.vy = 480; e.preventDefault(); }","else if (e.key === 'ArrowDown' && !symmetryMode) { player.vy = 480; e.preventDefault(); }");
 html=html.replace("if (e.key === 'ArrowUp' && !keys['ArrowDown']) player.vy = 0;","if (!symmetryMode && e.key === 'ArrowUp' && !keys['ArrowDown']) player.vy = 0;");
