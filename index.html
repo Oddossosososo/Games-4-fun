@@ -110,13 +110,23 @@
     .online-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
     @media(max-width:620px){.online-tabs{gap:6px}.online-tabs .chip{flex:1}}
 
-  </style>
+  
+    .account-button{border:1px solid #8e7bd866;border-radius:999px;background:#b69cff1b;color:#eee7ff;padding:8px 13px;font-size:11px;font-weight:800}
+    .account-modal{position:fixed;inset:0;z-index:100;display:none;place-items:center;padding:18px;background:#05050be8;backdrop-filter:blur(12px)}
+    .account-modal.open{display:grid}
+    .account-card{width:min(430px,100%);padding:22px;border:1px solid var(--line);border-radius:20px;background:#141629;box-shadow:0 30px 100px #0009}
+    .account-card h2{margin:0 0 5px;font-size:20px}.account-card p{color:var(--muted);font-size:12px}
+    .account-card label{display:grid;gap:6px;margin:12px 0;color:var(--muted);font-size:11px}
+    .account-card input{width:100%;padding:11px;border:1px solid var(--line);border-radius:10px;background:#0d1021;color:var(--text)}
+    .account-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}.account-status{min-height:22px;margin-top:12px;color:var(--cyan);font-size:11px;overflow-wrap:anywhere}
+    .account-user{color:var(--cyan);font-size:11px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+\n  </style>
 </head>
 <body>
   <header class="topbar">
     <div class="shell nav">
       <a class="brand" href="./" aria-label="Afterglow Arcade home"><span class="brand-mark">✦</span><span>Afterglow <b>Arcade</b></span></a>
-      <div class="nav-right"><span class="live-dot"></span><span>IN THE LIBRARY</span><strong id="header-count">Ready</strong><button class="action" id="cloak-toggle" type="button" aria-pressed="false">Cloak</button></div>
+      <div class="nav-right"><span class="live-dot"></span><span>IN THE LIBRARY</span><strong id="header-count">Ready</strong><button class="account-button" id="account-open" type="button">Sign in</button><span class="account-user" id="account-user" hidden></span><button class="action" id="cloak-toggle" type="button" aria-pressed="false">Cloak</button></div>
     </div>
   </header>
 
@@ -231,7 +241,26 @@
   </section>
 
 
-  <script type="module">
+
+  <section class="account-modal" id="account-modal" role="dialog" aria-modal="true" aria-labelledby="account-title">
+    <div class="account-card">
+      <div class="modal-head"><h2 id="account-title">Your Afterglow account</h2><button class="modal-close" id="account-close" type="button" aria-label="Close">✕</button></div>
+      <p id="account-intro">Sign in or create an account to sync favourites and game saves across devices.</p>
+      <form id="account-form">
+        <label>Email<input id="account-email" type="email" autocomplete="email" required maxlength="254"></label>
+        <label>Password<input id="account-password" type="password" autocomplete="current-password" minlength="8" required></label>
+        <label id="account-username-wrap" hidden>Username<input id="account-username" type="text" autocomplete="username" minlength="3" maxlength="20" pattern="[A-Za-z0-9_-]{3,20}"></label>
+        <div class="account-actions"><button class="action primary" id="account-submit" type="submit">Sign in</button><button class="action" id="account-switch" type="button">Create account</button></div>
+      </form>
+      <div id="account-signed-in" hidden>
+        <p id="account-profile"></p>
+        <label>Arcade username<input id="account-profile-name" type="text" minlength="3" maxlength="20" pattern="[A-Za-z0-9_-]{3,20}" placeholder="3–20 letters, numbers, _ or -"></label>
+        <div class="account-actions"><button class="action primary" id="account-save-profile" type="button">Save username</button><button class="action" id="account-sync" type="button">Sync game saves</button><button class="action" id="account-signout" type="button">Sign out</button></div>
+      </div>
+      <div class="account-status" id="account-status" role="status" aria-live="polite"></div>
+    </div>
+  </section>
+\n  <script type="module">
     "use strict";
 
     let onlineAPI = null;
@@ -244,6 +273,11 @@
 
     const $ = selector => document.querySelector(selector);
     const state = { games: [], selected: null, category: "All", query: "", loadTimer: null, generation: 0, previewUrls: new Map(), recorder: null, recordStream: null, favorites: new Set(JSON.parse(localStorage.getItem("afterglow-favorites") || "[]")), recent: JSON.parse(localStorage.getItem("afterglow-recent") || "[]"), theater: false };
+    window.addEventListener("afterglow:sync-favorites", event => {
+      state.favorites = new Set(Array.isArray(event.detail) ? event.detail : []);
+      localStorage.setItem("afterglow-favorites", JSON.stringify([...state.favorites]));
+      renderShelves(); updateFavoriteButton(); renderGames();
+    });
     const escapeHTML = value => String(value ?? "").replace(/[&<>"']/g, char => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[char]));
     // Detection is deliberately non-global so repeated checks are consistent.
     const PROFANITY_SOURCE = "\\b(?:asshole|arsehole|bastard|bitch|bullshit|crap|cunt|damn|dick|fuck|motherfucker|piss|shit|slut|whore)\\w*\\b";
@@ -871,7 +905,7 @@
       });
       document.querySelectorAll(".online-card").forEach(panel => { if (panel.id.startsWith("online-")) panel.hidden = panel.id !== tab.dataset.onlineTab; });
     });
-    start();
+    const accountsReady = import("./accounts.js").then(module => module.initAccounts()).catch(error => { console.warn("Account services unavailable.", error); return null; });\n    accountsReady.finally(() => start());
   </script>
 </body>
 </html>
