@@ -265,10 +265,10 @@
     <div class="account-card">
       <div class="modal-head"><h2 id="account-title">Your Afterglow account</h2><button class="modal-close" id="account-close" type="button" aria-label="Close">✕</button></div>
       <p id="account-intro">Sign in or create an account to sync favourites and game saves across devices.</p>
-      <form id="account-form">
-        <label>Email<input id="account-email" type="email" autocomplete="email" required maxlength="254"></label>
-        <label>Password<input id="account-password" type="password" autocomplete="current-password" minlength="8" required></label>
-        <label id="account-username-wrap" hidden>Username<input id="account-username" type="text" autocomplete="username" minlength="3" maxlength="20" pattern="[A-Za-z0-9_-]{3,20}"></label>
+      <form id="account-form" autocomplete="off">
+        <label>Email<input id="account-email" type="email" autocomplete="off" required maxlength="254"></label>
+        <label>Password<input id="account-password" type="password" autocomplete="off" minlength="8" required></label>
+        <label id="account-username-wrap" hidden>Username<input id="account-username" type="text" autocomplete="off" minlength="3" maxlength="20" pattern="[A-Za-z0-9_-]{3,20}"></label>
         <div class="account-actions"><button class="action primary" id="account-submit" type="submit">Sign in</button><button class="action" id="account-switch" type="button">Create account</button></div>
       </form>
       <div id="account-signed-in" hidden>
@@ -821,7 +821,7 @@
     $("#favorite-toggle").addEventListener("click", () => { if (!state.selected) return; const id=state.selected.id; if(state.favorites.has(id)) state.favorites.delete(id); else state.favorites.add(id); localStorage.setItem("afterglow-favorites",JSON.stringify([...state.favorites])); renderShelves(); updateFavoriteButton(); renderGames(); });
     $("#theater").addEventListener("click", () => { state.theater=!state.theater; $("#stage").classList.toggle("theater",state.theater); $("#theater").textContent=state.theater?"Exit theater":"Theater mode"; document.body.style.overflow=state.theater?"hidden":""; });
     $("#backup-save").addEventListener("click", () => { const data={createdAt:new Date().toISOString(), localStorage:Object.fromEntries(Object.keys(localStorage).filter(k=>k.startsWith("afterglow-")||k.startsWith("number-")).map(k=>[k,localStorage.getItem(k)]))}; const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}); const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="afterglow-save-backup.json";a.click();URL.revokeObjectURL(a.href); });
-    $("#copy-room-link").addEventListener("click", async () => { const code=$("#room-code").value.trim().toUpperCase(); if(!code) return; const url=new URL(location.href); url.searchParams.set("room",code); try{await navigator.clipboard.writeText(url.href);$("#room-status").textContent="Invite link copied."; }catch{$("#room-status").textContent=url.href;} });
+    $("#copy-room-link").addEventListener("click", async () => { const code=$("#room-code").value.trim().toUpperCase(); if(!code) return; const url=new URL(location.href); if (["localhost","127.0.0.1","0.0.0.0"].includes(url.hostname)) { url.protocol="https:"; url.hostname="oddossosososo.github.io"; url.port=""; } url.searchParams.set("room",code); try{await navigator.clipboard.writeText(url.href);$("#room-status").textContent="Invite link copied."; }catch{$("#room-status").textContent=url.href;} });
     $("#search").addEventListener("input", event => {
       state.query = event.target.value;
       renderGames();
