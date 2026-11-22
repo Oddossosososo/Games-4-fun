@@ -595,7 +595,7 @@
 
     function toggleCloak(force) {
       cloakEnabled = typeof force === "boolean" ? force : !cloakEnabled;
-      document.title = cloakEnabled ? "Error" : arcadeTitle;
+      document.title = cloakEnabled ? "Storage - Google Drive" : arcadeTitle;
       const favicon = document.querySelector('link[rel="icon"]');
       if (favicon) {
         favicon.href = cloakEnabled ? "https://drive.google.com/favicon.ico" : arcadeFavicon;
