@@ -15,7 +15,11 @@ pub extern "C" fn predict_intercept_y(
     if span <= 0.0 { return field_height * 0.5; }
     let raw = ball_y + ball_vy * time_to_impact;
     let period = 2.0 * span;
-    let folded = (raw - ball_radius).rem_euclid(period);
+    // no_std wasm32 toolchains may not expose f64::rem_euclid.
+    let offset = raw - ball_radius;
+    let turns = (offset / period) as i64;
+    let mut folded = offset - (turns as f64) * period;
+    if folded < 0.0 { folded += period; }
     ball_radius + if folded <= span { folded } else { period - folded }
 }
 
