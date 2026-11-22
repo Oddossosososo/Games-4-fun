@@ -163,7 +163,19 @@ jobs:
         with:
           node-version: 26
 
-      - name: Upgrade Pong ball-only predictive CPU
+      - name: Set up Rust for Pong GOD CPU
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-unknown-unknown
+
+      - name: Compile Rust Pong prediction engine to WebAssembly
+        run: |
+          set -euo pipefail
+          mkdir -p public/games/jeffreyhamilton6399-arcadia/games/pong
+          rustc --target wasm32-unknown-unknown --crate-type cdylib -C opt-level=3 -C panic=abort rust/pong-ai.rs -o public/games/jeffreyhamilton6399-arcadia/games/pong/pong-ai.wasm
+          test -s public/games/jeffreyhamilton6399-arcadia/games/pong/pong-ai.wasm
+
+      - name: Upgrade Pong to Rust-powered GOD CPU
         run: node scripts/improve-pong-ai.js
 
       - name: Fix cloned game asset paths for GitHub Pages
