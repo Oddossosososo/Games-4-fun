@@ -144,9 +144,11 @@ jobs:
           progressive_web_app/icon_180x180=""
           progressive_web_app/icon_512x512=""
           PRESET
-          docker run --rm -v "$game_dir:/project" -w /project barichello/godot-ci:3.5.3 godot --no-window --editor --path /project --quit
-          docker run --rm -v "$game_dir:/project" -w /project barichello/godot-ci:3.5.3 godot --no-window --path /project --export "HTML5" web/index.html
+          docker run --rm -v "$game_dir:/project" -w /project barichello/godot-ci:3.6.2 godot --no-window --editor --path /project --quit
+          docker run --rm -v "$game_dir:/project" -w /project barichello/godot-ci:3.6.2 godot --no-window --path /project --export "HTML5" web/index.html
           test -s "$game_dir/web/index.html"
+          # Keep only the browser export; don't ship editable project source or import caches.
+          find "$game_dir" -mindepth 1 -maxdepth 1 ! -name web -exec rm -rf {} +
           echo "Godot HTML5 export created successfully."
 
       - name: Use Node.js 24 for Sandspiel's dependency tree
