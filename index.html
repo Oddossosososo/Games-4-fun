@@ -90,13 +90,6 @@
     .library-row strong{display:block;font-size:12px}
     .library-row small{color:var(--muted)}
     .status-pill{flex:none;padding:4px 8px;border:1px solid #6ad7a866;border-radius:99px;color:#9be9c1;font-size:9px}
-    .fake-doc{position:fixed;inset:0;z-index:100;background:#fff;color:#202124;font:14px Arial,sans-serif;padding:0}
-    .fake-doc[hidden]{display:none}
-    .fake-top{height:58px;display:flex;align-items:center;gap:12px;padding:0 22px;border-bottom:1px solid #dadce0}
-    .fake-top b{font-size:18px;color:#4285f4}
-    .fake-page{width:min(760px,90%);margin:55px auto;color:#202124}
-    .fake-page h2{font-size:24px;font-weight:400}
-    .fake-page p{color:#5f6368}
     @media(max-width:900px){.layout{grid-template-columns:1fr}.game-grid{max-height:420px;grid-template-columns:repeat(3,minmax(0,1fr))}.stage{min-height:320px}}
     @media(max-width:600px){.shell{width:min(100% - 22px,1500px)}.hero{display:block;padding-top:30px}.stats{margin-top:18px}.stat{flex:1}.game-grid{grid-template-columns:repeat(2,minmax(0,1fr));max-height:380px}.player-head{align-items:flex-start;flex-direction:column}.actions{justify-content:flex-start}.stage{min-height:250px}.details{grid-template-columns:1fr 1fr}.nav{height:60px}.nav-right{font-size:10px}}
     @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
@@ -228,10 +221,6 @@
     <div class="modal-card"><div class="modal-head"><h2 id="credits-title">Credits &amp; licences</h2><button class="modal-close" data-close="credits-modal" type="button">Close</button></div><p class="modal-copy">Game creators retain their rights. Self-hosted third-party games are included only when their source licence permits redistribution. Attribution and licence notices are retained with the deployed files.</p><p class="modal-copy">Classic browser games are self-hosted from the MIT-licensed <a href="https://github.com/JeffreyHamilton6399/arcadia" target="_blank" rel="noopener">Arcadia source repository</a>. Their original licence and attribution are retained in the deployed source files.</p><p class="modal-copy">See <a href="./SOURCES.md" target="_blank" rel="noopener">the source and licence list</a> for upstream repositories and notices.</p></div>
   </section>
 
-  <div class="fake-doc" id="fake-404" hidden aria-label="Google Drive-style error screen">
-    <div class="fake-top"><img src="https://drive.google.com/favicon.ico" alt="" width="24" height="24"><span>Google Drive</span></div>
-    <div class="fake-page"><h2>Something went wrong</h2><p>Sorry, Google Drive is currently unable to open this page.</p><p>Please try again later.</p><small>Press <b>Shift + C</b> to return.</small></div>
-  </div>
 
   <script type="module">
     "use strict";
@@ -568,8 +557,6 @@
         favicon.href = cloakEnabled ? "https://drive.google.com/favicon.ico" : arcadeFavicon;
         favicon.type = cloakEnabled ? "image/x-icon" : "image/svg+xml";
       }
-      const errorScreen = $("#fake-404");
-      if (errorScreen) errorScreen.hidden = !cloakEnabled;
       const button = $("#cloak-toggle");
       if (button) {
         button.textContent = cloakEnabled ? "Uncloak" : "Cloak";
