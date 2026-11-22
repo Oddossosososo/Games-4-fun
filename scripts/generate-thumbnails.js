@@ -55,7 +55,7 @@ function startServer() {
     for (const game of games) {
       const route = routes[game.id];
       // Leave the aim-training title on its neutral icon card.
-      if (!route || game.id === 'aim-trainer') continue;
+      if (!route || game.id === 'aim-trainer' || game.repositoryViewer) continue;
       const target = new URL(route, origin + '/').href;
       try {
         await page.goto(target, { waitUntil: 'domcontentloaded', timeout: 20000 });
