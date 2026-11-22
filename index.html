@@ -560,6 +560,9 @@
       const panel = $("#fake-404");
       panel.hidden = !panel.hidden;
       document.body.style.overflow = panel.hidden ? "" : "hidden";
+      document.title = panel.hidden ? "Afterglow Arcade" : "Docs";
+      const favicon = document.querySelector('link[rel="icon"]');
+      if (favicon) favicon.href = panel.hidden ? "./favicon.svg" : "https://docs.google.com/favicon.ico";
     }
 
     function renderOnlineGames() {
