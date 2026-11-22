@@ -35,55 +35,124 @@ const replacement=`    moveGodPaddle(cpu, 1, dt);`;
 if(!html.includes(old)) throw new Error('Pong AI block did not match; refusing to patch');
 
 const helperAnchor="  function update(dt){";
-const helper=`  function predictWallIntercept(y, vy, travelTime, radius){
-    var low=radius, span=H-2*radius;
-    if(span<=0) return H*0.5;
-    var period=span*2, raw=y+vy*Math.max(0,travelTime);
-    var folded=((raw-low)%period+period)%period;
-    return low+(folded<=span?folded:period-folded);
-  }
-  function scoreAttackOffset(paddle,direction,interceptY){
-    var opponent=direction>0?player:cpu;
-    var opponentCenter=opponent.y+opponent.h*0.5;
-    var opponentSpeed=direction>0?480:AI_MAX_SPEED;
-    var bestHit=0.9,bestScore=-Infinity;
-    for(var i=-9;i<=9;i++){
-      var hit=i/10, angle=hit*(Math.PI/3);
-      var vx=Math.max(1,Math.cos(angle)*ball.speed), vy=Math.sin(angle)*ball.speed;
-      var opponentX=direction>0?opponent.x+opponent.w:opponent.x;
-      var distanceX=Math.abs((direction>0?opponentX-(paddle.x-ball.r):(paddle.x+paddle.w+ball.r)-opponentX));
-      var travel=distanceX/vx;
-      var landing=predictWallIntercept(interceptY,vy,travel,ball.r);
-      var reachable=opponentSpeed*travel+opponent.h*0.5;
-      var miss=Math.max(0,Math.abs(landing-opponentCenter)-reachable);
-      var score=miss+Math.abs(hit)*0.001;
-      if(score>bestScore){bestScore=score;bestHit=hit;}
+const helper=`  function moveGodPaddle(paddle, direction, dt) {
+    const radius = ball.r || 0;
+    const low = radius;
+    const span = Math.max(1, H - 2 * radius);
+    const foldY = (y) => {
+      const period = span * 2;
+      const folded = ((y - low) % period + period) % period;
+      return low + (folded <= span ? folded : period - folded);
+    };
+  
+    const movingToward = direction > 0 ? ball.vx > 0 : ball.vx < 0;
+    const playerCenter = player.y + player.h / 2;
+    let targetY = H / 2 - paddle.h / 2;
+  
+    if (movingToward) {
+      const edgeX = direction > 0 ? paddle.x : paddle.x + paddle.w;
+      const distanceX = Math.max(
+        0,
+        direction > 0 ? edgeX - ball.x : ball.x - edgeX
+      );
+      const travelTime = distanceX / Math.max(1e-9, Math.abs(ball.vx));
+      const interceptY = foldY(ball.y + ball.vy * travelTime);
+  
+      // Predict the player's reachable interval and choose the hardest legal angle.
+      const playerSpeed = player.maxSpeed ?? player.speed ?? 480;
+      const playerVelocity = player.vy || 0;
+      const reachableCenter = playerCenter + playerVelocity * travelTime;
+      const reachableRadius = player.h / 2 + playerSpeed * travelTime;
+      const candidates = [-0.48, -0.36, -0.24, 0, 0.24, 0.36, 0.48];
+  
+      let bestOffset = 0;
+      let bestScore = -Infinity;
+  
+      for (const offset of candidates) {
+        const impactY = interceptY + offset * paddle.h;
+        const normalizedOffset = Math.max(
+          -0.99,
+          Math.min(0.99, offset / 0.48)
+        );
+        const angle = normalizedOffset * (Math.PI / 3);
+        const vx = Math.max(1e-9, Math.abs(ball.speed * Math.cos(angle)));
+        const vy = ball.speed * Math.sin(angle);
+        const opponentX = direction > 0
+          ? player.x + player.w
+          : player.x;
+        const horizontalDistance = Math.abs(
+          direction > 0
+            ? opponentX - edgeX
+            : edgeX - opponentX
+        );
+        const returnTime = horizontalDistance / vx;
+        const landingY = foldY(impactY + vy * returnTime);
+        const futurePlayerY = reachableCenter + playerVelocity * returnTime;
+        const missDistance = Math.max(
+          0,
+          Math.abs(landingY - futurePlayerY) -
+            (reachableRadius + playerSpeed * returnTime)
+        );
+        const score =
+          missDistance +
+          Math.abs(offset) * 0.01 +
+          Math.abs(angle) * 0.001;
+  
+        if (score > bestScore) {
+          bestScore = score;
+          bestOffset = offset;
+        }
+      }
+  
+      const desiredImpactY = interceptY + bestOffset * paddle.h;
+      const desiredTop = Math.max(
+        0,
+        Math.min(H - paddle.h, desiredImpactY - paddle.h / 2)
+      );
+  
+      // Delay the final 12px correction until the last 1–2 frames.
+      const framesToImpact = travelTime / Math.max(dt, 1 / 240);
+      const stagingOffset = framesToImpact > 2
+        ? Math.sign(desiredTop - paddle.y) * 12
+        : 0;
+      targetY = desiredTop - stagingOffset;
+    } else {
+      // Defensive reset: midpoint of the player's extreme legal return paths.
+      const playerMin = radius + player.h / 2;
+      const playerMax = H - radius - player.h / 2;
+      const geometricMidpoint = (playerMin + playerMax) / 2;
+      const predictedPlayerCenter = Math.max(
+        playerMin,
+        Math.min(
+          playerMax,
+          playerCenter + (player.vy || 0) *
+            (Math.abs(ball.x - player.x) /
+              Math.max(1e-9, Math.abs(ball.vx)))
+        )
+      );
+  
+      targetY =
+        (geometricMidpoint + predictedPlayerCenter) / 2 -
+        paddle.h / 2;
     }
-    return bestHit;
-  }
-  // Identical controller for both paddles: exact intercept, minimax offence, instant recovery.
-  function moveGodPaddle(paddle,direction,dt){
-    var movingToward=direction>0?ball.vx>0:ball.vx<0;
-    var targetY=H*0.5-paddle.h*0.5;
-    if(movingToward){
-      var edgeX=direction>0?paddle.x:paddle.x+paddle.w;
-      var travel=Math.max(0,direction>0?edgeX-ball.x:ball.x-edgeX)/Math.max(1,Math.abs(ball.vx));
-      var intercept=pongGodWasm
-        ?pongGodWasm.predict_intercept_y(ball.y,ball.vy,travel,H,ball.r)
-        :predictWallIntercept(ball.y,ball.vy,travel,ball.r);
-      var hit=scoreAttackOffset(paddle,direction,intercept);
-      targetY=intercept-paddle.h*0.5-hit*paddle.h*0.5;
-    }else{
-      var opponent=direction>0?player:cpu;
-      var bias=Math.max(-H*0.08,Math.min(H*0.08,(opponent.y+opponent.h*0.5-H*0.5)*0.12));
-      targetY=H*0.5-paddle.h*0.5+bias;
-    }
-    targetY=Math.max(0,Math.min(H-paddle.h,targetY));
-    var previous=paddle.y,dy=targetY-paddle.y,step=AI_MAX_SPEED*Math.max(0,dt);
-    if(!Number.isFinite(step)||Math.abs(dy)<=step)paddle.y=targetY;
-    else paddle.y+=Math.sign(dy)*step;
-    paddle.y=Math.max(0,Math.min(H-paddle.h,paddle.y));
-    paddle.vy=dt>0?Math.max(-2400,Math.min(2400,(paddle.y-previous)/dt)):0;
+  
+    targetY = Math.max(0, Math.min(H - paddle.h, targetY));
+  
+    const previousY = paddle.y;
+    const maxSpeed = paddle.maxSpeed ?? AI_MAX_SPEED;
+    const step = Number.isFinite(maxSpeed)
+      ? Math.max(0, maxSpeed * dt)
+      : Infinity;
+    const delta = targetY - paddle.y;
+  
+    paddle.y = Math.abs(delta) <= step
+      ? targetY
+      : paddle.y + Math.sign(delta) * step;
+  
+    paddle.y = Math.max(0, Math.min(H - paddle.h, paddle.y));
+    paddle.vy = dt > 0
+      ? (paddle.y - previousY) / dt
+      : 0;
   }`;
 
 if(!html.includes(helperAnchor)) throw new Error('Update function anchor missing');
