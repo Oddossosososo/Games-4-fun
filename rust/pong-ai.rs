@@ -1,5 +1,8 @@
 #![no_std]
 
+#[panic_handler]
+fn panic(_info: &core::panic::PanicInfo) -> ! { loop {} }
+
 #[no_mangle]
 pub extern "C" fn predict_intercept_y(
     ball_y: f64,
