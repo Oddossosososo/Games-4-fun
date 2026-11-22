@@ -9,6 +9,9 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
 const $ = selector => document.querySelector(selector);
 let user = null;
 let mode = "signin";
+let pendingEmail = "";
+let pendingUsername = "";
+let awaitingVerification = false;
 
 function status(message, error = false) {
   const el = $("#account-status");
@@ -21,7 +24,8 @@ function showModal(open = true) {
 function renderUser(current) {
   user = current || null;
   const signedIn = Boolean(user);
-  $("#account-form").hidden = signedIn;
+  $("#account-form").hidden = signedIn || awaitingVerification;
+  $("#account-code-form").hidden = signedIn || !awaitingVerification;
   $("#account-signed-in").hidden = !signedIn;
   $("#account-switch").hidden = signedIn;
   $("#account-open").textContent = signedIn ? "Account" : "Sign in";
@@ -93,6 +97,9 @@ export async function initAccounts() {
     $("#account-switch").textContent = mode === "signin" ? "Create account" : "I already have an account";
     $("#account-username-wrap").hidden = mode !== "signup";
     $("#account-password").autocomplete = mode === "signin" ? "current-password" : "new-password";
+    awaitingVerification = false;
+    $("#account-code-form").hidden = true;
+    $("#account-form").hidden = false;
     status("");
   });
   $("#account-form")?.addEventListener("submit", async event => {
@@ -108,12 +115,23 @@ export async function initAccounts() {
       if (mode === "signup") {
         const { data, error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
-        if (data.session && username) {
-          const normalized = username.toLowerCase();
-          const { error: profileError } = await supabase.from("profiles").upsert({ id: data.user.id, username, username_normalized: normalized });
-          if (profileError) throw profileError;
+        if (data.session) {
+          if (username) {
+            const { error: profileError } = await supabase.from("profiles").upsert({ id: data.user.id, username, username_normalized: username.toLowerCase() });
+            if (profileError) throw profileError;
+          }
+          status("Account created. You're signed in.");
+        } else {
+          pendingEmail = email;
+          pendingUsername = username;
+          awaitingVerification = true;
+          $("#account-form").hidden = true;
+          $("#account-code-form").hidden = false;
+          $("#account-title").textContent = "Verify your email";
+          $("#account-code").value = "";
+          $("#account-code").focus();
+          status("We sent a 6-digit verification code to your email.");
         }
-        status(data.session ? "Account created. You're signed in." : "Account created. Check your email to confirm, then sign in.");
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
@@ -122,6 +140,41 @@ export async function initAccounts() {
     } catch (error) { status(error.message || "Authentication failed.", true); }
     finally { $("#account-submit").disabled = false; }
   });
+  $("#account-code-form")?.addEventListener("submit", async event => {
+    event.preventDefault();
+    const token = $("#account-code").value.trim();
+    if (!/^\\d{6}$/.test(token)) { status("Enter the 6-digit code from your email.", true); return; }
+    const submit = $("#account-verify");
+    submit.disabled = true;
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({ email: pendingEmail, token, type: "signup" });
+      if (error) throw error;
+      if (pendingUsername && data.user) {
+        const { error: profileError } = await supabase.from("profiles").upsert({
+          id: data.user.id, username: pendingUsername, username_normalized: pendingUsername.toLowerCase()
+        });
+        if (profileError) throw profileError;
+      }
+      awaitingVerification = false;
+      $("#account-code-form").hidden = true;
+      $("#account-title").textContent = "Your Afterglow account";
+      renderUser(data.user);
+      status("Email verified. Your account is ready.");
+    } catch (error) { status(error.message || "Code verification failed.", true); }
+    finally { submit.disabled = false; }
+  });
+  $("#account-resend")?.addEventListener("click", async () => {
+    if (!pendingEmail) return;
+    const button = $("#account-resend");
+    button.disabled = true;
+    try {
+      const { error } = await supabase.auth.resend({ type: "signup", email: pendingEmail });
+      if (error) throw error;
+      status("A new 6-digit code has been sent.");
+    } catch (error) { status(error.message || "Could not resend the code.", true); }
+    finally { button.disabled = false; }
+  });
+
   $("#account-save-profile")?.addEventListener("click", async () => {
     if (!user) return;
     const username = $("#account-profile-name").value.trim();
