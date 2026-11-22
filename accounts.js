@@ -28,7 +28,7 @@ function renderUser(current) {
   $("#account-user").hidden = !signedIn;
   $("#account-user").textContent = signedIn ? (user.email || "Signed in") : "";
   $("#account-profile").textContent = signedIn ? "Signed in as " + (user.email || "your account") : "";
-  if (signedIn) loadProfile();
+  if (signedIn) window.setTimeout(() => loadProfile(), 0);
   else status("");
 }
 async function loadProfile() {
@@ -47,10 +47,12 @@ async function syncFavorites() {
   if (!user) return;
   const ids = JSON.parse(localStorage.getItem("afterglow-favorites") || "[]")
     .filter(id => typeof id === "string" && /^[a-z0-9-]{1,40}$/.test(id));
-  const { error: removeError } = await supabase.from("favourites").delete().eq("user_id", user.id);
+  let removeQuery = supabase.from("favourites").delete().eq("user_id", user.id);
+  if (ids.length) removeQuery = removeQuery.not("game_id", "in", "(" + ids.join(",") + ")");
+  const { error: removeError } = await removeQuery;
   if (removeError) throw removeError;
   if (ids.length) {
-    const { error } = await supabase.from("favourites").insert(ids.map(game_id => ({ user_id: user.id, game_id })));
+    const { error } = await supabase.from("favourites").upsert(ids.map(game_id => ({ user_id: user.id, game_id })), { onConflict: "user_id,game_id" });
     if (error) throw error;
   }
 }
