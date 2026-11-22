@@ -36,9 +36,56 @@ const replacement=`    moveGodPaddle(cpu, 1, dt);`;
 if(!html.includes(old)) throw new Error('Pong AI block did not match; refusing to patch');
 
 const helperAnchor="  function update(dt){";
-const helper=`function moveGodPaddle(paddle, direction, dt) {
+const helper=`function predictHotmapTarget() {
+  // Forecast the likely landing zones from a spread of possible player contact offsets.
+  if (ball.vx >= 0 || Math.abs(ball.vx) < 1e-9) return null;
+  const playerFaceX = player.x + player.w + ball.r;
+  const framesToPlayer = (playerFaceX - ball.x) / ball.vx / PHYSICS_STEP;
+  if (framesToPlayer < 0 || framesToPlayer > 2.05) return null;
+
+  const bins = new Array(32).fill(0);
+  const span = H - 2 * ball.r;
+  if (span <= 0) return null;
+  const nextSpeed = ball.speed + SPEED_INC;
+  for (let i = 0; i <= 64; i++) {
+    const contactOffset = -1 + (2 * i / 64);
+    const angle = contactOffset * (75 * Math.PI / 180);
+    let vx = Math.cos(angle) * nextSpeed;
+    let vy = Math.sin(angle) * nextSpeed + (player.vy || 0) * 0.30;
+    const length = Math.hypot(vx, vy) || 1;
+    vx *= nextSpeed / length;
+    vy *= nextSpeed / length;
+    if (vx <= 1e-9) continue;
+    const targetFaceX = cpu.x - ball.r;
+    const flight = Math.max(0, (targetFaceX - playerFaceX) / vx);
+    const predicted = pongGodWasm && pongGodWasm.predict_intercept_y
+      ? pongGodWasm.predict_intercept_y(ball.y, vy, flight, H, ball.r)
+      : (function(){
+          const raw = ball.y + vy * flight - ball.r;
+          const folded = ((raw % (2 * span)) + (2 * span)) % (2 * span);
+          return ball.r + (folded <= span ? folded : 2 * span - folded);
+        })();
+    const bin = Math.max(0, Math.min(bins.length - 1,
+      Math.floor((predicted - ball.r) / span * bins.length)));
+    bins[bin]++;
+  }
+  let hottest = 0;
+  for (let i = 1; i < bins.length; i++) if (bins[i] > bins[hottest]) hottest = i;
+  return ball.r + (hottest + 0.5) * span / bins.length;
+}
+
+function moveGodPaddle(paddle, direction, dt) {
   const previousY = paddle.y;
   let impactY = ball.y;
+  if (direction > 0 && ball.vx < 0) {
+    const hotmapTarget = predictHotmapTarget();
+    if (hotmapTarget !== null) {
+      paddle.y = Math.max(0, Math.min(H - paddle.h, hotmapTarget - paddle.h / 2));
+      paddle.vy = dt > 0 ? (paddle.y - previousY) / dt : 0;
+      paddle._stagedHotmap = true;
+      return;
+    }
+  }
   if (ball.vx * direction > 0 && Math.abs(ball.vx) > 1e-9) {
     const faceX = direction < 0 ? paddle.x + paddle.w + ball.r : paddle.x - ball.r;
     const timeToImpact = Math.max(0, (faceX - ball.x) / ball.vx);
@@ -57,6 +104,7 @@ const helper=`function moveGodPaddle(paddle, direction, dt) {
     : Math.max(0, Math.min(H - paddle.h, impactY - paddle.h / 2 + edgeAim));
   paddle.y = Math.max(0, Math.min(H - paddle.h, targetY + edgeAim));
   paddle.vy = dt > 0 ? (paddle.y - previousY) / dt : 0;
+  paddle._stagedHotmap = false;
 }`;
 
 if(!html.includes(helperAnchor)) throw new Error('Update function anchor missing');
@@ -123,7 +171,9 @@ html=html.replace('var angle = hit * (Math.PI/3);',
 html=html.replace('ball.speed = Math.min(MAX_SPEED, ball.speed + SPEED_INC);',
   'ball.speed = Math.min(Number.MAX_VALUE / 4, ball.speed + SPEED_INC);');
 html=html.replace('ball.vy = Math.sin(angle) * ball.speed;',
-  'var spinImpulse = (p.vy || 0) * 0.30;\n    ball.vy = Math.sin(angle) * ball.speed + spinImpulse;\n    var velocityLength = Math.hypot(ball.vx, ball.vy) || 1;\n    ball.vx *= ball.speed / velocityLength;\n    ball.vy *= ball.speed / velocityLength;');
+  'var spinImpulse = (p.vy || 0) * 0.30;\n    ball.vy = Math.sin(angle) * ball.speed + spinImpulse;\n    var velocityLength = Math.hypot(ball.vx, ball.vy) || 1;\n    ball.vx *= ball.speed / velocityLength;\n    ball.vy *= ball.speed / velocityLength;
+    // Exact hit-frame lock: replace the speculative hotmap with the actual outgoing trajectory.
+    moveGodPaddle(cpu, 1, 0);');
 const hitPatch = `    if (p === player) ball.x = p.x + p.w + ball.r + 0.5;
     else ball.x = p.x - ball.r - 0.5;`;
 const hitReplacement = `    if (p === player) {
