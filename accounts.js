@@ -199,6 +199,27 @@ export async function initAccounts() {
     finally { $("#profile-save").disabled = false; }
   });
 
+  $("#admin-add-game")?.addEventListener("submit", async event => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const submit = $("#admin-game-submit");
+    const statusEl = $("#admin-game-status");
+    const repo_url = $("#admin-game-repo").value.trim();
+    const title = $("#admin-game-title").value.trim();
+    const description = $("#admin-game-description").value.trim();
+    submit.disabled = true;
+    statusEl.textContent = "Adding game…";
+    try {
+      const result = await callAdmin("add_game", { repo_url, title, description });
+      statusEl.textContent = "Added " + result.game.title + " to the shared catalogue. Refreshing…";
+      form.reset();
+      window.setTimeout(() => window.location.reload(), 900);
+    } catch (error) {
+      statusEl.textContent = error.message || "Could not add game.";
+      submit.disabled = false;
+    }
+  });
+
   $("#account-close")?.addEventListener("click", () => showModal(false));
   $("#account-modal")?.addEventListener("click", event => { if (event.target.id === "account-modal") showModal(false); });
   $("#account-switch")?.addEventListener("click", () => {
