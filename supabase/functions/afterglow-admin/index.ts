@@ -9,6 +9,58 @@ const cors = {
 const reply = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: cors });
 
+const ALLOWED_LICENSES = new Set([
+  "MIT", "Apache-2.0", "GPL-2.0", "GPL-2.0-only", "GPL-2.0-or-later",
+  "GPL-3.0", "GPL-3.0-only", "GPL-3.0-or-later", "AGPL-3.0",
+  "AGPL-3.0-only", "AGPL-3.0-or-later", "MPL-2.0", "Unlicense",
+  "BSD-2-Clause", "BSD-3-Clause", "ISC"
+]);
+const MIME: Record<string, string> = {
+  ".html": "text/html; charset=utf-8", ".htm": "text/html; charset=utf-8",
+  ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8",
+  ".mjs": "text/javascript; charset=utf-8", ".json": "application/json; charset=utf-8",
+  ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg", ".gif": "image/gif", ".webp": "image/webp",
+  ".ico": "image/x-icon", ".mp3": "audio/mpeg", ".ogg": "audio/ogg",
+  ".wav": "audio/wav", ".mp4": "video/mp4", ".webm": "video/webm",
+  ".woff": "font/woff", ".woff2": "font/woff2", ".ttf": "font/ttf",
+  ".otf": "font/otf", ".wasm": "application/wasm", ".txt": "text/plain; charset=utf-8",
+  ".xml": "application/xml", ".webmanifest": "application/manifest+json"
+};
+const excluded = (path: string) =>
+  /(^|\/)(\.git|\.github|\.vscode|node_modules|coverage|__tests__|\.next)(\/|$)/i.test(path) ||
+  /(^|\/)(README|CONTRIBUTING|CHANGELOG|LICENSE|CODE_OF_CONDUCT)(\.[^/]*)?$/i.test(path) ||
+  /\.(map|lock|md|mdx|yml|yaml|toml|rs|c|cc|cpp|h|hpp|py|sh|bat|ps1)$/i.test(path) ||
+  /(^|\/)(\.gitignore|\.gitattributes|\.editorconfig|\.npmrc|\.prettierrc)$/i.test(path);
+
+function contentType(path: string) {
+  const ext = path.match(/\.[^.\/]+$/)?.[0].toLowerCase() || "";
+  return MIME[ext] || "application/octet-stream";
+}
+function safePath(path: string) {
+  return path && !path.startsWith("/") && !path.includes("\\") &&
+    path.split("/").every(part => part && part !== "." && part !== "..");
+}
+function rewriteRootAssets(source: string, gameId: string, files: Set<string>, publicBase: string) {
+  const replace = (reference: string) => {
+    if (!reference.startsWith("/") || reference.startsWith("//")) return reference;
+    const split = reference.search(/[?#]/);
+    const pathname = split < 0 ? reference.slice(1) : reference.slice(1, split);
+    const suffix = split < 0 ? "" : reference.slice(split);
+    if (!files.has(pathname)) return reference;
+    return publicBase + "/" + gameId + "/" + pathname + suffix;
+  };
+  source = source.replace(/(["'`])(\/[^"'\`\s<>]*)\1/g, (whole, quote, reference) => {
+    const next = replace(reference);
+    return next === reference ? whole : quote + next + quote;
+  });
+  source = source.replace(/url\(\s*(\/[^)'"\s]+)\s*\)/gi, (whole, reference) => {
+    const next = replace(reference);
+    return next === reference ? whole : "url(" + next + ")";
+  });
+  return source;
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   if (req.method !== "POST") return reply({ error: "Method not allowed." }, 405);
@@ -47,7 +99,7 @@ Deno.serve(async (req: Request) => {
       return reply({ ok: true, display_name: displayName });
     }
 
-    if (action === "admin_list" || action === "admin_update") {
+    if (action === "admin_list" || action === "admin_update" || action === "add_game") {
       if (!["owner", "admin"].includes(actorRole)) return reply({ error: "Admin access required." }, 403);
     }
 
@@ -67,12 +119,12 @@ Deno.serve(async (req: Request) => {
     }
 
     if (action === "add_game") {
-      if (!["owner", "admin"].includes(actorRole)) return reply({ error: "Admin access required." }, 403);
       const title = String(body.title || "").trim();
       const description = String(body.description || "").trim();
       const rawRepo = String(body.repo_url || "").trim();
       if (title.length < 2 || title.length > 60) return reply({ error: "Game name must be 2–60 characters." }, 400);
       if (!description || description.length > 300) return reply({ error: "Description must be 1–300 characters." }, 400);
+
       let parsed: URL;
       try { parsed = new URL(rawRepo); } catch { return reply({ error: "Enter a valid GitHub repository URL." }, 400); }
       const parts = parsed.pathname.replace(/\.git$/i, "").split("/").filter(Boolean);
@@ -85,23 +137,106 @@ Deno.serve(async (req: Request) => {
       const repository = parts[1].replace(/\.git$/i, "");
       const repoUrl = "https://github.com/" + owner + "/" + repository;
       const id = title.toLowerCase().normalize("NFKD").replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 54).replace(/-$/g, "");
+        .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40).replace(/-$/g, "");
       if (!id) return reply({ error: "Game name needs at least one letter or number." }, 400);
+
       const { data: existing, error: existingError } = await service.from("game_catalog")
         .select("id").eq("id", id).maybeSingle();
       if (existingError) throw existingError;
       if (existing) return reply({ error: "A game with that name is already in the catalogue." }, 409);
+
+      const headers = { "Accept": "application/vnd.github+json", "User-Agent": "Afterglow-Arcade" };
+      const metaResponse = await fetch("https://api.github.com/repos/" + owner + "/" + repository, { headers });
+      if (!metaResponse.ok) {
+        return reply({ error: metaResponse.status === 404 ? "Repository not found or it is private." : "GitHub could not inspect that repository. Try again shortly." }, 400);
+      }
+      const metadata = await metaResponse.json();
+      const license = metadata.license?.spdx_id || "NOASSERTION";
+      if (!ALLOWED_LICENSES.has(license)) {
+        return reply({ error: "This repository's licence (" + license + ") is not on the approved redistribution list, so it cannot be copied into Afterglow." }, 400);
+      }
+      const branch = String(metadata.default_branch || "main");
+      const treeResponse = await fetch(
+        "https://api.github.com/repos/" + owner + "/" + repository + "/git/trees/" + encodeURIComponent(branch) + "?recursive=1",
+        { headers }
+      );
+      if (!treeResponse.ok) return reply({ error: "Could not read the repository file tree." }, 400);
+      const treeData = await treeResponse.json();
+      if (treeData.truncated) return reply({ error: "This repository is too large to import safely." }, 400);
+
+      const entries = (treeData.tree || []).filter((item: any) =>
+        item.type === "blob" && safePath(String(item.path || "")) && !excluded(item.path) &&
+        Number(item.size || 0) > 0 && Number(item.size || 0) <= 2500000
+      );
+      const totalBytes = entries.reduce((sum: number, item: any) => sum + Number(item.size || 0), 0);
+      if (entries.length > 120 || totalBytes > 12000000) {
+        return reply({ error: "Repository is too large for the one-click importer (limit: 120 files / 12 MB)." }, 400);
+      }
+      const htmlEntries = entries.filter((item: any) => /(^|\/)index\.html?$/i.test(item.path));
+      const entrypoint = htmlEntries.sort((a: any, b: any) => {
+        const priority = (p: string) => p === "index.html" || p === "index.htm" ? 0 :
+          /^(dist|build|public)\/index\.html?$/i.test(p) ? 1 : p.split("/").length + 2;
+        return priority(a.path) - priority(b.path) || a.path.localeCompare(b.path);
+      })[0]?.path;
+      if (!entrypoint) return reply({ error: "No playable index.html was found. This importer supports ready-to-run browser games, not source-only projects that need a build step." }, 400);
+
+      const paths = new Set(entries.map((item: any) => String(item.path)));
+      const publicBase = url + "/storage/v1/object/public/arcade-games";
+      const downloaded: { path: string; bytes: Uint8Array; type: string }[] = [];
+      for (let start = 0; start < entries.length; start += 5) {
+        const batch = entries.slice(start, start + 5);
+        const files = await Promise.all(batch.map(async (item: any) => {
+          const rawPath = String(item.path).split("/").map(encodeURIComponent).join("/");
+          const branchPath = branch.split("/").map(encodeURIComponent).join("/");
+          const response = await fetch("https://raw.githubusercontent.com/" + owner + "/" + repository + "/" + branchPath + "/" + rawPath);
+          if (!response.ok) throw new Error("Could not download repository file: " + item.path);
+          let bytes = new Uint8Array(await response.arrayBuffer());
+          const type = contentType(item.path);
+          if (type.startsWith("text/") || type.includes("javascript") || type.includes("json") || type.includes("xml")) {
+            const text = new TextDecoder().decode(bytes);
+            bytes = new TextEncoder().encode(rewriteRootAssets(text, id, paths, publicBase));
+          }
+          return { path: String(item.path), bytes, type };
+        }));
+        downloaded.push(...files);
+      }
+
+      const uploadedPaths: string[] = [];
+      try {
+        for (let start = 0; start < downloaded.length; start += 5) {
+          const batch = downloaded.slice(start, start + 5);
+          const results = await Promise.all(batch.map(async file => {
+            const objectPath = id + "/" + file.path;
+            const { error } = await service.storage.from("arcade-games").upload(
+              objectPath, new Blob([file.bytes], { type: file.type }),
+              { contentType: file.type, cacheControl: "31536000", upsert: true }
+            );
+            if (error) throw new Error("Storage upload failed for " + file.path + ": " + error.message);
+            uploadedPaths.push(objectPath);
+          }));
+        }
+      } catch (uploadError) {
+        if (uploadedPaths.length) await service.storage.from("arcade-games").remove(uploadedPaths);
+        throw uploadError;
+      }
+
+      const entrypointUrl = publicBase + "/" + id + "/" + entrypoint.split("/").map(encodeURIComponent).join("/");
+      const assets = downloaded.map(file => ({
+        path: file.path, url: publicBase + "/" + id + "/" + file.path.split("/").map(encodeURIComponent).join("/"),
+        content_type: file.type, size: file.bytes.byteLength
+      }));
       const { data: game, error: insertError } = await service.from("game_catalog").insert({
-        id, title, category: "Community", creator: owner, license: "Not reviewed",
-        description, emoji: "🎮", glow: "#a78bfa", shade: "#34245d",
-        mode: "external", entrypoint_url: null, official_url: repoUrl,
-        source_url: repoUrl, assets: [], updated_at: new Date().toISOString()
-      }).select("id,title,description,source_url").single();
+        id, title, category: "Community", creator: metadata.owner?.login || owner,
+        license, description, emoji: "🎮", glow: "#a78bfa", shade: "#34245d",
+        mode: "local", entrypoint_url: entrypointUrl, official_url: repoUrl,
+        source_url: repoUrl, assets, updated_at: new Date().toISOString()
+      }).select("id,title,description,source_url,entrypoint_url,assets").single();
       if (insertError) {
+        await service.storage.from("arcade-games").remove(uploadedPaths);
         if (insertError.code === "23505") return reply({ error: "A game with that name is already in the catalogue." }, 409);
         throw insertError;
       }
-      return reply({ ok: true, game });
+      return reply({ ok: true, game: { id: game.id, title: game.title, source_url: game.source_url, entrypoint_url: game.entrypoint_url, files: assets.length } });
     }
 
     if (action === "admin_update") {
