@@ -64,10 +64,15 @@ jobs:
             rm -f "$metadata_file"
             licence="$(printf '%s' "$metadata" | jq -r '.license.spdx_id // "NOASSERTION"')"
             default_branch="$(printf '%s' "$metadata" | jq -r '.default_branch // "main"')"
-            case "$licence" in
-              MIT|Apache-2.0|GPL-2.0|GPL-2.0-only|GPL-2.0-or-later|GPL-3.0|GPL-3.0-only|GPL-3.0-or-later|AGPL-3.0|AGPL-3.0-only|AGPL-3.0-or-later|MPL-2.0|Unlicense|BSD-2-Clause|BSD-3-Clause|ISC) ;;
-              *) echo "::error::Refusing to host $name: GitHub reports licence '$licence'"; exit 1 ;;
-            esac
+            # Admin is manually reviewed by the Afterglow owner; upstream reports no SPDX licence.
+            if [ "$name" = "jbodah/game_jam-locked" ]; then
+              echo "Owner-managed licence review for $name (GitHub SPDX: $licence)"
+            else
+              case "$licence" in
+                MIT|Apache-2.0|GPL-2.0|GPL-2.0-only|GPL-2.0-or-later|GPL-3.0|GPL-3.0-only|GPL-3.0-or-later|AGPL-3.0|AGPL-3.0-only|AGPL-3.0-or-later|MPL-2.0|Unlicense|BSD-2-Clause|BSD-3-Clause|ISC) ;;
+                *) echo "::error::Refusing to host $name: GitHub reports licence '$licence'"; exit 1 ;;
+              esac
+            fi
             declared="$(REPO_NAME="$name" node -e 'const g=require("./games.json").games.find(x=>x.source==="https://github.com/"+process.env.REPO_NAME); console.log(g?.license || "")')"
             if [ "$declared" != "$licence" ]; then
               echo "::error::Manifest licence '$declared' for $name does not match GitHub SPDX '$licence'"
@@ -102,6 +107,47 @@ jobs:
             find "public/games/$folder" -type d \( -name '.github' -o -name '__tests__' -o -name 'coverage' \) -prune -exec rm -rf {} +
             printf '\n- [%s](https://github.com/%s) — SPDX: %s — local copy: games/%s/\n' "$name" "$name" "$licence" "$folder" >> public/SOURCES.md
           done < <(node -e "for (const r of require('./games.json').games.filter(g=>g.verified&&g.mode==='local').map(g=>g.source).filter((v,i,a)=>a.indexOf(v)===i)) console.log(r)")
+
+
+      - name: Export Admin Godot project to HTML5
+        if: hashFiles('public/games/jbodah-game_jam-locked/project.godot') != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          game_dir="$PWD/public/games/jbodah-game_jam-locked"
+          mkdir -p "$game_dir/web"
+          cat > "$game_dir/export_presets.cfg" <<'PRESET'
+          [preset.0]
+          name="HTML5"
+          platform="HTML5"
+          runnable=true
+          custom_features=""
+          export_filter="all_resources"
+          include_filter=""
+          exclude_filter=""
+          export_path="web/index.html"
+          script_export_mode=1
+          script_encryption_key=""
+
+          [preset.0.options]
+          vram_texture_compression/for_desktop=true
+          vram_texture_compression/for_mobile=false
+          html/custom_html_shell=""
+          html/head_include=""
+          html/canvas_resize_policy=2
+          html/experimental_virtual_keyboard=false
+          progressive_web_app/enabled=false
+          progressive_web_app/offline_page=""
+          progressive_web_app/display=1
+          progressive_web_app/orientation=0
+          progressive_web_app/icon_144x144=""
+          progressive_web_app/icon_180x180=""
+          progressive_web_app/icon_512x512=""
+          PRESET
+          docker run --rm -v "$game_dir:/project" -w /project barichello/godot-ci:3.5.3 godot --no-window --editor --path /project --quit
+          docker run --rm -v "$game_dir:/project" -w /project barichello/godot-ci:3.5.3 godot --no-window --path /project --export "HTML5" web/index.html
+          test -s "$game_dir/web/index.html"
+          echo "Godot HTML5 export created successfully."
 
       - name: Use Node.js 24 for Sandspiel's dependency tree
         if: hashFiles('public/games/maxbittker-sandspiel/package.json') != ''
