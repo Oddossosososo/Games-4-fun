@@ -306,6 +306,17 @@
         </section>
         <section class="profile-section" id="admin-panel" hidden>
           <h3>Admin panel</h3><p>Manage account badges and access. Owner privileges are protected.</p>
+          <section class="profile-section" style="margin:0 0 14px;background:#15172a">
+            <h3>Add a game</h3>
+            <p>Add a GitHub repository to the public catalogue. It will appear as an external listing; the repository is not automatically cloned or executed.</p>
+            <form id="admin-add-game" autocomplete="off">
+              <label>GitHub repository URL<input id="admin-game-repo" type="url" required maxlength="300" placeholder="https://github.com/owner/repository"></label>
+              <label>Game name<input id="admin-game-title" type="text" required minlength="2" maxlength="60" placeholder="Game title"></label>
+              <label>Description<textarea id="admin-game-description" required maxlength="300" rows="3" placeholder="What is this game about?"></textarea></label>
+              <button class="action primary" id="admin-game-submit" type="submit">＋ Add game</button>
+            </form>
+            <div class="profile-status" id="admin-game-status" role="status" aria-live="polite"></div>
+          </section>
           <div class="admin-list" id="admin-users"><p>Loading accounts…</p></div>
           <div class="profile-status" id="admin-status" role="status" aria-live="polite"></div>
         </section>
