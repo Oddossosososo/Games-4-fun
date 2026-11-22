@@ -37,7 +37,10 @@ jobs:
         with:
           node-version: 26
 
-      - name: Validate patch script syntax\n        run: node --check scripts/improve-pong-ai.js\n\n      - name: Clone Pong source
+      - name: Validate patch script syntax
+        run: node --check scripts/improve-pong-ai.js
+
+      - name: Clone Pong source
         run: |
           set -euo pipefail
           mkdir -p public/games/jeffreyhamilton6399-arcadia
@@ -69,7 +72,11 @@ jobs:
           grep -q 'var AI_MAX_SPEED = Infinity;' "$pong"
           grep -q 'var MAX_SPEED = Infinity;' "$pong"
           grep -q 'var SPEED_INC = 45;' "$pong"
-          grep -q 'shotOffset' "$pong"\n          grep -q 'desiredHit' "$pong"\n          grep -q 'spinImpulse' "$pong"\n          grep -q 'paddle.vy' "$pong"\n          grep -q 'adaptiveStep' "$pong"
+          grep -q 'shotOffset' "$pong"
+          grep -q 'desiredHit' "$pong"
+          grep -q 'spinImpulse' "$pong"
+          grep -q 'paddle.vy' "$pong"
+          grep -q 'adaptiveStep' "$pong"
           grep -q 'rallyHits++' "$pong"
           grep -q 'var PHYSICS_STEP = 1 / 240;' "$pong"
           grep -q 'fetch("./pong-ai.wasm")' "$pong"
