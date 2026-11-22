@@ -53,15 +53,22 @@ const helper=`  // Shared controller: both paddles use precisely the same GOD CP
         targetY = intercept - paddle.h/2;
       }
     }
-    // Add intentional shot placement so both perfect predictors create varied angles.
-    var shotOffset = Math.sin((rallyHits + 1) * 1.37) * paddle.h * 0.40 * (direction > 0 ? 1 : -1);
-    targetY -= shotOffset;
+    // Attack the opponent's weakest lane by selecting an upper/lower-edge strike.
+    var opponent = direction > 0 ? player : cpu;
+    var opponentCenter = opponent.y + opponent.h * 0.5;
+    var desiredHit = opponentCenter < H * 0.5 ? 0.88 : -0.88;
+    if (Math.abs(opponentCenter - H * 0.5) < 10) desiredHit = (rallyHits % 2) ? 0.88 : -0.88;
+    var shotOffset = desiredHit * paddle.h * 0.5;
+    targetY = targetY - paddle.h * 0.5 - shotOffset;
     targetY = Math.max(0, Math.min(H - paddle.h, targetY));
+    var previousY = paddle.y;
     var dy = targetY - paddle.y;
     var step = AI_MAX_SPEED * dt;
     if (!Number.isFinite(step) || Math.abs(dy) <= step) paddle.y = targetY;
     else paddle.y += Math.sign(dy) * step;
     paddle.y = Math.max(0, Math.min(H - paddle.h, paddle.y));
+    // A bounded last-frame swipe creates spin without destabilising the simulation.
+    paddle.vy = dt > 0 ? Math.max(-1800, Math.min(1800, (paddle.y - previousY) / dt)) : 0;
     paddle._pretarget = false;
   }
 
@@ -121,6 +128,8 @@ html=html.replace("if (keys['ArrowDown']) player.vy = 480;","if (!symmetryMode &
 html=html.replace(old,replacement);
 html=html.replace('pscore = 0; cscore = 0;','pscore = 0; cscore = 0;\n    rallyHits = 0;');
 html=html.replace('function bouncePaddle(p, hit){','function bouncePaddle(p, hit){\n    rallyHits++;');
+html=html.replace('ball.vy = Math.sin(angle) * ball.speed;',
+  'var spinImpulse = Math.max(-520, Math.min(520, (p.vy || 0) * 0.30));\\n    ball.vy = Math.sin(angle) * ball.speed + spinImpulse;\\n    ball.speed += Math.min(120, Math.abs(spinImpulse) * 0.08);');
 const hitPatch = `    if (p === player) ball.x = p.x + p.w + ball.r + 0.5;
     else ball.x = p.x - ball.r - 0.5;`;
 const hitReplacement = `    if (p === player) {
@@ -165,4 +174,4 @@ html=html.replace('var MAX_SPEED = 820;','var MAX_SPEED = Infinity;');
 html=html.replace('var SPEED_INC = 28;','var SPEED_INC = 45;');
 html=html.replace('var AI_MAX_SPEED = 360;','var AI_MAX_SPEED = Infinity;\n  var pongGodWasm = null;\n  fetch("./pong-ai.wasm").then(function(r){ if(!r.ok) throw new Error("WASM unavailable"); return r.arrayBuffer(); }).then(function(bytes){ return WebAssembly.instantiate(bytes); }).then(function(result){ pongGodWasm = result.instance.exports; }).catch(function(){ console.warn("Pong GOD CPU: using JavaScript fallback."); });');
 fs.writeFileSync(file,html);
-console.log('Pong GOD CPU patched: instant uncapped tracking, reflected-wall prediction, adaptive anti-tunnelling physics and Rust/WASM acceleration.');
+console.log('Pong GOD CPU patched: exact reflected-wall raycasting, offensive edge targeting, swipe spin, center recovery, adaptive anti-tunnelling physics and uncapped speed.');
