@@ -583,7 +583,7 @@
       "category": "Rhythm",
       "creator": "The Funkin' Crew",
       "license": "Apache-2.0 (code); game assets All Rights Reserved",
-      "officialUrl": "https://www.newgrounds.com/portal/view/770371",
+      "officialUrl": "https://github.com/anime-kun32/Friday-Night-Funkin-html",
       "mode": "external",
       "verified": true,
       "embeddable": false,
@@ -596,7 +596,7 @@
         "Mild cartoon violence",
         "Mild suggestive humour"
       ],
-      "auditNote": "The game code is Apache-2.0, but the bundled game assets are All Rights Reserved. Do not redistribute the complete game; link to the official browser demo instead. Not self-hosted."
+      "auditNote": "Links to the requested HTML5 source repository. The repository contains broad fan-content permission text, but its bundled asset licence also states that game content may not be publicly redistributed by third parties. Keep external until redistribution rights for the complete build are clear; do not self-host the bundled assets."
     }
   ]
 }
