@@ -289,6 +289,7 @@
       // A self-hosted title remains local even if an older catalogue omitted its mode.
       const mode = game.mode === "bundled" || game.hosting === "self-hosted" ? "bundled" : game.mode;
       if (!["local", "bundled"].includes(mode)) return "";
+      if (typeof game.entrypoint_url === "string" && game.entrypoint_url.startsWith("https://")) return game.entrypoint_url;
       let route = "";
       const cleanEntry = value => {
         let path = String(value || "");
