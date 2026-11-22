@@ -228,9 +228,9 @@
     <div class="modal-card"><div class="modal-head"><h2 id="credits-title">Credits &amp; licences</h2><button class="modal-close" data-close="credits-modal" type="button">Close</button></div><p class="modal-copy">Game creators retain their rights. Self-hosted third-party games are included only when their source licence permits redistribution. Attribution and licence notices are retained with the deployed files.</p><p class="modal-copy">Classic browser games are self-hosted from the MIT-licensed <a href="https://github.com/JeffreyHamilton6399/arcadia" target="_blank" rel="noopener">Arcadia source repository</a>. Their original licence and attribution are retained in the deployed source files.</p><p class="modal-copy">See <a href="./SOURCES.md" target="_blank" rel="noopener">the source and licence list</a> for upstream repositories and notices.</p></div>
   </section>
 
-  <div class="fake-doc" id="fake-404" hidden aria-label="Fake Google Docs page">
-    <div class="fake-top"><b>▣</b><span>Docs</span></div>
-    <div class="fake-page"><h2>404. That’s an error.</h2><p>The requested document could not be found.</p><p>Press <b>Shift + C</b> again to close this page.</p><small>https://docs.google.com/document/u/0/?tgif=d</small></div>
+  <div class="fake-doc" id="fake-404" hidden aria-label="Google Drive-style error screen">
+    <div class="fake-top"><img src="https://drive.google.com/favicon.ico" alt="" width="24" height="24"><span>Google Drive</span></div>
+    <div class="fake-page"><h2>Something went wrong</h2><p>Sorry, Google Drive is currently unable to open this page.</p><p>Please try again later.</p><small>Press <b>Shift + C</b> to return.</small></div>
   </div>
 
   <script type="module">
@@ -565,9 +565,11 @@
       document.title = cloakEnabled ? "Error" : arcadeTitle;
       const favicon = document.querySelector('link[rel="icon"]');
       if (favicon) {
-        favicon.href = cloakEnabled ? "https://docs.google.com/favicon.ico" : arcadeFavicon;
+        favicon.href = cloakEnabled ? "https://drive.google.com/favicon.ico" : arcadeFavicon;
         favicon.type = cloakEnabled ? "image/x-icon" : "image/svg+xml";
       }
+      const errorScreen = $("#fake-404");
+      if (errorScreen) errorScreen.hidden = !cloakEnabled;
       const button = $("#cloak-toggle");
       if (button) {
         button.textContent = cloakEnabled ? "Uncloak" : "Cloak";
