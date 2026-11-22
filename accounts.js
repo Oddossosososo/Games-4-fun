@@ -146,12 +146,12 @@ export async function initAccounts() {
   const { data: { session } } = await supabase.auth.getSession();
   renderUser(session?.user || null);
   if (session?.user) { await loadFavorites(); await syncSaves().catch(error => console.warn("Save restore skipped:", error)); }
-  supabase.auth.onAuthStateChange(async (_event, nextSession) => {
+  supabase.auth.onAuthStateChange((_event, nextSession) => {
     renderUser(nextSession?.user || null);
-    if (nextSession?.user) {
-      await loadFavorites();
-      await syncSaves().catch(error => console.warn("Save restore skipped:", error));
-    }
+    if (nextSession?.user) window.setTimeout(() => {
+      loadFavorites();
+      syncSaves().catch(error => console.warn("Save restore skipped:", error));
+    }, 0);
   });
 
   const api = {
