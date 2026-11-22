@@ -85,7 +85,7 @@ const helper=`function predictHotmapTarget() {
 function moveGodPaddle(paddle, direction, dt) {
   const previousY = paddle.y;
   let impactY = ball.y;
-  if (direction > 0 && ball.vx < 0) {
+  if (direction > 0 && ball.vx < 0 && cpuDifficulty === 'impossible') {
     const hotmapTarget = predictHotmapTarget();
     if (hotmapTarget !== null) {
       paddle.y = Math.max(0, Math.min(H - paddle.h, hotmapTarget - paddle.h / 2));
@@ -110,7 +110,17 @@ function moveGodPaddle(paddle, direction, dt) {
   const targetY = pongGodWasm && pongGodWasm.clamp_paddle_target
     ? pongGodWasm.clamp_paddle_target(impactY, paddle.h, H)
     : Math.max(0, Math.min(H - paddle.h, impactY - paddle.h / 2 + edgeAim));
-  paddle.y = Math.max(0, Math.min(H - paddle.h, targetY + edgeAim));
+  const isCpu = direction > 0;
+  const aimError = !isCpu || cpuDifficulty === 'impossible' ? 0
+    : cpuDifficulty === 'medium' ? Math.sin((rallyHits + 1) * 2.17) * 22
+    : Math.sin((rallyHits + 1) * 1.73) * 58;
+  const adjustedTarget = Math.max(0, Math.min(H - paddle.h, targetY + edgeAim + aimError));
+  const maxSpeed = !isCpu || cpuDifficulty === 'impossible' ? Infinity
+    : cpuDifficulty === 'medium' ? 560 : 300;
+  const distance = adjustedTarget - paddle.y;
+  const maxStep = maxSpeed * Math.max(0, dt);
+  paddle.y = Math.max(0, Math.min(H - paddle.h,
+    Math.abs(distance) <= maxStep ? adjustedTarget : paddle.y + Math.sign(distance) * maxStep));
   paddle.vy = dt > 0 ? (paddle.y - previousY) / dt : 0;
   paddle._stagedHotmap = false;
 }`;
@@ -132,18 +142,20 @@ const playerNew=`    // Normal mode uses player input; symmetry mode uses the id
 if(!html.includes(playerOld)) throw new Error('Player movement block missing');
 html=html.replace(playerOld,playerNew);
 
-const stateOld="var player, cpu, ball, pscore, cscore, running, started, last, serveTimer, paused;
+const stateOld=`var player, cpu, ball, pscore, cscore, running, started, last, serveTimer, paused;
   var matchAnalysis = { playerHits: 0, playerMisses: 0, cpuHits: 0, offsets: [], fastestShot: 0 };
-";
+`;
 if(!html.includes(stateOld)) throw new Error('State declaration missing');
 html=html.replace(stateOld,stateOld+"\n  var symmetryMode = false;\n  var rallyHits = 0;");
 
 const uiAnchor="  <div id=\"stage\">";
 if(!html.includes(uiAnchor)) throw new Error('Stage anchor missing');
-html=html.replace(uiAnchor,'  <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:10px"><button class="btn" id="symmetryToggle" type="button" style="padding:8px 14px;font-size:11px">Mode: Player vs CPU</button><label id="symmetrySpeedWrap" class="hidden" style="display:flex;align-items:center;gap:7px;color:#d8ccff;font-size:10px">START SPEED <input id="symmetryStartSpeed" type="number" min="0.01" step="any" value="390" inputmode="decimal" aria-label="Starting ball speed" style="width:112px;background:#211b3a;color:#fff;border:1px solid #6345a8;border-radius:6px;padding:7px;font:700 11px ui-monospace,monospace"></label></div>\n'+uiAnchor);
+html=html.replace(uiAnchor,'  <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:10px"><label style="display:flex;align-items:center;gap:7px;color:#d8ccff;font-size:10px">CPU DIFFICULTY <select id="cpuDifficulty" aria-label="CPU difficulty" style="background:#211b3a;color:#fff;border:1px solid #6345a8;border-radius:6px;padding:8px;font:700 11px ui-monospace,monospace"><option value="easy">Easy</option><option value="medium">Medium</option><option value="impossible" selected>Impossible</option></select></label><button class="btn" id="symmetryToggle" type="button" style="padding:8px 14px;font-size:11px">Mode: Player vs CPU</button><label id="symmetrySpeedWrap" class="hidden" style="display:flex;align-items:center;gap:7px;color:#d8ccff;font-size:10px">START SPEED <input id="symmetryStartSpeed" type="number" min="0.01" step="any" value="390" inputmode="decimal" aria-label="Starting ball speed" style="width:112px;background:#211b3a;color:#fff;border:1px solid #6345a8;border-radius:6px;padding:7px;font:700 11px ui-monospace,monospace"></label></div>\n'+uiAnchor);
 
 const hudAnchor="  var loseCEl = document.getElementById('loseC');";
-const hudCode=`  var symmetryToggle = document.getElementById('symmetryToggle');
+const hudCode=`  var cpuDifficultySelect = document.getElementById('cpuDifficulty');
+  cpuDifficultySelect.addEventListener('change', function(){ if (!started) cpuDifficulty = cpuDifficultySelect.value; });
+  var symmetryToggle = document.getElementById('symmetryToggle');
   var symmetrySpeedWrap = document.getElementById('symmetrySpeedWrap');
   var symmetryStartSpeed = document.getElementById('symmetryStartSpeed');
   var playerLabel = document.querySelector('#hud .you small');
