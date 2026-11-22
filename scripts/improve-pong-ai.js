@@ -61,10 +61,12 @@ html=html.replace(stateOld,stateOld+"\n  var symmetryMode = false;\n  var rallyH
 
 const uiAnchor="  <div id=\"stage\">";
 if(!html.includes(uiAnchor)) throw new Error('Stage anchor missing');
-html=html.replace(uiAnchor,'  <button class="btn" id="symmetryToggle" type="button" style="margin:0 0 10px;padding:8px 14px;font-size:11px">Mode: Player vs CPU</button>\n'+uiAnchor);
+html=html.replace(uiAnchor,'  <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:10px"><button class="btn" id="symmetryToggle" type="button" style="padding:8px 14px;font-size:11px">Mode: Player vs CPU</button><label id="symmetrySpeedWrap" class="hidden" style="display:flex;align-items:center;gap:7px;color:#d8ccff;font-size:10px">START SPEED <select id="symmetryStartSpeed" style="background:#211b3a;color:#fff;border:1px solid #6345a8;border-radius:6px;padding:7px;font:700 11px ui-monospace,monospace"><option value="390">390 · Normal</option><option value="600">600 · Fast</option><option value="900">900 · Very fast</option><option value="1200">1200 · Extreme</option><option value="1600">1600 · Insane</option><option value="2200">2200 · Maximum</option></select></label></div>\n'+uiAnchor);
 
 const hudAnchor="  var loseCEl = document.getElementById('loseC');";
 const hudCode=`  var symmetryToggle = document.getElementById('symmetryToggle');
+  var symmetrySpeedWrap = document.getElementById('symmetrySpeedWrap');
+  var symmetryStartSpeed = document.getElementById('symmetryStartSpeed');
   var playerLabel = document.querySelector('#hud .you small');
   var cpuLabel = document.querySelector('#hud .cpu small');
   symmetryToggle.addEventListener('click', function(){
@@ -73,9 +75,10 @@ const hudCode=`  var symmetryToggle = document.getElementById('symmetryToggle');
     playerLabel.textContent = symmetryMode ? 'Bot A' : 'You';
     cpuLabel.textContent = symmetryMode ? 'Bot B' : 'CPU';
     symmetryToggle.textContent = symmetryMode ? 'Mode: Perfect Symmetry' : 'Mode: Player vs CPU';
+    symmetrySpeedWrap.classList.toggle('hidden', !symmetryMode);
     startO.querySelector('p').textContent = symmetryMode
       ? 'Two identical uncapped GOD CPUs use instant tracking, Rust/WASM prediction and adaptive high-speed physics.'
-      : 'Move your left paddle with mouse, touch, or arrow keys. Each rally speeds the ball up. First to 7 points wins the match.';
+      : 'Move your left paddle with mouse, touch, or arrow keys. Each rally speeds the ball up. First to 9 points wins the match.';
   });`;
 if(!html.includes(hudAnchor)) throw new Error('HUD anchor missing');
 html=html.replace(hudAnchor,hudAnchor+"\n\n"+hudCode);
@@ -91,6 +94,7 @@ html=html.replace("if (keys['ArrowUp']) player.vy = -480;","if (!symmetryMode &&
 html=html.replace("if (keys['ArrowDown']) player.vy = 480;","if (!symmetryMode && keys['ArrowDown']) player.vy = 480;");
 
 html=html.replace(old,replacement);
+html=html.replace('function startGame(){\n reset();started=true;','function startGame(){\n BASE_SPEED = symmetryMode ? Number(symmetryStartSpeed.value) : 390;\n reset();started=true;');
 html=html.replace('pscore = 0; cscore = 0;','pscore = 0; cscore = 0;\n    rallyHits = 0;');
 html=html.replace('function bouncePaddle(p, hit){','function bouncePaddle(p, hit){\n    rallyHits++;');
 html=html.replace('ball.vy = Math.sin(angle) * ball.speed;',
