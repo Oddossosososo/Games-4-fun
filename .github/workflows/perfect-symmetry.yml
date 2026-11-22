@@ -22,7 +22,7 @@ permissions:
 
 concurrency:
   group: pong-perfect-symmetry
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   verify:
@@ -37,7 +37,7 @@ jobs:
         with:
           node-version: 26
 
-      - name: Clone Pong source
+      - name: Validate patch script syntax\n        run: node --check scripts/improve-pong-ai.js\n\n      - name: Clone Pong source
         run: |
           set -euo pipefail
           mkdir -p public/games/jeffreyhamilton6399-arcadia
@@ -69,8 +69,8 @@ jobs:
           grep -q 'var AI_MAX_SPEED = Infinity;' "$pong"
           grep -q 'var MAX_SPEED = Infinity;' "$pong"
           grep -q 'var SPEED_INC = 45;' "$pong"
-          grep -q 'shotOffset' "$pong"
+          grep -q 'shotOffset' "$pong"\n          grep -q 'desiredHit' "$pong"\n          grep -q 'spinImpulse' "$pong"\n          grep -q 'paddle.vy' "$pong"\n          grep -q 'adaptiveStep' "$pong"
           grep -q 'rallyHits++' "$pong"
           grep -q 'var PHYSICS_STEP = 1 / 240;' "$pong"
           grep -q 'fetch("./pong-ai.wasm")' "$pong"
-          echo "PASS: Perfect Symmetry uses uncapped ball and GOD CPU speed, 240 Hz physics and Rust/WASM predictor."
+          echo "PASS: Perfect Symmetry uses uncapped speed, raycast targeting, offensive edge strikes, spin, adaptive physics and Rust/WASM prediction."
