@@ -86,8 +86,9 @@ function moveGodPaddle(paddle, direction, dt) {
   let impactY = ball.y;
   if (direction > 0 && ball.vx < 0 && (symmetryMode || cpuDifficulty === 'impossible')) {
     const hotmapTarget = predictHotmapTarget();
-    if (hotmapTarget !== null) {
+    if (Number.isFinite(hotmapTarget)) {
       paddle.y = Math.max(0, Math.min(H - paddle.h, hotmapTarget - paddle.h / 2));
+      if (!Number.isFinite(paddle.y)) paddle.y = H / 2 - paddle.h / 2;
       paddle.vy = dt > 0 ? (paddle.y - previousY) / dt : 0;
       paddle._stagedHotmap = true;
       return;
@@ -97,18 +98,23 @@ function moveGodPaddle(paddle, direction, dt) {
     const faceX = direction < 0 ? paddle.x + paddle.w + ball.r : paddle.x - ball.r;
     const timeToImpact = Math.max(0, (faceX - ball.x) / ball.vx);
     if (pongGodWasm && pongGodWasm.predict_intercept_y) {
-      impactY = pongGodWasm.predict_intercept_y(ball.y, ball.vy, timeToImpact, H, ball.r);
-    } else {
+      const wasmY = pongGodWasm.predict_intercept_y(ball.y, ball.vy, timeToImpact, H, ball.r);
+      if (Number.isFinite(wasmY)) impactY = wasmY;
+    }
+    if (!Number.isFinite(impactY)) {
       const span = H - 2 * ball.r;
       const raw = ball.y + ball.vy * timeToImpact - ball.r;
       const folded = ((raw % (2 * span)) + (2 * span)) % (2 * span);
-      impactY = ball.r + (folded <= span ? folded : 2 * span - folded);
+      impactY = Number.isFinite(folded) ? ball.r + (folded <= span ? folded : 2 * span - folded) : H / 2;
     }
   }
   const edgeAim = Math.sin((rallyHits + 1) * 1.61803398875 + direction * 0.73) * paddle.h * 0.008;
-  const targetY = pongGodWasm && pongGodWasm.clamp_paddle_target
-    ? pongGodWasm.clamp_paddle_target(impactY, paddle.h, H)
-    : Math.max(0, Math.min(H - paddle.h, impactY - paddle.h / 2 + edgeAim));
+  let targetY = Math.max(0, Math.min(H - paddle.h, impactY - paddle.h / 2 + edgeAim));
+  if (pongGodWasm && pongGodWasm.clamp_paddle_target) {
+    const wasmTarget = pongGodWasm.clamp_paddle_target(impactY, paddle.h, H);
+    if (Number.isFinite(wasmTarget)) targetY = wasmTarget;
+  }
+  if (!Number.isFinite(targetY)) targetY = H / 2 - paddle.h / 2;
   const isCpu = direction > 0 && !symmetryMode;
   const aimError = !isCpu || cpuDifficulty === 'impossible' ? 0
     : cpuDifficulty === 'medium' ? Math.sin((rallyHits + 1) * 2.17) * 22
@@ -279,6 +285,9 @@ html=html.replace(oldLoop,newLoop);
 html=html.replace('var MAX_SPEED = 820;','var MAX_SPEED = Infinity;');
 html=html.replace('var SPEED_INC = 28;','var SPEED_INC = 45;');
 html=html.replace('var AI_MAX_SPEED = 360;','var AI_MAX_SPEED = Infinity;\n  var pongGodWasm = null;\n  fetch("./pong-ai.wasm").then(function(r){ if(!r.ok) throw new Error("WASM unavailable"); return r.arrayBuffer(); }).then(function(bytes){ return WebAssembly.instantiate(bytes); }).then(function(result){ pongGodWasm = result.instance.exports; }).catch(function(){ console.warn("Pong GOD CPU: using JavaScript fallback."); });');
+const safeDrawOld="function drawPaddle(p,color){\n ctx.fillStyle=color;ctx.shadowColor=color;ctx.shadowBlur=16;roundRect(ctx,p.x,p.y,p.w,p.h,5);ctx.fill();ctx.shadowBlur=0;\n ctx.fillStyle='rgba(255,255,255,.3)';roundRect(ctx,p.x+2,p.y+4,p.w-4,5,2);ctx.fill();\n}";
+if (!html.includes(safeDrawOld)) throw new Error('Paddle renderer anchor missing');
+html=html.replace(safeDrawOld,"function drawPaddle(p,color){\n if (!p) return;\n if (!Number.isFinite(p.h) || p.h <= 0) p.h = PADDLE_H;\n if (!Number.isFinite(p.w) || p.w <= 0) p.w = PADDLE_W;\n if (!Number.isFinite(p.x)) p.x = p === player ? 25 : W - 25 - p.w;\n if (!Number.isFinite(p.y)) p.y = H / 2 - p.h / 2;\n p.y = Math.max(0, Math.min(H - p.h, p.y));\n ctx.fillStyle=color;ctx.shadowColor=color;ctx.shadowBlur=16;roundRect(ctx,p.x,p.y,p.w,p.h,5);ctx.fill();ctx.shadowBlur=0;\n ctx.fillStyle='rgba(255,255,255,.3)';roundRect(ctx,p.x+2,p.y+4,p.w-4,5,2);ctx.fill();\n}");
 const scriptStart=html.lastIndexOf('<script>');
 const scriptEnd=html.indexOf('</script>',scriptStart);
 if(scriptStart<0||scriptEnd<0) throw new Error('Pong script tag missing after patch');
