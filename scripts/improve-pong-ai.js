@@ -150,14 +150,13 @@ function moveGodPaddle(paddle, direction, dt) {
 const updateAnchor='  function update(dt){';
 if(!html.includes(updateAnchor)) throw new Error('Update function anchor missing');
 html=html.replace(updateAnchor,helper+'\n'+updateAnchor);
-// Anchor to the actual ball integration statement, not a comment whose
-// wording/placement can change when the upstream Pong source is refreshed.
-const replayAnchorMatch=html.match(/ball\.x\s*\+=\s*ball\.vx\s*\*\s*dt\s*;\s*ball\.y\s*\+=\s*ball\.vy\s*\*\s*dt\s*;/);
-if(!replayAnchorMatch) throw new Error('Replay ball-motion anchor missing');
-
-// Capture one sample beside the stable ball integration anchor. This avoids
-// depending on point-scoring formatting, which varies between upstream builds.
-html=html.replace(replayAnchorMatch[0], 'if (perfectPaddle) moveGodPaddle(perfectPaddle, -1, dt);\n '+replayAnchorMatch[0]+'\n if (perfectPaddle && matchReplay.length < 30000) matchReplay.push({ py: player.y, perfectY: perfectPaddle.y, bx: ball.x, by: ball.y, running: running });');
+// Run the comparison paddle and record both paddles every physics update.
+const replayAnchorMatch=html.match(/\/\/ Ball motion and arena collisions/);
+if(!replayAnchorMatch) throw new Error('Replay update anchor missing');
+html=html.replace(replayAnchorMatch[0],
+'if (perfectPaddle) moveGodPaddle(perfectPaddle, -1, dt);\n'+
+' if (perfectPaddle && running && matchReplay.length < 30000) matchReplay.push({ py: player.y, perfectY: perfectPaddle.y, bx: ball.x, by: ball.y });\n'+
+replayAnchorMatch[0]);
 
 const playerOld=`    // player paddle (keyboard control if vy set)
     player.y += player.vy * dt;
@@ -234,7 +233,7 @@ const lossFn = `function renderLossAnalysis(contentId) {
  box.innerHTML='<div style="display:flex;justify-content:space-between;gap:10px"><b style="color:#d8ccff">PLAYER SKILL REPORT</b><b style="font-size:18px;color:#22d3ee">'+Math.round(total)+'/100</b></div><b style="display:block;margin:5px 0 8px;color:#d8ccff">OVERALL · '+grade(total)+'</b>'+rows+'<div style="margin-top:10px;padding:9px;border-radius:6px;background:rgba(34,211,238,.08)"><b style="color:#22d3ee">NEXT TRAINING TIP</b><div style="margin-top:4px">'+tips[weak.name]+'</div></div>'+perfectMarkup;
  var show=document.getElementById('showPerfectBtn'),panel=document.getElementById('perfectCompare');
  if(show&&panel)show.addEventListener('click',function(){var opening=panel.classList.contains('hidden');panel.classList.toggle('hidden',!opening);show.textContent=opening?'Hide Perfect':'Show Perfect';if(opening)drawPerfectReplay();});
- function drawPerfectReplay(){var canvas=document.getElementById('perfectReplay');if(!canvas)return;var g=canvas.getContext('2d'),w=canvas.width,hc=canvas.height,rows=matchReplay;if(!rows.length)return;g.clearRect(0,0,w,hc);g.strokeStyle='rgba(150,130,220,.25)';g.setLineDash([5,6]);g.beginPath();g.moveTo(w/2,0);g.lineTo(w/2,hc);g.stroke();g.setLineDash([]);var scale=hc/H;var stride=Math.max(1,Math.floor(rows.length/1000));for(var k=0;k<rows.length;k+=stride){var s=rows[k],x=(k/Math.max(1,rows.length-1))*w;g.fillStyle='rgba(34,211,238,.18)';g.fillRect(5,Math.max(0,s.py*scale),7,Math.max(2,player.h*scale));g.fillStyle='rgba(167,139,250,.55)';g.fillRect(w-12,Math.max(0,s.perfectY*scale),7,Math.max(2,player.h*scale));}g.fillStyle='#22d3ee';g.fillText('YOUR GHOST',12,14);g.fillStyle='#c4b5fd';g.fillText('PERFECT BOT',w-105,14);}
+ function drawPerfectReplay(){var canvas=document.getElementById('perfectReplay');if(!canvas)return;var g=canvas.getContext('2d'),w=canvas.width,hc=canvas.height,rows=matchReplay;g.clearRect(0,0,w,hc);g.fillStyle='#aaa8c5';g.font='12px ui-monospace,monospace';if(!rows.length){g.fillText('No replay samples were recorded for this match.',14,28);return;}g.strokeStyle='rgba(150,130,220,.22)';g.lineWidth=1;for(var y=0;y<=H;y+=H/4){var yy=y/H*hc;g.beginPath();g.moveTo(0,yy);g.lineTo(w,yy);g.stroke();}var stride=Math.max(1,Math.floor(rows.length/1800));function trace(key,color){g.strokeStyle=color;g.lineWidth=2;g.beginPath();var started=false;for(var k=0;k<rows.length;k+=stride){var q=rows[k],x=k/Math.max(1,rows.length-1)*w,cy=(q[key]+player.h/2)/H*hc;if(!Number.isFinite(cy))continue;if(!started){g.moveTo(x,cy);started=true;}else g.lineTo(x,cy);}g.stroke();}trace('py','#22d3ee');trace('perfectY','#c4b5fd');g.fillStyle='#22d3ee';g.fillText('YOUR PADDLE',12,14);g.fillStyle='#c4b5fd';g.fillText('IMPOSSIBLE BOT',w-130,14);g.fillStyle='#aaa8c5';g.fillText(rows.length+' recorded frames',12,hc-8);}
 
 }
 function wireAnalysisButton(bid,pid,cid){var b=document.getElementById(bid),p=document.getElementById(pid);if(!b||!p)return;b.addEventListener('click',function(){var opening=p.classList.contains('hidden');if(opening)renderLossAnalysis(cid);p.classList.toggle('hidden',!opening);b.textContent=opening?'Hide Match Analysis':'View Match Analysis';});}
