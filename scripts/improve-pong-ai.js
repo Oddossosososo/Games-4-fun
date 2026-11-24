@@ -119,7 +119,16 @@ function moveGodPaddle(paddle, direction, dt) {
   const aimError = !isCpu || cpuDifficulty === 'impossible' ? 0
     : cpuDifficulty === 'medium' ? Math.sin((rallyHits + 1) * 2.17) * 22
     : Math.sin((rallyHits + 1) * 1.73) * 58;
-  const adjustedTarget = Math.max(0, Math.min(H - paddle.h, targetY + edgeAim + aimError));
+  let adjustedTarget = Math.max(0, Math.min(H - paddle.h, targetY + edgeAim + aimError));
+  // Easy and Medium deliberately misread a few incoming shots. The roll is
+  // deterministic for the whole rally, so the CPU does not flicker between targets.
+  if (isCpu && (cpuDifficulty === 'easy' || cpuDifficulty === 'medium')) {
+    const missRoll = Math.abs(Math.sin((rallyHits + 1) * 12.9898 + 78.233));
+    const missChance = cpuDifficulty === 'easy' ? 0.28 : 0.09;
+    if (missRoll < missChance) {
+      adjustedTarget = impactY < H / 2 ? H - paddle.h : 0;
+    }
+  }
   const maxSpeed = !isCpu || cpuDifficulty === 'impossible' ? Infinity
     : cpuDifficulty === 'medium' ? 560 : 300;
   const distance = adjustedTarget - paddle.y;
