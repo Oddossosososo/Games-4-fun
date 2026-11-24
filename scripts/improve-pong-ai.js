@@ -150,9 +150,9 @@ function moveGodPaddle(paddle, direction, dt) {
 const updateAnchor='  function update(dt){';
 if(!html.includes(updateAnchor)) throw new Error('Update function anchor missing');
 html=html.replace(updateAnchor,helper+'\n'+updateAnchor);
-const replayAnchor='    // Ball motion and arena collisions';
-if(!html.includes(replayAnchor)) throw new Error('Replay update anchor missing');
-html=html.replace(replayAnchor, '    if (perfectPaddle) moveGodPaddle(perfectPaddle, -1, dt);\n'+replayAnchor);
+const replayAnchorMatch=html.match(/^\s*\/\/ Ball motion and arena collisions\s*$/m);
+if(!replayAnchorMatch) throw new Error('Replay update anchor missing');
+html=html.replace(replayAnchorMatch[0], '    if (perfectPaddle) moveGodPaddle(perfectPaddle, -1, dt);\n'+replayAnchorMatch[0]);
 const replayEnd=' if(ball.x+ball.r<0)pointScored(false);else if(ball.x-ball.r>W)pointScored(true);';
 if(!html.includes(replayEnd)) throw new Error('Replay sample anchor missing');
 html=html.replace(replayEnd, replayEnd+'\n if (perfectPaddle && matchReplay.length < 30000) matchReplay.push({ py: player.y, perfectY: perfectPaddle.y, bx: ball.x, by: ball.y, running: running });');
