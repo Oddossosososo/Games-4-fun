@@ -150,6 +150,12 @@ function moveGodPaddle(paddle, direction, dt) {
 const updateAnchor='  function update(dt){';
 if(!html.includes(updateAnchor)) throw new Error('Update function anchor missing');
 html=html.replace(updateAnchor,helper+'\n'+updateAnchor);
+const replayAnchor='    // Ball motion and arena collisions';
+if(!html.includes(replayAnchor)) throw new Error('Replay update anchor missing');
+html=html.replace(replayAnchor, '    if (perfectPaddle) moveGodPaddle(perfectPaddle, -1, dt);\n'+replayAnchor);
+const replayEnd=' if(ball.x+ball.r<0)pointScored(false);else if(ball.x-ball.r>W)pointScored(true);';
+if(!html.includes(replayEnd)) throw new Error('Replay sample anchor missing');
+html=html.replace(replayEnd, replayEnd+'\n if (perfectPaddle && matchReplay.length < 30000) matchReplay.push({ py: player.y, perfectY: perfectPaddle.y, bx: ball.x, by: ball.y, running: running });');
 
 const playerOld=`    // player paddle (keyboard control if vy set)
     player.y += player.vy * dt;
@@ -167,7 +173,7 @@ html=html.replace(playerOld,playerNew);
 
 const stateOld='var player, cpu, ball, pscore, cscore, running, started, last, serveTimer, paused;';
 if(!html.includes(stateOld)) throw new Error('State declaration missing');
-html=html.replace(stateOld,stateOld+"\n  var matchAnalysis = { playerHits: 0, playerMisses: 0, cpuHits: 0, cpuMisses: 0, offsets: [], fastestShot: 0 };\n  var symmetryMode = false;\n  var rallyHits = 0;\n  var cpuServeCount = 0;\n  var cpuDifficulty = 'impossible';");
+html=html.replace(stateOld,stateOld+"\n  var matchAnalysis = { playerHits: 0, playerMisses: 0, cpuHits: 0, cpuMisses: 0, offsets: [], fastestShot: 0 };\n  var symmetryMode = false;\n  var rallyHits = 0;\n  var cpuServeCount = 0;\n  var matchReplay = [];\n  var perfectPaddle = null;\n  var cpuDifficulty = 'impossible';");
 
 const uiAnchor="  <div id=\"stage\">";
 if(!html.includes(uiAnchor)) throw new Error('Stage anchor missing');
@@ -222,7 +228,12 @@ const lossFn = `function renderLossAnalysis(contentId) {
  var total=stats.reduce(function(a,x){return a+x.value;},0)/stats.length,weak=stats.slice().sort(function(a,b){return a.value-b.value;})[0];
  var tips={'Return accuracy':'Track the ball earlier and position your paddle behind its predicted crossing point.','Contact precision':'Use the paddle centre for controlled returns; use the edges to change angle.','Shot power':'Vary your contact height to create sharper return angles.','Consistency':'Keep your positioning steady and avoid last-second corrections.','Offensive pressure':'Change your return angles so the CPU must cover more of the court.'};
  var rows=stats.map(function(x){return '<div style="padding:7px 0;border-bottom:1px solid rgba(160,130,220,.2)"><div style="display:flex;justify-content:space-between;gap:8px"><b>'+x.name+'</b><b>'+Math.round(x.value)+'/100 · '+grade(x.value)+'</b></div><small style="color:#aaa8c5">'+x.detail+'</small><div style="height:5px;margin-top:5px;border-radius:5px;background:#29233e;overflow:hidden"><div style="height:100%;width:'+Math.max(0,Math.min(100,x.value))+'%;background:linear-gradient(90deg,#22d3ee,#a78bfa)"></div></div></div>';}).join('');
- box.innerHTML='<div style="display:flex;justify-content:space-between;gap:10px"><b style="color:#d8ccff">PLAYER SKILL REPORT</b><b style="font-size:18px;color:#22d3ee">'+Math.round(total)+'/100</b></div><b style="display:block;margin:5px 0 8px;color:#d8ccff">OVERALL · '+grade(total)+'</b>'+rows+'<div style="margin-top:10px;padding:9px;border-radius:6px;background:rgba(34,211,238,.08)"><b style="color:#22d3ee">NEXT TRAINING TIP</b><div style="margin-top:4px">'+tips[weak.name]+'</div></div>';
+ var perfectMarkup='<div style="margin-top:12px"><button type="button" class="btn" id="showPerfectBtn" style="padding:9px 14px">Show Perfect</button><div id="perfectCompare" class="hidden" style="margin-top:9px"><b style="color:#c4b5fd">IMPOSSIBLE BOT · PERFECT BASELINE</b><div style="display:flex;gap:12px;flex-wrap:wrap;margin:6px 0"><span>Positioning <b>100/100</b></span><span>Reaction <b>100/100</b></span><span>Coverage <b>100/100</b></span></div><div style="font-size:10px;color:#aaa8c5;margin-bottom:6px">Cyan = your recorded paddle (ghost) · Purple = Impossible bot on the same ball timeline</div><canvas id="perfectReplay" width="680" height="180" style="width:100%;height:auto;border:1px solid #514078;border-radius:6px;background:#080812"></canvas></div></div>';
+ box.innerHTML='<div style="display:flex;justify-content:space-between;gap:10px"><b style="color:#d8ccff">PLAYER SKILL REPORT</b><b style="font-size:18px;color:#22d3ee">'+Math.round(total)+'/100</b></div><b style="display:block;margin:5px 0 8px;color:#d8ccff">OVERALL · '+grade(total)+'</b>'+rows+'<div style="margin-top:10px;padding:9px;border-radius:6px;background:rgba(34,211,238,.08)"><b style="color:#22d3ee">NEXT TRAINING TIP</b><div style="margin-top:4px">'+tips[weak.name]+'</div></div>'+perfectMarkup;
+ var show=document.getElementById('showPerfectBtn'),panel=document.getElementById('perfectCompare');
+ if(show&&panel)show.addEventListener('click',function(){var opening=panel.classList.contains('hidden');panel.classList.toggle('hidden',!opening);show.textContent=opening?'Hide Perfect':'Show Perfect';if(opening)drawPerfectReplay();});
+ function drawPerfectReplay(){var canvas=document.getElementById('perfectReplay');if(!canvas)return;var g=canvas.getContext('2d'),w=canvas.width,hc=canvas.height,rows=matchReplay;if(!rows.length)return;g.clearRect(0,0,w,hc);g.strokeStyle='rgba(150,130,220,.25)';g.setLineDash([5,6]);g.beginPath();g.moveTo(w/2,0);g.lineTo(w/2,hc);g.stroke();g.setLineDash([]);var scale=hc/H;var stride=Math.max(1,Math.floor(rows.length/1000));for(var k=0;k<rows.length;k+=stride){var s=rows[k],x=(k/Math.max(1,rows.length-1))*w;g.fillStyle='rgba(34,211,238,.18)';g.fillRect(5,Math.max(0,s.py*scale),7,Math.max(2,player.h*scale));g.fillStyle='rgba(167,139,250,.55)';g.fillRect(w-12,Math.max(0,s.perfectY*scale),7,Math.max(2,player.h*scale));}g.fillStyle='#22d3ee';g.fillText('YOUR GHOST',12,14);g.fillStyle='#c4b5fd';g.fillText('PERFECT BOT',w-105,14);}
+
 }
 function wireAnalysisButton(bid,pid,cid){var b=document.getElementById(bid),p=document.getElementById(pid);if(!b||!p)return;b.addEventListener('click',function(){var opening=p.classList.contains('hidden');if(opening)renderLossAnalysis(cid);p.classList.toggle('hidden',!opening);b.textContent=opening?'Hide Match Analysis':'View Match Analysis';});}
 wireAnalysisButton('winAnalysisBtn','winAnalysisPanel','winAnalysisContent');
@@ -300,7 +311,7 @@ html=html.replace('var MAX_SPEED = 820;','var MAX_SPEED = Infinity;');
 html=html.replace('var SPEED_INC = 28;','var SPEED_INC = 45;');
 html=html.replace('var AI_MAX_SPEED = 360;','var AI_MAX_SPEED = Infinity;\n  var pongGodWasm = null;\n  fetch("./pong-ai.wasm").then(function(r){ if(!r.ok) throw new Error("WASM unavailable"); return r.arrayBuffer(); }).then(function(bytes){ return WebAssembly.instantiate(bytes); }).then(function(result){ pongGodWasm = result.instance.exports; }).catch(function(){ console.warn("Pong GOD CPU: using JavaScript fallback."); });');
 // Renderer is left intact; movement code already clamps paddle coordinates.
-html=html.replace('pscore = 0; cscore = 0;', 'pscore = 0; cscore = 0; matchAnalysis = { playerHits: 0, playerMisses: 0, cpuHits: 0, cpuMisses: 0, offsets: [], fastestShot: 0 }; rallyHits = 0;');
+html=html.replace('pscore = 0; cscore = 0;', 'pscore = 0; cscore = 0; matchAnalysis = { playerHits: 0, playerMisses: 0, cpuHits: 0, cpuMisses: 0, offsets: [], fastestShot: 0 }; rallyHits = 0; matchReplay = []; perfectPaddle = { x: player.x, y: player.y, w: player.w, h: player.h, vy: 0 };');
 html=html.replace('if(playerScored)pscore++;else cscore++;', 'cpuServeCount++; if(playerScored){pscore++;matchAnalysis.cpuMisses++;}else{cscore++;matchAnalysis.playerMisses++;}');
 const scriptStart=html.lastIndexOf('<script>');
 const scriptEnd=html.indexOf('</script>',scriptStart);
