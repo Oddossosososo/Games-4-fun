@@ -120,14 +120,13 @@ function moveGodPaddle(paddle, direction, dt) {
     : cpuDifficulty === 'medium' ? Math.sin((rallyHits + 1) * 2.17) * 22
     : Math.sin((rallyHits + 1) * 1.73) * 58;
   let adjustedTarget = Math.max(0, Math.min(H - paddle.h, targetY + edgeAim + aimError));
-  // Easy and Medium deliberately misread a few incoming shots. The roll is
-  // deterministic for the whole rally, so the CPU does not flicker between targets.
+  // Occasional misses are tied to the serve number, not rallyHits.
+  // A missed serve cannot lock the CPU into repeating the same mistake forever.
   if (isCpu && (cpuDifficulty === 'easy' || cpuDifficulty === 'medium')) {
-    const missRoll = Math.abs(Math.sin((rallyHits + 1) * 12.9898 + 78.233));
-    const missChance = cpuDifficulty === 'easy' ? 0.28 : 0.09;
-    if (missRoll < missChance) {
-      adjustedTarget = impactY < H / 2 ? H - paddle.h : 0;
-    }
+    const missThisServe = cpuDifficulty === 'easy'
+      ? cpuServeCount % 4 === 0
+      : cpuServeCount % 11 === 0;
+    if (missThisServe) adjustedTarget = impactY < H / 2 ? H - paddle.h : 0;
   }
   const maxSpeed = !isCpu || cpuDifficulty === 'impossible' ? Infinity
     : cpuDifficulty === 'medium' ? 560 : 300;
@@ -168,7 +167,7 @@ html=html.replace(playerOld,playerNew);
 
 const stateOld='var player, cpu, ball, pscore, cscore, running, started, last, serveTimer, paused;';
 if(!html.includes(stateOld)) throw new Error('State declaration missing');
-html=html.replace(stateOld,stateOld+"\n  var matchAnalysis = { playerHits: 0, playerMisses: 0, cpuHits: 0, cpuMisses: 0, offsets: [], fastestShot: 0 };\n  var symmetryMode = false;\n  var rallyHits = 0;\n  var cpuDifficulty = 'impossible';");
+html=html.replace(stateOld,stateOld+"\n  var matchAnalysis = { playerHits: 0, playerMisses: 0, cpuHits: 0, cpuMisses: 0, offsets: [], fastestShot: 0 };\n  var symmetryMode = false;\n  var rallyHits = 0;\n  var cpuServeCount = 0;\n  var cpuDifficulty = 'impossible';");
 
 const uiAnchor="  <div id=\"stage\">";
 if(!html.includes(uiAnchor)) throw new Error('Stage anchor missing');
@@ -302,7 +301,7 @@ html=html.replace('var SPEED_INC = 28;','var SPEED_INC = 45;');
 html=html.replace('var AI_MAX_SPEED = 360;','var AI_MAX_SPEED = Infinity;\n  var pongGodWasm = null;\n  fetch("./pong-ai.wasm").then(function(r){ if(!r.ok) throw new Error("WASM unavailable"); return r.arrayBuffer(); }).then(function(bytes){ return WebAssembly.instantiate(bytes); }).then(function(result){ pongGodWasm = result.instance.exports; }).catch(function(){ console.warn("Pong GOD CPU: using JavaScript fallback."); });');
 // Renderer is left intact; movement code already clamps paddle coordinates.
 html=html.replace('pscore = 0; cscore = 0;', 'pscore = 0; cscore = 0; matchAnalysis = { playerHits: 0, playerMisses: 0, cpuHits: 0, cpuMisses: 0, offsets: [], fastestShot: 0 }; rallyHits = 0;');
-html=html.replace('if(playerScored)pscore++;else cscore++;', 'if(playerScored){pscore++;matchAnalysis.cpuMisses++;}else{cscore++;matchAnalysis.playerMisses++;}');
+html=html.replace('if(playerScored)pscore++;else cscore++;', 'cpuServeCount++; if(playerScored){pscore++;matchAnalysis.cpuMisses++;}else{cscore++;matchAnalysis.playerMisses++;}');
 const scriptStart=html.lastIndexOf('<script>');
 const scriptEnd=html.indexOf('</script>',scriptStart);
 if(scriptStart<0||scriptEnd<0) throw new Error('Pong script tag missing after patch');
