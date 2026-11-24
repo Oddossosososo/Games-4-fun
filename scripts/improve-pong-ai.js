@@ -131,8 +131,17 @@ function moveGodPaddle(paddle, direction, dt) {
   }
   const maxSpeed = !isCpu || cpuDifficulty === 'impossible' ? Infinity
     : cpuDifficulty === 'medium' ? 560 : 300;
+  // Hit-frame calls use dt=0 to apply the freshly calculated trajectory.
+  // Infinity * 0 is NaN, which previously poisoned paddle.y and made the CPU
+  // miss every serve. Snap safely on that one zero-time update.
+  if (!(dt > 0)) {
+    paddle.y = Math.max(0, Math.min(H - paddle.h, adjustedTarget));
+    paddle.vy = 0;
+    paddle._stagedHotmap = false;
+    return;
+  }
   const distance = adjustedTarget - paddle.y;
-  const maxStep = maxSpeed * Math.max(0, dt);
+  const maxStep = maxSpeed * dt;
   paddle.y = Math.max(0, Math.min(H - paddle.h,
     Math.abs(distance) <= maxStep ? adjustedTarget : paddle.y + Math.sign(distance) * maxStep));
   paddle.vy = dt > 0 ? (paddle.y - previousY) / dt : 0;
