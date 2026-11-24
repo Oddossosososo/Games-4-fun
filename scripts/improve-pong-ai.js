@@ -154,10 +154,10 @@ html=html.replace(updateAnchor,helper+'\n'+updateAnchor);
 // wording/placement can change when the upstream Pong source is refreshed.
 const replayAnchorMatch=html.match(/ball\.x\s*\+=\s*ball\.vx\s*\*\s*dt\s*;\s*ball\.y\s*\+=\s*ball\.vy\s*\*\s*dt\s*;/);
 if(!replayAnchorMatch) throw new Error('Replay ball-motion anchor missing');
-html=html.replace(replayAnchorMatch[0], 'if (perfectPaddle) moveGodPaddle(perfectPaddle, -1, dt);\n '+replayAnchorMatch[0]);
-const replayEndMatch=html.match(/if\s*\(\s*ball\.x\s*\+\s*ball\.r\s*<\s*0\s*\)\s*pointScored\(false\)\s*;\s*else\s*if\s*\(\s*ball\.x\s*-\s*ball\.r\s*>\s*W\s*\)\s*pointScored\(true\)\s*;/);
-if(!replayEndMatch) throw new Error('Replay sample anchor missing');
-html=html.replace(replayEndMatch[0], replayEndMatch[0]+'\n if (perfectPaddle && matchReplay.length < 30000) matchReplay.push({ py: player.y, perfectY: perfectPaddle.y, bx: ball.x, by: ball.y, running: running });');
+
+// Capture one sample beside the stable ball integration anchor. This avoids
+// depending on point-scoring formatting, which varies between upstream builds.
+html=html.replace(replayAnchorMatch[0], 'if (perfectPaddle) moveGodPaddle(perfectPaddle, -1, dt);\n '+replayAnchorMatch[0]+'\n if (perfectPaddle && matchReplay.length < 30000) matchReplay.push({ py: player.y, perfectY: perfectPaddle.y, bx: ball.x, by: ball.y, running: running });');
 
 const playerOld=`    // player paddle (keyboard control if vy set)
     player.y += player.vy * dt;
