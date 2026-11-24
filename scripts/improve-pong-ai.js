@@ -150,13 +150,13 @@ function moveGodPaddle(paddle, direction, dt) {
 const updateAnchor='  function update(dt){';
 if(!html.includes(updateAnchor)) throw new Error('Update function anchor missing');
 html=html.replace(updateAnchor,helper+'\n'+updateAnchor);
-// Run the comparison paddle and record both paddles every physics update.
-const replayAnchorMatch=html.match(/\/\/ Ball motion and arena collisions/);
-if(!replayAnchorMatch) throw new Error('Replay update anchor missing');
+// Run the comparison paddle and record both paddles around ball integration.
+const replayAnchorMatch=html.match(/ball\.x\s*\+=\s*ball\.vx\s*\*\s*dt\s*;\s*ball\.y\s*\+=\s*ball\.vy\s*\*\s*dt\s*;/);
+if(!replayAnchorMatch) throw new Error('Replay ball-motion anchor missing');
 html=html.replace(replayAnchorMatch[0],
 'if (perfectPaddle) moveGodPaddle(perfectPaddle, -1, dt);\n'+
-' if (perfectPaddle && running && matchReplay.length < 30000) matchReplay.push({ py: player.y, perfectY: perfectPaddle.y, bx: ball.x, by: ball.y });\n'+
-replayAnchorMatch[0]);
+replayAnchorMatch[0]+'\n'+
+' if (perfectPaddle && running && matchReplay.length < 30000) matchReplay.push({ py: player.y, perfectY: perfectPaddle.y, bx: ball.x, by: ball.y });');
 
 const playerOld=`    // player paddle (keyboard control if vy set)
     player.y += player.vy * dt;
