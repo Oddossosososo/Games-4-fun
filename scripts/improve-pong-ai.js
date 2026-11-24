@@ -282,7 +282,7 @@ html=html.replace(oldLoop,newLoop);
 html=html.replace('var MAX_SPEED = 820;','var MAX_SPEED = Infinity;');
 html=html.replace('var SPEED_INC = 28;','var SPEED_INC = 45;');
 html=html.replace('var AI_MAX_SPEED = 360;','var AI_MAX_SPEED = Infinity;\n  var pongGodWasm = null;\n  fetch("./pong-ai.wasm").then(function(r){ if(!r.ok) throw new Error("WASM unavailable"); return r.arrayBuffer(); }).then(function(bytes){ return WebAssembly.instantiate(bytes); }).then(function(result){ pongGodWasm = result.instance.exports; }).catch(function(){ console.warn("Pong GOD CPU: using JavaScript fallback."); });');
-const safeDrawPattern = /function drawPaddle\\s*\\(\\s*p\\s*,\\s*color\\s*\\)\\s*\\{[\\s\\S]*?\\n\\}/;
+const safeDrawPattern = /function drawPaddle\s*\(\s*p\s*,\s*color\s*\)\s*\{[\s\S]*?\n\}/;
 const safeDrawMatch = html.match(safeDrawPattern);
 if (!safeDrawMatch) throw new Error('Paddle renderer function missing (drawPaddle)');
 const safeDrawNew = `function drawPaddle(p,color){
