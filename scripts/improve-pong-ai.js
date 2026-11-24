@@ -150,7 +150,7 @@ html=html.replace(playerOld,playerNew);
 
 const stateOld='var player, cpu, ball, pscore, cscore, running, started, last, serveTimer, paused;';
 if(!html.includes(stateOld)) throw new Error('State declaration missing');
-html=html.replace(stateOld,stateOld+"\n  var matchAnalysis = { playerHits: 0, playerMisses: 0, cpuHits: 0, offsets: [], fastestShot: 0 };\n  var symmetryMode = false;\n  var rallyHits = 0;\n  var cpuDifficulty = 'impossible';");
+html=html.replace(stateOld,stateOld+"\n  var matchAnalysis = { playerHits: 0, playerMisses: 0, cpuHits: 0, cpuMisses: 0, offsets: [], fastestShot: 0 };\n  var symmetryMode = false;\n  var rallyHits = 0;\n  var cpuDifficulty = 'impossible';");
 
 const uiAnchor="  <div id=\"stage\">";
 if(!html.includes(uiAnchor)) throw new Error('Stage anchor missing');
@@ -189,34 +189,31 @@ html=html.replace("if (keys['ArrowUp']) player.vy = -480;","if (!symmetryMode &&
 html=html.replace("if (keys['ArrowDown']) player.vy = 480;","if (!symmetryMode && keys['ArrowDown']) player.vy = 480;");
 
 html=html.replace(old,replacement);
-html=html.replace('<p>Final score: <b id="loseP">0</b> – <b id="loseC">0</b></p>',
-  '<p>Final score: <b id="loseP">0</b> – <b id="loseC">0</b></p><section id="lossAnalysis" style="width:min(100%,560px);max-height:34vh;overflow:auto;text-align:left;padding:12px;border:1px solid #6345a8;border-radius:8px;background:rgba(33,27,58,.72)"><b style="color:#d8ccff">CPU GAME ANALYSIS</b><div id="lossAnalysisText" style="margin-top:8px;color:#e7e7f5;font-size:11px;line-height:1.55">Analysis will appear after the match.</div></section>');
-const lossFn = `function renderLossAnalysis() {
-  var box = document.getElementById('lossAnalysisText');
-  if (!box) return;
-  var offsets = matchAnalysis.offsets;
-  var avg = offsets.length ? offsets.reduce(function(a,b){return a+b;},0) / offsets.length : 0;
-  var tendency = !offsets.length ? 'Not enough paddle contacts to identify a shot pattern.'
-    : avg < -0.18 ? 'Your contacts tended to be above paddle centre.'
-    : avg > 0.18 ? 'Your contacts tended to be below paddle centre.'
-    : 'Your contacts were mostly near paddle centre.';
-  var lines = [
-    'Player paddle contacts: ' + matchAnalysis.playerHits,
-    'Missed returns: ' + matchAnalysis.playerMisses,
-    'CPU contacts: ' + matchAnalysis.cpuHits,
-    'Fastest recorded shot: ' + Math.round(matchAnalysis.fastestShot) + ' px/s',
-    tendency,
-    matchAnalysis.playerMisses > matchAnalysis.playerHits
-      ? 'CPU finding: missed returns were the biggest source of lost points. Try positioning earlier.'
-      : 'CPU finding: vary your contact height to make your returns less predictable.'
-  ];
-  box.textContent = lines.join(' ');
+const analysisMarkup = '<button class="btn" id="ANALYSIS_BUTTON" type="button" style="margin-top:4px">View Match Analysis</button><section id="ANALYSIS_PANEL" class="hidden" style="width:min(100%,560px);max-height:34vh;overflow:auto;text-align:left;padding:12px;border:1px solid #6345a8;border-radius:8px;background:rgba(33,27,58,.72)"><div id="ANALYSIS_CONTENT" style="color:#e7e7f5;font-size:11px;line-height:1.55">Match stats will appear here.</div></section>';
+html=html.replace('<p>Final score: <b id="winP">0</b> – <b id="winC">0</b></p>', '<p>Final score: <b id="winP">0</b> – <b id="winC">0</b></p>'+analysisMarkup.replace(/ANALYSIS_BUTTON/g,'winAnalysisBtn').replace(/ANALYSIS_PANEL/g,'winAnalysisPanel').replace(/ANALYSIS_CONTENT/g,'winAnalysisContent'));
+html=html.replace('<p>Final score: <b id="loseP">0</b> – <b id="loseC">0</b></p>', '<p>Final score: <b id="loseP">0</b> – <b id="loseC">0</b></p>'+analysisMarkup.replace(/ANALYSIS_BUTTON/g,'loseAnalysisBtn').replace(/ANALYSIS_PANEL/g,'loseAnalysisPanel').replace(/ANALYSIS_CONTENT/g,'loseAnalysisContent'));
+const lossFn = `function renderLossAnalysis(contentId) {
+ var box=document.getElementById(contentId);if(!box)return;
+ var o=matchAnalysis.offsets||[],h=matchAnalysis.playerHits||0,m=matchAnalysis.playerMisses||0,n=h+m;
+ var accuracy=n?h/n*100:0,avg=o.length?o.reduce(function(a,b){return a+Math.abs(b);},0)/o.length:1;
+ var precision=o.length?Math.max(0,100-avg*100):0,fast=matchAnalysis.fastestShot||0,power=Math.max(0,Math.min(100,fast/900*100));
+ var mean=o.length?o.reduce(function(a,b){return a+b;},0)/o.length:0;
+ var variance=o.length?o.reduce(function(a,b){return a+Math.pow(b-mean,2);},0)/o.length:1;
+ var consistency=o.length>1?Math.max(0,100-Math.sqrt(variance)*100):0,pressure=n?Math.min(100,(matchAnalysis.cpuMisses||0)/n*100):0;
+ var stats=[{name:'Return accuracy',value:accuracy,detail:h+' returns / '+n+' points'},{name:'Contact precision',value:precision,detail:'Average offset '+(avg*100).toFixed(1)+'%'},{name:'Shot power',value:power,detail:'Fastest shot '+Math.round(fast)+' px/s'},{name:'Consistency',value:consistency,detail:o.length+' measured contacts'},{name:'Offensive pressure',value:pressure,detail:(matchAnalysis.cpuMisses||0)+' CPU misses forced'}];
+ function grade(v){return v>=90?'Elite':v>=80?'Expert':v>=70?'Skilled':v>=55?'Developing':'Beginner';}
+ var total=stats.reduce(function(a,x){return a+x.value;},0)/stats.length,weak=stats.slice().sort(function(a,b){return a.value-b.value;})[0];
+ var tips={'Return accuracy':'Track the ball earlier and position your paddle behind its predicted crossing point.','Contact precision':'Use the paddle centre for controlled returns; use the edges to change angle.','Shot power':'Vary your contact height to create sharper return angles.','Consistency':'Keep your positioning steady and avoid last-second corrections.','Offensive pressure':'Change your return angles so the CPU must cover more of the court.'};
+ var rows=stats.map(function(x){return '<div style="padding:7px 0;border-bottom:1px solid rgba(160,130,220,.2)"><div style="display:flex;justify-content:space-between;gap:8px"><b>'+x.name+'</b><b>'+Math.round(x.value)+'/100 · '+grade(x.value)+'</b></div><small style="color:#aaa8c5">'+x.detail+'</small><div style="height:5px;margin-top:5px;border-radius:5px;background:#29233e;overflow:hidden"><div style="height:100%;width:'+Math.max(0,Math.min(100,x.value))+'%;background:linear-gradient(90deg,#22d3ee,#a78bfa)"></div></div></div>';}).join('');
+ box.innerHTML='<div style="display:flex;justify-content:space-between;gap:10px"><b style="color:#d8ccff">PLAYER SKILL REPORT</b><b style="font-size:18px;color:#22d3ee">'+Math.round(total)+'/100</b></div><b style="display:block;margin:5px 0 8px;color:#d8ccff">OVERALL · '+grade(total)+'</b>'+rows+'<div style="margin-top:10px;padding:9px;border-radius:6px;background:rgba(34,211,238,.08)"><b style="color:#22d3ee">NEXT TRAINING TIP</b><div style="margin-top:4px">'+tips[weak.name]+'</div></div>';
 }
-`;
+function wireAnalysisButton(bid,pid,cid){var b=document.getElementById(bid),p=document.getElementById(pid);if(!b||!p)return;b.addEventListener('click',function(){var opening=p.classList.contains('hidden');if(opening)renderLossAnalysis(cid);p.classList.toggle('hidden',!opening);b.textContent=opening?'Hide Match Analysis':'View Match Analysis';});}
+wireAnalysisButton('winAnalysisBtn','winAnalysisPanel','winAnalysisContent');
+wireAnalysisButton('loseAnalysisBtn','loseAnalysisPanel','loseAnalysisContent');`;
 if (!html.includes('function draw(){')) throw new Error('Draw function anchor missing');
 html=html.replace('function draw(){', lossFn + '\nfunction draw(){');
 html=html.replace("else{losePEl.textContent=pscore;loseCEl.textContent=cscore;loseO.classList.remove('hidden')}",
-  "else{losePEl.textContent=pscore;loseCEl.textContent=cscore;renderLossAnalysis();loseO.classList.remove('hidden')}");
+  "else{losePEl.textContent=pscore;loseCEl.textContent=cscore;loseO.classList.remove('hidden')}");
 
 html=html.replace('function startGame(){\n reset();started=true;','function startGame(){\n var requestedSpeed = Number(symmetryStartSpeed.value);\n BASE_SPEED = Number.isFinite(requestedSpeed) && requestedSpeed > 0 ? requestedSpeed : 390;\n reset();started=true;');
 html=html.replace('pscore = 0; cscore = 0;\n    matchAnalysis = { playerHits: 0, playerMisses: 0, cpuHits: 0, offsets: [], fastestShot: 0 };','pscore = 0; cscore = 0;\n    rallyHits = 0;');
@@ -288,6 +285,8 @@ html=html.replace('var AI_MAX_SPEED = 360;','var AI_MAX_SPEED = Infinity;\n  var
 const safeDrawOld="function drawPaddle(p,color){\n ctx.fillStyle=color;ctx.shadowColor=color;ctx.shadowBlur=16;roundRect(ctx,p.x,p.y,p.w,p.h,5);ctx.fill();ctx.shadowBlur=0;\n ctx.fillStyle='rgba(255,255,255,.3)';roundRect(ctx,p.x+2,p.y+4,p.w-4,5,2);ctx.fill();\n}";
 if (!html.includes(safeDrawOld)) throw new Error('Paddle renderer anchor missing');
 html=html.replace(safeDrawOld,"function drawPaddle(p,color){\n if (!p) return;\n if (!Number.isFinite(p.h) || p.h <= 0) p.h = PADDLE_H;\n if (!Number.isFinite(p.w) || p.w <= 0) p.w = PADDLE_W;\n if (!Number.isFinite(p.x)) p.x = p === player ? 25 : W - 25 - p.w;\n if (!Number.isFinite(p.y)) p.y = H / 2 - p.h / 2;\n p.y = Math.max(0, Math.min(H - p.h, p.y));\n ctx.fillStyle=color;ctx.shadowColor=color;ctx.shadowBlur=16;roundRect(ctx,p.x,p.y,p.w,p.h,5);ctx.fill();ctx.shadowBlur=0;\n ctx.fillStyle='rgba(255,255,255,.3)';roundRect(ctx,p.x+2,p.y+4,p.w-4,5,2);ctx.fill();\n}");
+html=html.replace('pscore = 0; cscore = 0;', 'pscore = 0; cscore = 0; matchAnalysis = { playerHits: 0, playerMisses: 0, cpuHits: 0, cpuMisses: 0, offsets: [], fastestShot: 0 }; rallyHits = 0;');
+html=html.replace('if(playerScored)pscore++;else cscore++;', 'if(playerScored){pscore++;matchAnalysis.cpuMisses++;}else{cscore++;matchAnalysis.playerMisses++;}');
 const scriptStart=html.lastIndexOf('<script>');
 const scriptEnd=html.indexOf('</script>',scriptStart);
 if(scriptStart<0||scriptEnd<0) throw new Error('Pong script tag missing after patch');
